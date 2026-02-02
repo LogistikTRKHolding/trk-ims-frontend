@@ -13,7 +13,7 @@ export default function Vendor() {
   // ============================================
   const fetchVendorData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3000/api/data/vendor', {
+    const response = await fetch('${import.meta.env.VITE_API_URL}/data/vendor', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');
@@ -135,8 +135,8 @@ export default function Vendor() {
 
       // Determine endpoint and method
       const url = editingItem
-        ? `http://localhost:3000/api/data/vendor/${editingItem.id}`
-        : 'http://localhost:3000/api/data/vendor';
+        ? `${import.meta.env.VITE_API_URL}/data/vendor/${editingItem.id}`
+        : '${import.meta.env.VITE_API_URL}/data/vendor';
 
       const method = editingItem ? 'PUT' : 'POST';
 
@@ -185,7 +185,7 @@ export default function Vendor() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3000/api/data/vendor/${item.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/data/vendor/${item.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

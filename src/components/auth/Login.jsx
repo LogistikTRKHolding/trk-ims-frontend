@@ -96,7 +96,7 @@ function Login() {
                   }`}
               >
                 <LogIn className="w-4 h-4 inline mr-2" />
-                Login
+                Masuk
               </button>
               <button
                 onClick={() => setIsLogin(false)}
@@ -106,7 +106,7 @@ function Login() {
                   }`}
               >
                 <UserPlus className="w-4 h-4 inline mr-2" />
-                Sign Up
+                Register
               </button>
             </div>
 
@@ -116,7 +116,7 @@ function Login() {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name *
+                      Nama Lengkap *
                     </label>
                     <input
                       type="text"
@@ -131,7 +131,7 @@ function Login() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number
+                      Nomor Telepon
                     </label>
                     <input
                       type="tel"
@@ -145,7 +145,7 @@ function Login() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Department
+                      Departemen
                     </label>
                     <input
                       type="text"
@@ -176,7 +176,7 @@ function Login() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
+                  Kata sandi *
                 </label>
                 <div className="relative">
                   <input
@@ -209,10 +209,10 @@ function Login() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Processing...
+                    Memproses...
                   </span>
                 ) : (
-                  isLogin ? 'Login' : 'Create Account'
+                  isLogin ? 'Masuk' : 'Buat Akun'
                 )}
               </button>
             </form>
@@ -221,22 +221,22 @@ function Login() {
             <div className="mt-6 text-center text-sm text-gray-600">
               {isLogin ? (
                 <p>
-                  Don't have an account?{' '}
+                  Belum punya akun?{' '}
                   <button
                     onClick={() => setIsLogin(false)}
                     className="text-green-600 hover:text-green-700 font-semibold"
                   >
-                    Sign up here
+                    Daftar di sini
                   </button>
                 </p>
               ) : (
                 <p>
-                  Already have an account?{' '}
+                  Sudah punya akun?{' '}
                   <button
                     onClick={() => setIsLogin(true)}
                     className="text-green-600 hover:text-green-700 font-semibold"
                   >
-                    Login here
+                    Masuk di sini
                   </button>
                 </p>
               )}

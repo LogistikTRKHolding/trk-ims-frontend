@@ -13,7 +13,7 @@ export default function Kategori() {
   // ============================================
   const fetchKategoriData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3000/api/data/kategori', {
+    const response = await fetch('${import.meta.env.VITE_API_URL}/data/kategori', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');
@@ -135,8 +135,8 @@ export default function Kategori() {
 
       // Determine endpoint and method
       const url = editingItem
-        ? `http://localhost:3000/api/data/kategori/${editingItem.id}`
-        : 'http://localhost:3000/api/data/kategori';
+        ? `${import.meta.env.VITE_API_URL}/data/kategori/${editingItem.id}`
+        : '${import.meta.env.VITE_API_URL}/data/kategori';
 
       const method = editingItem ? 'PUT' : 'POST';
 
@@ -185,7 +185,7 @@ export default function Kategori() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3000/api/data/kategori/${item.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/data/kategori/${item.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

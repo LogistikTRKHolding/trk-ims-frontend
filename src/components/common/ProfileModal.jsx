@@ -30,7 +30,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await fetch('http://localhost:3000/api/users', {
+      const response = await fetch('${import.meta.env.VITE_API_URL}/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -81,7 +81,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
         updates.status = formData.status;
       }
 
-      const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

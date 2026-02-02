@@ -263,8 +263,8 @@ export default function Barang() {
       };
 
       const url = editingItem
-        ? `http://localhost:3000/api/data/barang/${editingItem.id}`
-        : 'http://localhost:3000/api/data/barang';
+        ? `${import.meta.env.VITE_API_URL}/data/barang/${editingItem.id}`
+        : '${import.meta.env.VITE_API_URL}/data/barang';
 
       const method = editingItem ? 'PUT' : 'POST';
 
@@ -297,7 +297,7 @@ export default function Barang() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3000/api/data/barang/${item.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/data/barang/${item.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

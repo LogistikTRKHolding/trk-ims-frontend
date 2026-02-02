@@ -13,7 +13,7 @@ export default function Armada() {
   // ============================================
   const fetchArmadaData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('http://localhost:3000/api/data/armada', {
+    const response = await fetch('${import.meta.env.VITE_API_URL}/data/armada', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');
@@ -135,8 +135,8 @@ export default function Armada() {
 
       // Determine endpoint and method
       const url = editingItem
-        ? `http://localhost:3000/api/data/armada/${editingItem.id}`
-        : 'http://localhost:3000/api/data/armada';
+        ? `${import.meta.env.VITE_API_URL}/data/armada/${editingItem.id}`
+        : '${import.meta.env.VITE_API_URL}/data/armada';
 
       const method = editingItem ? 'PUT' : 'POST';
 
@@ -185,7 +185,7 @@ export default function Armada() {
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`http://localhost:3000/api/data/armada/${item.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/data/armada/${item.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

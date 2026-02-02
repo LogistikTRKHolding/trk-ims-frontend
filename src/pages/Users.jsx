@@ -65,7 +65,7 @@ export default function Users() {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await fetch('http://localhost:3000/api/users', {
+      const response = await fetch('${import.meta.env.VITE_API_URL}/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -104,7 +104,7 @@ export default function Users() {
           department: formData.department || null,
         };
 
-        const response = await fetch(`http://localhost:3000/api/users/${editingItem.user_id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${editingItem.user_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ export default function Users() {
 
     try {
       const token = getAuthToken();
-      const response = await fetch(`http://localhost:3000/api/users/${item.user_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/${item.user_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
