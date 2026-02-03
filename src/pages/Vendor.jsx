@@ -13,7 +13,7 @@ export default function Vendor() {
   // ============================================
   const fetchVendorData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('${import.meta.env.VITE_API_URL}/data/vendor', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/data/vendor`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');

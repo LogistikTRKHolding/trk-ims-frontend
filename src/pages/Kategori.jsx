@@ -13,7 +13,7 @@ export default function Kategori() {
   // ============================================
   const fetchKategoriData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('${import.meta.env.VITE_API_URL}/data/kategori', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/data/kategori`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');

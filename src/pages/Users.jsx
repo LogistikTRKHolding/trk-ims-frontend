@@ -65,7 +65,7 @@ export default function Users() {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await fetch('${import.meta.env.VITE_API_URL}/users', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -377,7 +377,7 @@ export default function Users() {
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          
+
                           <div className="ml-4">
                             <div className="font-medium text-gray-900">{item.full_name}</div>
                           </div>

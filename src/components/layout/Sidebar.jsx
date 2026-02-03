@@ -51,7 +51,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff'] },
         { name: 'Summary', path: '/summary', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff'] },
         { name: 'Stok', path: '/stok', icon: Warehouse, roles: ['Admin', 'Manager', 'Staff'] },
-        { name: 'Kartu Stok', path: '/kartu-stok', icon: ClipboardList, roles: ['Admin', 'Manager', 'Staff'], badge: 'New' },
+        { name: 'Kartu Stok', path: '/kartu-stok', icon: ClipboardList, roles: ['Admin', 'Manager', 'Staff'] }, //, badge: 'New' },
       ]
     },
     {

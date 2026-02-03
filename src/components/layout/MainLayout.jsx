@@ -97,8 +97,8 @@ export default function MainLayout({ children }) {
         {/* Footer */}
         <footer className="bg-white border-t border-gray-200 py-4 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-600">
-            <p>© 2025 TRK Holding - Inventory Management System</p>
-            <p>Version 2.1</p>
+            <p>© 2025 TRK Holding</p>
+            <p>Version 1.0</p>
           </div>
         </footer>
       </div>

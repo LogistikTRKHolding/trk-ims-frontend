@@ -13,7 +13,7 @@ export default function Armada() {
   // ============================================
   const fetchArmadaData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch('${import.meta.env.VITE_API_URL}/data/armada', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/data/armada`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');
