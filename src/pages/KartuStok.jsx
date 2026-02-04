@@ -175,7 +175,7 @@ export default function KartuStok() {
 
     // Get unique categories for sidebar filter
     const kategoriList = [...new Set(items.map(item => item.nama_kategori).filter(Boolean))].sort();
-    
+
     const hasItemFilter = filterKategori !== 'all' || searchTerm !== '';
 
     const formatDate = (dateStr) => {
@@ -230,8 +230,10 @@ export default function KartuStok() {
             <MainLayout title="Kartu Stok">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                        <RefreshCw className="w-8 h-8 animate-spin text-green-600 mx-auto mb-2" />
-                        <p className="text-gray-600">Memuat data...</p>
+                        {/* <RefreshCw className="w-8 h-8 animate-spin text-green-600 mx-auto mb-2" />
+                        <p className="text-gray-600">Memuat data...</p> */}
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span className="text-sm text-gray-500">Memuat data...</span>
                     </div>
                 </div>
             </MainLayout>
@@ -316,7 +318,7 @@ export default function KartuStok() {
                                     <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
                                         {filteredItems.length === 0 ? (
                                             <div className="p-8 text-center text-gray-500">
-                                                { hasItemFilter ? 'Tidak ada barang yang sesuai' : 'Tidak ada barang'}
+                                                {hasItemFilter ? 'Tidak ada barang yang sesuai' : 'Tidak ada barang'}
                                             </div>
                                         ) : (
                                             filteredItems.map((item) => (
@@ -535,7 +537,13 @@ export default function KartuStok() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 bg-white">
                                             {loadingHistory ? (
-                                                <tr><td colSpan="5" className="p-8 text-center"><RefreshCw className="w-5 h-5 animate-spin mx-auto text-green-500" /></td></tr>
+                                                <tr>
+                                                    <td colSpan="8" className="px-6 py-12 text-center">
+                                                        <div className="flex flex-col items-center justify-center space-y-2">
+                                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             ) : filteredHistory.length === 0 ? (
                                                 <tr><td colSpan="5" className="p-8 text-center text-gray-500">Tidak ada data transaksi</td></tr>
                                             ) : (
@@ -580,82 +588,75 @@ export default function KartuStok() {
             {/* ============================================
                 NEW: Image Preview Modal
                 ============================================ */}
-            {showImagePreview && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-                    onClick={handleCloseImagePreview}
-                >
+            {
+                showImagePreview && (
                     <div
-                        className="relative max-w-4xl w-full bg-white rounded-lg shadow-2xl overflow-hidden"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+                        onClick={handleCloseImagePreview}
                     >
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
-                            <div className="flex items-center gap-3">
-                                <ImageIcon className="w-5 h-5 text-gray-600" />
-                                <h3 className="font-semibold text-gray-900">{previewImageName}</h3>
+                        <div
+                            className="relative max-w-4xl w-full bg-white rounded-lg shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+                                <div className="flex items-center gap-3">
+                                    <ImageIcon className="w-5 h-5 text-gray-600" />
+                                    <h3 className="font-semibold text-gray-900">{previewImageName}</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {/* Download Button */}
+                                    <button
+                                        onClick={handleDownloadImage}
+                                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                        title="Download gambar"
+                                    >
+                                        <Download className="w-5 h-5 text-gray-700" />
+                                    </button>
+
+                                    {/* Open in New Tab Button */}
+                                    <button
+                                        onClick={handleOpenInNewTab}
+                                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                        title="Buka di tab baru"
+                                    >
+                                        <ExternalLink className="w-5 h-5 text-gray-700" />
+                                    </button>
+
+                                    {/* Close Button */}
+                                    <button
+                                        onClick={handleCloseImagePreview}
+                                        className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                                        title="Tutup"
+                                    >
+                                        <X className="w-5 h-5 text-gray-700" />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {/* Download Button */}
-                                <button
-                                    onClick={handleDownloadImage}
-                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                    title="Download gambar"
-                                >
-                                    <Download className="w-5 h-5 text-gray-700" />
-                                </button>
 
-                                {/* Open in New Tab Button */}
-                                <button
-                                    onClick={handleOpenInNewTab}
-                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                    title="Buka di tab baru"
-                                >
-                                    <ExternalLink className="w-5 h-5 text-gray-700" />
-                                </button>
-
-                                {/* Close Button */}
-                                <button
-                                    onClick={handleCloseImagePreview}
-                                    className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                                    title="Tutup"
-                                >
-                                    <X className="w-5 h-5 text-gray-700" />
-                                </button>
+                            {/* Image Container */}
+                            <div className="flex items-center justify-center bg-gray-900 p-6" style={{ maxHeight: '70vh' }}>
+                                <img
+                                    src={cloudinaryService.getMediumUrl(previewImageUrl, 1200, 900)}
+                                    alt={previewImageName}
+                                    className="max-w-full max-h-full object-contain rounded"
+                                    onError={(e) => {
+                                        // Fallback to original URL if optimized fails
+                                        e.target.src = previewImageUrl;
+                                    }}
+                                />
                             </div>
-                        </div>
 
-                        {/* Image Container */}
-                        <div className="flex items-center justify-center bg-gray-900 p-6" style={{ maxHeight: '70vh' }}>
-                            <img
-                                src={cloudinaryService.getMediumUrl(previewImageUrl, 1200, 900)}
-                                alt={previewImageName}
-                                className="max-w-full max-h-full object-contain rounded"
-                                onError={(e) => {
-                                    // Fallback to original URL if optimized fails
-                                    e.target.src = previewImageUrl;
-                                }}
-                            />
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="px-6 py-3 bg-gray-50 border-t">
-                            <div className="flex items-center justify-between text-sm text-gray-600">
-                                <span>Klik di luar atau tekan ESC untuk menutup</span>
-                                <a
-                                    href={previewImageUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
-                                >
-                                    Lihat di Cloudinary
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
+                            {/* Modal Footer */}
+                            <div className="px-6 py-3 bg-gray-50 border-t">
+                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                    <span>Klik di luar atau tekan ESC untuk menutup</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </MainLayout>
+                )
+            }
+        </MainLayout >
     );
 }

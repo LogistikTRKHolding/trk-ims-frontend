@@ -30,7 +30,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await fetch('${import.meta.env.VITE_API_URL}/users', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -119,26 +119,22 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <User className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">
-                Profile Settings
-              </h3>
-              <p className="text-sm text-gray-500">
-                Update your profile information
-              </p>
-            </div>
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-white">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">
+              Profile Settings
+            </h2>
+            <p className="text-sm text-gray-500">
+              Update your profile information
+            </p>
           </div>
           <button
+            type="button"
             onClick={() => onClose(false)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-gray-100 rounded"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -308,11 +304,10 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                     Role
                   </label>
                   <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      userData.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userData.role === 'Admin' ? 'bg-red-100 text-red-800' :
                       userData.role === 'Manager' ? 'bg-purple-100 text-purple-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+                        'bg-green-100 text-green-800'
+                      }`}>
                       {userData.role}
                     </span>
                   </div>
@@ -325,9 +320,8 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                     Status
                   </label>
                   <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      userData.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${userData.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {userData.status}
                     </span>
                   </div>
@@ -335,31 +329,21 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
               <button
                 type="button"
                 onClick={() => onClose(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
               >
-                Cancel
+                Batal
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
+                Simpan
               </button>
             </div>
           </form>

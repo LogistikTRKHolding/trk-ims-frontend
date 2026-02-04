@@ -323,10 +323,10 @@ export default function Vendor() {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center">
-                    <div className="flex items-center justify-center">
+                  <td colSpan="8" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                      <span className="ml-2 text-gray-600">Memuat data...</span>
+                      <span className="text-sm text-gray-500">Memuat data...</span>
                     </div>
                   </td>
                 </tr>

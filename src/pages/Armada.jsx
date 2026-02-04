@@ -270,23 +270,23 @@ export default function Armada() {
 
             {/* Action Buttons */}
             <div className="flex gap-2 w-full lg:w-auto">
-            <button
-              onClick={handleExport}
-              className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-
-            {canEdit && (
               <button
-                onClick={openCreateModal}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                onClick={handleExport}
+                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
               >
-                <Plus className="w-4 h-4" />
-                <span>Tambah</span>
+                <Download className="w-4 h-4" />
+                <span>Export</span>
               </button>
-            )}            
+
+              {canEdit && (
+                <button
+                  onClick={openCreateModal}
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -319,10 +319,10 @@ export default function Armada() {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center">
-                    <div className="flex items-center justify-center">
+                  <td colSpan="8" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-                      <span className="ml-2">Memuat Data...</span>
+                      <span className="text-sm text-gray-500">Memuat data...</span>
                     </div>
                   </td>
                 </tr>

@@ -441,7 +441,7 @@ export default function Dashboard() {
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
-              <span className="text-sm font-medium text-gray-900">View Critical</span>
+              <span className="text-sm font-medium text-gray-900">Stok Kritis</span>
             </a>
           </div>
         </div>

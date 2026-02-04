@@ -355,7 +355,6 @@ export default function Summary() {
                   </th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Kategori</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Armada</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Satuan</th>
                   <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Stok {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
@@ -388,8 +387,12 @@ export default function Summary() {
                       <td className="px-6 py-4 font-semibold text-gray-900">{item.nama_barang}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.satuan}</td>
-                      <td className="px-6 py-4 text-right font-bold text-gray-900">{item.stok_akhir.toLocaleString('id-ID')}</td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-right font-bold text-gray-900">{item.stok_akhir.toLocaleString('id-ID')}</p>
+                          <p className="text-xs text-right text-gray-500">{item.satuan}</p>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex px-3 py-1 text-[11px] font-bold uppercase rounded-full shadow-sm ${getStatusColor(item.status_stok)}`}>

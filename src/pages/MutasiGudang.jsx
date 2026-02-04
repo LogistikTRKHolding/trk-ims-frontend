@@ -335,29 +335,6 @@ export default function MutasiGudang() {
     XLSX.writeFile(wb, fileName);
   };
 
-  if (loading && allData.length === 0) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Memuat data...</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Error: {error}</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
       {/* Toolbar: Search, Filters, Actions - All in one row */}
@@ -647,76 +624,86 @@ export default function MutasiGudang() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
-                      {hasActiveFilters
-                        ? 'Tidak ada data yang sesuai dengan filter'
-                        : 'Belum ada data mutasi gudang'}
+                    <td colSpan="8" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span className="text-sm text-gray-500">Memuat data...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(item.tanggal)}
+                  paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                        {hasActiveFilters
+                          ? 'Tidak ada data yang sesuai dengan filter'
+                          : 'Belum ada data mutasi gudang'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.jenis_transaksi === 'Masuk'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                            }`}
-                        >
-                          {item.jenis_transaksi === 'Masuk' ? (
-                            <TrendingUp className="w-3 h-3" />
-                          ) : (
-                            <TrendingDown className="w-3 h-3" />
-                          )}
-                          {item.jenis_transaksi}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-                        {item.kode_barang}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.nama_barang}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
-                        {item.qty} {item.satuan}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {item.referensi || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {item.keterangan || '-'}
-                      </td>
-                      {(canEdit || canDelete) && (
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <div className="flex items-center justify-end gap-2">
-                            {canEdit && (
-                              <button
-                                onClick={() => openEditModal(item)}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Edit"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                onClick={() => handleDelete(item)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      )}
                     </tr>
-                  ))
+                  ) : (
+                    paginatedData.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(item.tanggal)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.jenis_transaksi === 'Masuk'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                              }`}
+                          >
+                            {item.jenis_transaksi === 'Masuk' ? (
+                              <TrendingUp className="w-3 h-3" />
+                            ) : (
+                              <TrendingDown className="w-3 h-3" />
+                            )}
+                            {item.jenis_transaksi}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+                          {item.kode_barang}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {item.nama_barang}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
+                          {item.qty} {item.satuan}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.referensi || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.keterangan || '-'}
+                        </td>
+                        {(canEdit || canDelete) && (
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <div className="flex items-center justify-end gap-2">
+                              {canEdit && (
+                                <button
+                                  onClick={() => openEditModal(item)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDelete(item)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    )))
                 )}
               </tbody>
             </table>
@@ -972,14 +959,13 @@ export default function MutasiGudang() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    disabled={!formData.kode_barang}
-                    className={`px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700'}`}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                   >
                     {editingItem ? 'Update' : 'Simpan'}
                   </button>

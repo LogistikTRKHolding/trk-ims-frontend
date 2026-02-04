@@ -444,26 +444,6 @@ export default function Pembelian() {
         );
     };
 
-    if (loading) {
-        return (
-            <MainLayout>
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-                </div>
-            </MainLayout>
-        );
-    }
-
-    if (error) {
-        return (
-            <MainLayout>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-red-800">Error: {error}</p>
-                </div>
-            </MainLayout>
-        );
-    }
-
     return (
         <MainLayout>
             <div className="space-y-6">
@@ -737,68 +717,78 @@ export default function Pembelian() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {paginatedData.length === 0 ? (
+                                {loading ? (
                                     <tr>
-                                        <td colSpan={canEdit || canDelete ? 10 : 9} className="px-6 py-12 text-center text-gray-500">
-                                            <Package className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                                            <p className="text-sm">
-                                                {hasActiveFilters
-                                                    ? 'Tidak ada purchase order yang sesuai dengan filter'
-                                                    : 'Belum ada purchase order. Klik tombol Tambah untuk membuat PO baru.'}
-                                            </p>
+                                        <td colSpan="8" className="px-6 py-12 text-center">
+                                            <div className="flex flex-col items-center justify-center space-y-2">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                                <span className="text-sm text-gray-500">Memuat data...</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    paginatedData.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 font-mono text-sm font-medium">{item.no_po}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{formatDate(item.tanggal_po)}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Building2 className="w-4 h-4 text-gray-400" />
-                                                    <span className="text-sm font-medium">{item.nama_vendor}</span>
-                                                </div>
+                                    paginatedData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={canEdit || canDelete ? 10 : 9} className="px-6 py-12 text-center text-gray-500">
+                                                <Package className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                                                <p className="text-sm">
+                                                    {hasActiveFilters
+                                                        ? 'Tidak ada purchase order yang sesuai dengan filter'
+                                                        : 'Belum ada purchase order. Klik tombol Tambah untuk membuat PO baru.'}
+                                                </p>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div>
-                                                    <p className="text-sm font-medium">{item.nama_barang}</p>
-                                                    <p className="text-xs text-gray-500">{item.kode_barang}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
-                                            <td className="px-6 py-4 text-right font-semibold text-sm">{item.qty_order}</td>
-                                            <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
-                                                Rp {(item.total_harga || 0).toLocaleString('id-ID')}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {getStatusBadge(item.status)}
-                                            </td>
-                                            {(canEdit || canDelete) && (
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {canEdit && (
-                                                            <button
-                                                                onClick={() => openEditModal(item)}
-                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                title="Edit"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                        {canDelete && (
-                                                            <button
-                                                                onClick={() => handleDelete(item)}
-                                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                                title="Delete"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        )}
+                                        </tr>
+                                    ) : (
+                                        paginatedData.map((item) => (
+                                            <tr key={item.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 font-mono text-sm font-medium">{item.no_po}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{formatDate(item.tanggal_po)}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Building2 className="w-4 h-4 text-gray-400" />
+                                                        <span className="text-sm font-medium">{item.nama_vendor}</span>
                                                     </div>
                                                 </td>
-                                            )}
-                                        </tr>
-                                    ))
+                                                <td className="px-6 py-4">
+                                                    <div>
+                                                        <p className="text-sm font-medium">{item.nama_barang}</p>
+                                                        <p className="text-xs text-gray-500">{item.kode_barang}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
+                                                <td className="px-6 py-4 text-right font-semibold text-sm">{item.qty_order}</td>
+                                                <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
+                                                    Rp {(item.total_harga || 0).toLocaleString('id-ID')}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    {getStatusBadge(item.status)}
+                                                </td>
+                                                {(canEdit || canDelete) && (
+                                                    <td className="px-6 py-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {canEdit && (
+                                                                <button
+                                                                    onClick={() => openEditModal(item)}
+                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            {canDelete && (
+                                                                <button
+                                                                    onClick={() => handleDelete(item)}
+                                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                    title="Delete"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        )))
                                 )}
                             </tbody>
                         </table>
@@ -1152,9 +1142,7 @@ export default function Pembelian() {
                                 </div>
                             </div>
 
-                            {/* ... Footer Modal */}
-                            {/* Modal Actions */}
-                            {/* <div className="flex justify-end gap-3 pt-4 border-t border-gray-200"> */}
+                            {/* Modal Footer */}
                             <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
                                 <button
                                     type="button"
@@ -1162,15 +1150,15 @@ export default function Pembelian() {
                                         setShowModal(false);
                                         resetForm();
                                     }}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                                 >
-                                    {editingItem ? 'Update PO' : 'Simpan PO'}
+                                    {editingItem ? 'Update' : 'Simpan'}
                                 </button>
                             </div>
                         </form>

@@ -597,90 +597,100 @@ export default function Barang() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan={canEdit || canDelete ? 9 : 8} className="px-6 py-8 text-center text-gray-500">
-                      {hasActiveFilters || searchQuery
-                        ? 'Tidak ada data yang sesuai dengan filter'
-                        : 'Belum ada data barang'}
+                    <td colSpan="8" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span className="text-sm text-gray-500">Memuat data...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      {/* Clickable Thumbnail */}
-                      <td className="px-6 py-4">
-                        {item.gambar_url ? (
-                          <div className="relative group">
-                            <button
-                              onClick={() => handleThumbnailClick(item)}
-                              className="relative overflow-hidden rounded border border-gray-200 hover:border-green-500 transition-all"
-                              title="Klik untuk melihat gambar"
-                            >
-                              <img
-                                src={cloudinaryService.getThumbnailUrl(item.gambar_url)}
-                                alt={item.nama_barang}
-                                className="w-12 h-12 object-cover transition-transform group-hover:scale-110"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23f3f4f6" width="48" height="48"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="20"%3E?%3C/text%3E%3C/svg%3E';
-                                }}
-                              />
-                              {/* Hover overlay */}
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
-                                <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                            <ImageIcon className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
+                  paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan={canEdit || canDelete ? 9 : 8} className="px-6 py-8 text-center text-gray-500">
+                        {hasActiveFilters || searchQuery
+                          ? 'Tidak ada data yang sesuai dengan filter'
+                          : 'Belum ada data barang'}
                       </td>
-
-                      <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>
-                      <td className="px-6 py-4 font-medium">{item.nama_barang}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada}</td>
-                      <td className="px-6 py-4">
-                        {item.is_stocked ? (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            Di-Stok
-                          </span>
-                        ) : (
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
-                            Non-Stok
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.min_stok || '-'}/{item.max_stok || '-'}</td>
-                      {(canEdit || canDelete) && (
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            {canEdit && (
-                              <button
-                                onClick={() => openEditModal(item)}
-                                className="p-1 text-green-600 hover:bg-green-50 rounded"
-                                title="Edit"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                onClick={() => handleDelete(item)}
-                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      )}
                     </tr>
-                  ))
+                  ) : (
+                    paginatedData.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        {/* Clickable Thumbnail */}
+                        <td className="px-6 py-4">
+                          {item.gambar_url ? (
+                            <div className="relative group">
+                              <button
+                                onClick={() => handleThumbnailClick(item)}
+                                className="relative overflow-hidden rounded border border-gray-200 hover:border-green-500 transition-all"
+                                title="Klik untuk melihat gambar"
+                              >
+                                <img
+                                  src={cloudinaryService.getThumbnailUrl(item.gambar_url)}
+                                  alt={item.nama_barang}
+                                  className="w-12 h-12 object-cover transition-transform group-hover:scale-110"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23f3f4f6" width="48" height="48"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="20"%3E?%3C/text%3E%3C/svg%3E';
+                                  }}
+                                />
+                                {/* Hover overlay */}
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+                                  <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                              <ImageIcon className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>
+                        <td className="px-6 py-4 font-medium">{item.nama_barang}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada}</td>
+                        <td className="px-6 py-4">
+                          {item.is_stocked ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              Di-Stok
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                              Non-Stok
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.min_stok || '-'}/{item.max_stok || '-'}</td>
+                        {(canEdit || canDelete) && (
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              {canEdit && (
+                                <button
+                                  onClick={() => openEditModal(item)}
+                                  className="p-1 text-green-600 hover:bg-green-50 rounded"
+                                  title="Edit"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDelete(item)}
+                                  className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    )))
                 )}
               </tbody>
             </table>
@@ -852,15 +862,7 @@ export default function Barang() {
               {/* Footer */}
               <div className="px-6 py-3 bg-gray-50 border-t">
                 <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>Click outside or press ESC to close</span>
-                  <a
-                    href={previewImageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-600 hover:text-green-800 hover:underline"
-                  >
-                    View on Cloudinary
-                  </a>
+                  <span>Klik di luar atau tekan ESC untuk menutup</span>
                 </div>
               </div>
             </div>
@@ -1010,7 +1012,7 @@ export default function Barang() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {/* Armada <span className="text-red-500">*</span> */}
-                        Armada 
+                        Armada
                       </label>
                       <select
                         name="kode_armada"
@@ -1166,16 +1168,14 @@ export default function Barang() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    disabled={uploading}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                   >
-                    {uploading && <Loader className="w-4 h-4 animate-spin" />}
                     {editingItem ? 'Update' : 'Simpan'}
                   </button>
                 </div>
