@@ -184,16 +184,6 @@ export default function Stok() {
                 Total global: {stats.global.totalStok.toLocaleString('id-ID')}
               </p>
             </div>
-
-            <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-              <p className="text-sm text-indigo-600">Total Nilai</p>
-              <p className="text-xl font-bold text-indigo-700">
-                Rp {((stats.filtered.totalNilai || 0) / 1000000000).toFixed(1)} M
-              </p>
-              <p className="text-[10px] text-gray-400 mt-1 italic">
-                Global: Rp {((stats.filtered.totalNilai || 0) / 1000000000).toFixed(1)} M
-              </p>
-            </div>
           </div>
         )}
 

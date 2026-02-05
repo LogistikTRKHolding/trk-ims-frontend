@@ -162,17 +162,6 @@ export default function Summary() {
             <p className="text-2xl font-bold text-green-700">{stats?.stokLebih || 0}</p>
             <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalStokLebih || 0}</p>
           </div>
-
-          {/* Total Nilai */}
-          <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
-            <p className="text-sm text-indigo-600">Total Nilai</p>
-            <p className="text-xl font-bold text-indigo-700">
-              Rp {((stats?.totalNilai || 0) / 1000000000).toFixed(1)} M
-            </p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">
-              Global: Rp {((stats?.globalTotalNilai || 0) / 1000000000).toFixed(1)} M
-            </p>
-          </div>
         </div>
 
         {/* Toolbar: Search, Filters, Actions - All in one row */}
