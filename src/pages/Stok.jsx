@@ -138,7 +138,7 @@ export default function Stok() {
         {/* Summary Stats */}
         {stats && (
           //<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <p className="text-sm text-gray-600 flex items-center">
                 <Package className="w-4 h-4 mr-1" />

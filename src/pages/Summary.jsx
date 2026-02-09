@@ -127,7 +127,7 @@ export default function Summary() {
     <MainLayout title="Summary">
       <div className="space-y-6">
         {/* STATS CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Total Items */}
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-600">Total Items</p>
