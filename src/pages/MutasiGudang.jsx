@@ -18,7 +18,7 @@ import {
 import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
-import { mutasiAPI, barangAPI, authAPI } from '../services/api';
+import { mutasiAPI, barangAPI, authAPI, kategoriAPI, armadaAPI } from '../services/api';
 
 export default function MutasiGudang() {
   // Current user & permissions
@@ -50,17 +50,20 @@ export default function MutasiGudang() {
 
   // State untuk Modal Tambah Barang Baru
   const [showAddBarangModal, setShowAddBarangModal] = useState(false);
+  const [kategoriListModal, setKategoriListModal] = useState([]);
+  const [armadaListModal, setArmadaListModal] = useState([]);
   const [newBarangData, setNewBarangData] = useState({
     kode_barang: '',
     nama_barang: '',
     satuan: '',
-    stok_minimum: 0,
     kode_kategori: '',
+    nama_armada: '',
   });
 
   // Load barang list untuk dropdown
   useEffect(() => {
     loadBarangList();
+    loadKategoriArmadaList();
   }, []);
 
   const loadBarangList = async () => {
@@ -69,6 +72,19 @@ export default function MutasiGudang() {
       setBarangList(result);
     } catch (error) {
       console.error('Error loading barang:', error);
+    }
+  };
+
+  const loadKategoriArmadaList = async () => {
+    try {
+      const [kategoriResult, armadaResult] = await Promise.all([
+        kategoriAPI.getAll(),
+        armadaAPI.getAll()
+      ]);
+      setKategoriListModal(kategoriResult);
+      setArmadaListModal(armadaResult);
+    } catch (error) {
+      console.error('Error loading kategori/armada:', error);
     }
   };
 
@@ -232,14 +248,28 @@ export default function MutasiGudang() {
   // Handler untuk Modal Tambah Barang Baru
   const handleNewBarangChange = (e) => {
     const { name, value, type } = e.target;
+    let finalValue = type === 'number' ? parseFloat(value) || 0 : value;
+
+    // Auto uppercase untuk nama_barang
+    if (name === 'nama_barang') {
+      finalValue = value.toUpperCase();
+    }
+
     setNewBarangData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value,
+      [name]: finalValue,
     }));
   };
 
   const handleAddNewBarang = async (e) => {
     e.preventDefault();
+
+    // Validasi armada untuk kategori KAT001
+    if (newBarangData.kode_kategori === 'KAT001' && !newBarangData.nama_armada) {
+      alert('Armada wajib diisi untuk kategori Suku Cadang!');
+      return;
+    }
+
     try {
       // Simpan barang baru ke database
       const savedBarang = await barangAPI.create(newBarangData);
@@ -260,8 +290,8 @@ export default function MutasiGudang() {
         kode_barang: '',
         nama_barang: '',
         satuan: '',
-        stok_minimum: 0,
         kode_kategori: '',
+        nama_armada: '',
       });
       setShowAddBarangModal(false);
       setSearchTermBarang('');
@@ -279,7 +309,7 @@ export default function MutasiGudang() {
     setNewBarangData(prev => ({
       ...prev,
       kode_barang: searchTermBarang.toUpperCase(),
-      nama_barang: searchTermBarang,
+      nama_barang: searchTermBarang.toUpperCase(),
     }));
     setShowAddBarangModal(true);
   };
@@ -407,7 +437,7 @@ export default function MutasiGudang() {
       'Referensi': item.referensi || '-',
       'Keterangan': item.keterangan || '-',
     }));
-    
+
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mutasi Gudang');
@@ -773,7 +803,7 @@ export default function MutasiGudang() {
                               )}
                               {canDelete && (
                                 <button
-                                  onClick={() => handleDelete(item)}
+                                  onClick={() => handleDelete(item.id)}
                                   className="text-red-600 hover:text-red-800"
                                   title="Delete"
                                 >
@@ -1077,7 +1107,7 @@ export default function MutasiGudang() {
               <form onSubmit={handleAddNewBarang}>
                 {/* Modal Header */}
                 <div className="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-white">
-                  <h2 className="text-xl font-bold text-green-700">Tambah Barang Baru</h2>
+                  <h2 className="text-xl font-bold">Tambah Barang Baru</h2>
                   <button
                     type="button"
                     onClick={() => {
@@ -1086,8 +1116,8 @@ export default function MutasiGudang() {
                         kode_barang: '',
                         nama_barang: '',
                         satuan: '',
-                        stok_minimum: 0,
                         kode_kategori: '',
+                        nama_armada: '',
                       });
                     }}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -1103,37 +1133,81 @@ export default function MutasiGudang() {
                       <strong>Info:</strong> Barang yang ditambahkan akan otomatis dipilih untuk transaksi mutasi.
                     </p>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kode Barang *
-                    </label>
-                    <input
-                      type="text"
-                      name="kode_barang"
-                      value={newBarangData.kode_barang}
-                      onChange={handleNewBarangChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                      placeholder="Contoh: BRG001"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Kode Barang *
+                      </label>
+                      <input
+                        type="text"
+                        name="kode_barang"
+                        value={newBarangData.kode_barang}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                        placeholder="Contoh: BRG001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Barang *
+                      </label>
+                      <input
+                        type="text"
+                        name="nama_barang"
+                        value={newBarangData.nama_barang}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                        placeholder="Contoh: OLI MESIN"
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nama Barang *
-                    </label>
-                    <input
-                      type="text"
-                      name="nama_barang"
-                      value={newBarangData.nama_barang}
-                      onChange={handleNewBarangChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                      placeholder="Contoh: Oli Mesin"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Kategori *
+                      </label>
+                      <select
+                        name="kode_kategori"
+                        value={newBarangData.kode_kategori}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                      >
+                        <option value="">Pilih Kategori</option>
+                        {kategoriListModal.map((kategori) => (
+                          <option key={kategori.kode_kategori} value={kategori.kode_kategori}>
+                            {kategori.nama_kategori}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Armada {newBarangData.kode_kategori === 'KAT001' && <span className="text-red-500">*</span>}
+                      </label>
+                      <select
+                        name="nama_armada"
+                        value={newBarangData.nama_armada}
+                        onChange={handleNewBarangChange}
+                        required={newBarangData.kode_kategori === 'KAT001'}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                      >
+                        <option value="">Pilih Armada</option>
+                        {armadaListModal.map((armada) => (
+                          <option key={armada.nama_armada} value={armada.nama_armada}>
+                            {armada.nama_armada}
+                          </option>
+                        ))}
+                      </select>
+                      {newBarangData.kode_kategori === 'KAT001' && (
+                        <p className="mt-1 text-xs text-red-500">
+                          Armada wajib diisi untuk kategori Suku Cadang
+                        </p>
+                      )}
+                    </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1147,48 +1221,15 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       >
                         <option value="">Pilih Satuan</option>
-                        <option value="Pcs">Pcs</option>
-                        <option value="Unit">Unit</option>
-                        <option value="Box">Box</option>
-                        <option value="Liter">Liter</option>
-                        <option value="Kg">Kg</option>
-                        <option value="Meter">Meter</option>
-                        <option value="Set">Set</option>
+                        <option value="Pcs">PCS</option>
+                        <option value="Unit">UNIT</option>
+                        <option value="Box">BOX</option>
+                        <option value="Liter">LITER</option>
+                        <option value="Kg">KG</option>
+                        <option value="Meter">METER</option>
+                        <option value="Set">SET</option>
                       </select>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Stok Minimum
-                      </label>
-                      <input
-                        type="number"
-                        name="stok_minimum"
-                        value={newBarangData.stok_minimum}
-                        onChange={handleNewBarangChange}
-                        min="0"
-                        step="1"
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kode Kategori (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      name="kode_kategori"
-                      value={newBarangData.kode_kategori}
-                      onChange={handleNewBarangChange}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                      placeholder="Contoh: KAT001"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Kosongkan jika kategori belum ada
-                    </p>
                   </div>
                 </div>
 
@@ -1202,17 +1243,17 @@ export default function MutasiGudang() {
                         kode_barang: '',
                         nama_barang: '',
                         satuan: '',
-                        stok_minimum: 0,
                         kode_kategori: '',
+                        nama_armada: '',
                       });
                     }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                   >
                     Simpan Barang
                   </button>

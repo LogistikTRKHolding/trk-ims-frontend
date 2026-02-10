@@ -225,8 +225,13 @@ export default function Barang() {
       return;
     }
 
-    if (!formData.kode_kategori || !formData.kode_armada) {
-      alert('Kategori dan Armada wajib dipilih!');
+    if (!formData.kode_kategori) {
+      alert('Kategori wajib dipilih!');
+      return;
+    }
+
+    if (formData.kode_kategori === "KAT001" && !formData.kode_armada) {
+      alert('Untuk kategori Suku Cadang, Armada wajib dipilih!');
       return;
     }
 
@@ -1018,7 +1023,7 @@ export default function Barang() {
                         name="kode_armada"
                         value={formData.kode_armada}
                         onChange={handleInputChange}
-                        // required
+                        //required
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       >
                         <option value="">-- Pilih Armada --</option>
