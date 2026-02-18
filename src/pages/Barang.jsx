@@ -231,7 +231,7 @@ export default function Barang() {
     }
 
     if (formData.kode_kategori === "KAT001" && !formData.kode_armada) {
-      alert('Untuk kategori Suku Cadang, Armada wajib dipilih!');
+      alert('Untuk kategori "Suku Cadang", Armada wajib dipilih!');
       return;
     }
 
@@ -258,7 +258,7 @@ export default function Barang() {
         min_stok: parseInt(formData.min_stok) || 0,
         max_stok: parseInt(formData.max_stok) || 0,
         kode_kategori: formData.kode_kategori,
-        kode_armada: formData.kode_armada,
+        kode_armada: formData.kode_armada || null,
         lokasi_gudang: formData.lokasi_gudang || null,
         supplier_utama: formData.supplier_utama || null,
         keterangan: formData.keterangan || null,
@@ -269,7 +269,7 @@ export default function Barang() {
 
       const url = editingItem
         ? `${import.meta.env.VITE_API_URL}/data/barang/${editingItem.id}`
-        : '${import.meta.env.VITE_API_URL}/data/barang';
+        : `${import.meta.env.VITE_API_URL}/data/barang`;
 
       const method = editingItem ? 'PUT' : 'POST';
 
