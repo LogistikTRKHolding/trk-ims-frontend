@@ -23,8 +23,8 @@ import { mutasiAPI, barangAPI, authAPI, kategoriAPI, armadaAPI } from '../servic
 export default function MutasiGudang() {
   // Current user & permissions
   const currentUser = authAPI.getCurrentUser();
-  const canCreate = ['Admin', 'Manager', 'Staff'].includes(currentUser?.role);
-  const canEdit = ['Admin', 'Manager', 'Staff'].includes(currentUser?.role);
+  const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
+  const canEdit = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canDelete = ['Admin', 'Manager'].includes(currentUser?.role);
 
   // Modal & Form states
@@ -57,6 +57,7 @@ export default function MutasiGudang() {
     nama_barang: '',
     satuan: '',
     kode_kategori: '',
+    kode_armada: '',   // FIX: foreign key ke tabel armada
     nama_armada: '',
   });
 
@@ -255,6 +256,17 @@ export default function MutasiGudang() {
       finalValue = value.toUpperCase();
     }
 
+    // FIX: Saat armada dipilih, tangkap kode_armada sekaligus dari dataset
+    if (name === 'nama_armada') {
+      const kodeArmada = e.target.selectedOptions[0]?.dataset.kode || '';
+      setNewBarangData(prev => ({
+        ...prev,
+        nama_armada: finalValue,
+        kode_armada: kodeArmada,
+      }));
+      return;
+    }
+
     setNewBarangData(prev => ({
       ...prev,
       [name]: finalValue,
@@ -291,6 +303,7 @@ export default function MutasiGudang() {
         nama_barang: '',
         satuan: '',
         kode_kategori: '',
+        kode_armada: '',
         nama_armada: '',
       });
       setShowAddBarangModal(false);
@@ -1117,6 +1130,7 @@ export default function MutasiGudang() {
                         nama_barang: '',
                         satuan: '',
                         kode_kategori: '',
+                        kode_armada: '',
                         nama_armada: '',
                       });
                     }}
@@ -1196,7 +1210,11 @@ export default function MutasiGudang() {
                       >
                         <option value="">Pilih Armada</option>
                         {armadaListModal.map((armada) => (
-                          <option key={armada.nama_armada} value={armada.nama_armada}>
+                          <option
+                            key={armada.kode_armada || armada.nama_armada}
+                            value={armada.nama_armada}
+                            data-kode={armada.kode_armada || ''}
+                          >
                             {armada.nama_armada}
                           </option>
                         ))}
@@ -1244,6 +1262,7 @@ export default function MutasiGudang() {
                         nama_barang: '',
                         satuan: '',
                         kode_kategori: '',
+                        kode_armada: '',
                         nama_armada: '',
                       });
                     }}

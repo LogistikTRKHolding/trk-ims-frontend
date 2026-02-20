@@ -230,8 +230,6 @@ export default function KartuStok() {
             <MainLayout title="Kartu Stok">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
-                        {/* <RefreshCw className="w-8 h-8 animate-spin text-green-600 mx-auto mb-2" />
-                        <p className="text-gray-600">Memuat data...</p> */}
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                         <span className="text-sm text-gray-500">Memuat data...</span>
                     </div>
@@ -418,7 +416,12 @@ export default function KartuStok() {
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                                             <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">{selectedItem.nama_barang}</h2>
                                             <div className="space-y-1 text-sm text-gray-600">
-                                                <p>Kode: <span className="font-medium font-mono">{selectedItem.kode_barang}</span></p>
+                                                <p>Kode: <button
+                                                    onClick={() => window.open(`/barang?kode=${encodeURIComponent(selectedItem.kode_barang)}`, '_blank')}
+                                                    className="font-mono text-sm text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                                                    title={`Lihat barang ${selectedItem.nama_barang} di halaman Barang`}
+                                                > {selectedItem.kode_barang}
+                                                </button></p>
                                                 <p>Kategori: <span className="font-medium">{selectedItem.nama_kategori}</span></p>
                                                 {selectedItem.nama_armada && (
                                                     <p>Armada: <span className="font-medium">{selectedItem.nama_armada}</span></p>

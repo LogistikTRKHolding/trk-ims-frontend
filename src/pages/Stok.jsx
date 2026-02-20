@@ -402,9 +402,13 @@ export default function Stok() {
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="font-mono text-sm font-medium text-gray-900">
+                        <button
+                          onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                          className="font-mono text-sm text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                          title={`Lihat barang ${item.kode_barang} di halaman Barang`}
+                        >
                           {item.kode_barang}
-                        </span>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div>

@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
 import { barangAPI, kategoriAPI, armadaAPI } from '../services/api';
@@ -23,8 +24,8 @@ import {
 export default function Barang() {
   // Permissions (based on user role)
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  const canCreate = ['Admin', 'Manager'].includes(currentUser?.role);
-  const canEdit = ['Admin', 'Manager'].includes(currentUser?.role);
+  const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
+  const canEdit = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canDelete = currentUser?.role === 'Admin';
 
   // Modal & Form States
@@ -110,6 +111,19 @@ export default function Barang() {
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
   });
+
+  // ============================================
+  // Read URL param ?kode= from Summary page navigation
+  // ============================================
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const kode = params.get('kode');
+    if (kode) {
+      setSearchQuery(decodeURIComponent(kode));
+    }
+  }, [location.search]);
 
   // ============================================
   // Image Preview Handlers

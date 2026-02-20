@@ -48,16 +48,16 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     {
       title: 'Overview',
       items: [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff'] },
-        { name: 'Summary', path: '/summary', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff'] },
-        { name: 'Stok', path: '/stok', icon: Warehouse, roles: ['Admin', 'Manager', 'Staff'] },
-        { name: 'Kartu Stok', path: '/kartu-stok', icon: ClipboardList, roles: ['Admin', 'Manager', 'Staff'] }, //, badge: 'New' },
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'] },
+        { name: 'Summary', path: '/summary', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'] },
+        { name: 'Stok', path: '/stok', icon: Warehouse, roles: ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'] },
+        { name: 'Kartu Stok', path: '/kartu-stok', icon: ClipboardList, roles: ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'] }, //, badge: 'New' },
       ]
     },
     {
       title: 'Master Data',
       items: [
-        { name: 'Barang', path: '/barang', icon: Package, roles: ['Admin'] },
+        { name: 'Barang', path: '/barang', icon: Package, roles: ['Admin', 'Staff_gudang'] },
         { name: 'Kategori', path: '/kategori', icon: FolderOpen, roles: ['Admin'] },
         { name: 'Armada', path: '/armada', icon: Settings, roles: ['Admin'] },
         { name: 'Vendor', path: '/vendor', icon: Truck, roles: ['Admin'] },
@@ -66,8 +66,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     {
       title: 'Transactions',
       items: [
-        { name: 'Mutasi Gudang', path: '/mutasi_gudang', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff'] },
-        { name: 'Pembelian', path: '/pembelian', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Staff'] },
+        { name: 'Mutasi Gudang', path: '/mutasi_gudang', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff_gudang'] },
+        { name: 'Pembelian', path: '/pembelian', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Staff_pembelian'] },
       ]
     },
     {

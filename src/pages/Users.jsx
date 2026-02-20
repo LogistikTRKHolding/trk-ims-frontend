@@ -300,6 +300,8 @@ export default function Users() {
                   <option value="Admin">Admin</option>
                   <option value="Manager">Manager</option>
                   <option value="Staff">Staff</option>
+                  <option value="Staff Gudang">Staff Gudang</option>
+                  <option value="Staff Pembelian">Staff Pembelian</option>
                 </select>
               </div>
 
@@ -640,6 +642,8 @@ export default function Users() {
                         <option value="Admin">Admin</option>
                         <option value="Manager">Manager</option>
                         <option value="Staff">Staff</option>
+                        <option value="Staff_gudang">Staff Gudang</option>
+                        <option value="Staff_pembelian">Staff Pembelian</option>
                       </select>
                       {editingItem?.user_id === currentUser?.userId && (
                         <p className="mt-1 text-xs text-orange-600">

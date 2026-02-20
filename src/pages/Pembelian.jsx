@@ -167,8 +167,8 @@ export default function Pembelian() {
     }, [allData]);
 
     // Permissions
-    const canCreate = ['Admin', 'Manager', 'Staff'].includes(currentUser?.role);
-    const canEdit = ['Admin', 'Manager', 'Staff'].includes(currentUser?.role);
+    const canCreate = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
+    const canEdit = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
     const canDelete = ['Admin', 'Manager'].includes(currentUser?.role);
 
     // Load master data untuk form

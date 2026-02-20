@@ -213,17 +213,22 @@ export const barangAPI = {
       supplier_utama: data.supplier_utama,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
-      
+
       // Foreign keys - simpan KODE saja
       kode_kategori: data.kode_kategori,
-      kode_armada: data.kode_armada,
-      
+      // FIX: Form MutasiGudang mengirim nama_armada (bukan kode_armada).
+      // Prioritaskan kode_armada jika ada, fallback ke nama_armada agar
+      // backend bisa resolve sendiri, atau kirim keduanya.
+      kode_armada: data.kode_armada || undefined,
+      nama_armada: data.nama_armada || undefined,
+
       // New field
       is_stocked: data.is_stocked ?? true,
-      
+
       // Metadata
       is_active: true,
-      created_by: data.created_by,
+      // FIX: created_by bisa datang dari data, atau fallback ke currentUser
+      created_by: data.created_by || authAPI.getCurrentUser()?.userId,
     };
 
     const result = await baseTableAPI.create('barang', payload);

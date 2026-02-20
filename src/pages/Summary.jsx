@@ -372,7 +372,15 @@ export default function Summary() {
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-600">{item.kode_barang}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                          className="font-mono text-sm text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                          title={`Lihat barang ${item.kode_barang} di halaman Barang`}
+                        >
+                          {item.kode_barang}
+                        </button>
+                      </td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{item.nama_barang}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada || '-'}</td>
