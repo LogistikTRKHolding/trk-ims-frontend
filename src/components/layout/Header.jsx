@@ -1,5 +1,4 @@
 // src/components/layout/Header.jsx
-// Top navigation header with logo and profile settings
 
 import { Menu, Bell, User, ChevronDown, LogOut, Settings } from 'lucide-react';
 import { useState } from 'react';
@@ -41,22 +40,25 @@ export default function Header({ onMenuClick, title = 'Dashboard', description =
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
           {/* Left: Menu Button + Logo + Page Title */}
           <div className="flex items-center gap-4">
-            {/* Hamburger Menu Button */}
+          {/* Hamburger Menu Button - Mobile only */}
             <button
               onClick={onMenuClick}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
 
-            {/* Logo - Visible on larger screens */}
-            <div className="hidden md:flex items-center gap-3 pr-4 border-r border-gray-200">
+            {/* Logo - Desktop: acts as menu toggle. Mobile: hidden */}
+            <button
+              onClick={onMenuClick}
+              className="hidden md:flex items-center gap-3 pr-4 border-r border-gray-200 p-2 pl-6 hover:bg-gray-100 transition-colors -ml-6 lg:pl-8 lg:-ml-8"
+            >
               <img 
                 src={logo} 
                 alt="TRK Logo" 
                 className="h-12 w-auto object-contain"
               />
-            </div>
+            </button>
 
             {/* Page Title */}
             <div>
