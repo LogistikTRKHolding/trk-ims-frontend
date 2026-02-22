@@ -101,7 +101,13 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         <div className="flex flex-col h-full">
           {/* Menu Items */}
           <nav className="flex-1 overflow-y-auto p-4">
-            {menuItems.map((section, idx) => (
+            {menuItems.map((section, idx) => {
+              const accessibleItems = section.items.filter(item => canAccessMenu(item.roles));
+
+              // Sembunyikan seluruh section (title + menu) jika tidak ada item yang bisa diakses
+              if (accessibleItems.length === 0) return null;
+
+              return (
               <div key={idx} className="mb-6">
                 {isOpen && (
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">
@@ -110,8 +116,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 )}
 
                 <div className="space-y-1">
-                  {section.items
-                    .filter(item => canAccessMenu(item.roles))
+                  {accessibleItems
                     .map((item) => {
                       const Icon = item.icon;
                       const active = isActive(item.path);
@@ -148,7 +153,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     })}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </nav>
         </div>
       </aside>
