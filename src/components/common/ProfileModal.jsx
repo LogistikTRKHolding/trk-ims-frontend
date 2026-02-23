@@ -415,7 +415,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                       {userData.role}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Contact admin to change role</p>
+                  <p className="mt-1 text-xs text-gray-500">Hubungi admin untuk mengubah role</p>
                 </div>
 
                 <div>
