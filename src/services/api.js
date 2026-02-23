@@ -332,7 +332,7 @@ export const kategoriAPI = {
 };
 
 // ============================================
-// ARMADA API (formerly MESIN)
+// ARMADA API 
 // ============================================
 
 export const armadaAPI = {
@@ -375,9 +375,6 @@ export const armadaAPI = {
     });
   },
 };
-
-// Alias for backward compatibility
-export const mesinAPI = armadaAPI;
 
 // ============================================
 // VENDOR API
@@ -657,6 +654,24 @@ export const usersAPI = {
 
   async getByStatus(status) {
     return fetchWithAuth(`${API_URL}/users?status=${status}`);
+  },
+
+  /**
+   * Ganti password user.
+   * Hanya user itu sendiri yang bisa mengganti passwordnya sendiri.
+   * Admin dapat mengganti password user lain (tanpa current_password).
+   * @param {string} userId
+   * @param {string} currentPassword - password saat ini (wajib untuk non-admin)
+   * @param {string} newPassword - password baru
+   */
+  async changePassword(userId, currentPassword, newPassword) {
+    return fetchWithAuth(`${API_URL}/users/${userId}/change-password`, {
+      method: 'POST',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
   },
 };
 
