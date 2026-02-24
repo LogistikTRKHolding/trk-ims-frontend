@@ -1,6 +1,6 @@
 // src/pages/Pembelian.jsx
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useDataTable } from '../hooks/useDataTable';
 import { pembelianAPI, barangAPI, vendorAPI, authAPI } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
@@ -20,8 +20,6 @@ import {
     CheckCircle2,
     XCircle,
     Loader2,
-    ChevronDown,
-    Check
 } from 'lucide-react';
 
 export default function Pembelian() {
@@ -57,6 +55,22 @@ export default function Pembelian() {
     const [barangSearch, setBarangSearch] = useState('');
     const [showVendorList, setShowVendorList] = useState(false);
     const [showBarangList, setShowBarangList] = useState(false);
+    const vendorDropdownRef = useRef(null);
+    const barangDropdownRef = useRef(null);
+
+    // Tutup dropdown saat klik di luar
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (vendorDropdownRef.current && !vendorDropdownRef.current.contains(event.target)) {
+                setShowVendorList(false);
+            }
+            if (barangDropdownRef.current && !barangDropdownRef.current.contains(event.target)) {
+                setShowBarangList(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Fetch pembelian data dengan useCallback
     const fetchPembelianData = useCallback(async () => {
@@ -217,18 +231,22 @@ export default function Pembelian() {
 
     // Filter vendor berdasarkan search input
     const filteredVendors = useMemo(() => {
+        if (!vendorSearch) return [];
+        const term = vendorSearch.toLowerCase();
         return vendorList.filter(v =>
-            v.nama_vendor.toLowerCase().includes(vendorSearch.toLowerCase()) ||
-            v.kode_vendor.toLowerCase().includes(vendorSearch.toLowerCase())
-        );
+            v.nama_vendor.toLowerCase().includes(term) ||
+            v.kode_vendor.toLowerCase().includes(term)
+        ).slice(0, 10);
     }, [vendorList, vendorSearch]);
 
     // Filter barang berdasarkan search input
     const filteredBarang = useMemo(() => {
+        if (!barangSearch) return [];
+        const term = barangSearch.toLowerCase();
         return barangList.filter(b =>
-            b.nama_barang.toLowerCase().includes(barangSearch.toLowerCase()) ||
-            b.kode_barang.toLowerCase().includes(barangSearch.toLowerCase())
-        );
+            b.nama_barang.toLowerCase().includes(term) ||
+            b.kode_barang.toLowerCase().includes(term)
+        ).slice(0, 10);
     }, [barangList, barangSearch]);
 
     // Handler saat item dipilih
@@ -238,7 +256,7 @@ export default function Pembelian() {
             kode_vendor: vendor.kode_vendor,
             nama_vendor: vendor.nama_vendor,
         }));
-        setVendorSearch(vendor.nama_vendor);
+        setVendorSearch('');
         setShowVendorList(false);
     };
 
@@ -250,7 +268,7 @@ export default function Pembelian() {
             harga_satuan: barang.harga_satuan || 0,
             total_harga: prev.qty_order * (barang.harga_satuan || 0),
         }));
-        setBarangSearch(barang.nama_barang);
+        setBarangSearch('');
         setShowBarangList(false);
     };
 
@@ -270,8 +288,8 @@ export default function Pembelian() {
             status: item.status,
             keterangan: item.keterangan || '',
         });
-        setVendorSearch(item.nama_vendor);
-        setBarangSearch(item.nama_barang);
+        setVendorSearch('');
+        setBarangSearch('');
         setEditingItem(item);
         setShowModal(true);
         loadMasterData();
@@ -350,7 +368,7 @@ export default function Pembelian() {
 
         // Validation
         if (!formData.no_po || !formData.kode_vendor || !formData.kode_barang) {
-            alert('No. PO, Vendor, dan Barang wajib diisi!');
+            alert('No. PO, Vendor, dan Kode Barang wajib diisi!');
             return;
         }
 
@@ -360,11 +378,32 @@ export default function Pembelian() {
         }
 
         try {
-            const payload = {
+            // Sanitize: ubah string kosong pada field tanggal menjadi null
+            // agar tidak menyebabkan error validasi di database
+            const sanitizedForm = {
                 ...formData,
-                created_by: currentUser?.userId,
-                updated_by: currentUser?.userId,
+                tanggal_terima: formData.tanggal_terima || null,
             };
+
+            let payload;
+            if (editingItem) {
+                // Saat update: jangan kirim created_by agar tidak
+                // menimpa nilai asli di database
+                const { created_by, ...updateFields } = sanitizedForm;
+                payload = {
+                    ...updateFields,
+                    updated_by: currentUser?.userId,
+                };
+            } else {
+                // Saat create: kirim created_by
+                payload = {
+                    ...sanitizedForm,
+                    created_by: currentUser?.userId,
+                    updated_by: currentUser?.userId,
+                };
+            }
+
+            console.log('[Pembelian] Payload dikirim:', payload); // untuk debugging
 
             if (editingItem) {
                 await pembelianAPI.update(editingItem.id, payload);
@@ -380,7 +419,12 @@ export default function Pembelian() {
 
         } catch (error) {
             console.error('Submit error:', error);
-            alert('Error: ' + error.message);
+            // Tampilkan detail error dari server jika tersedia
+            const message = error?.response?.data?.message
+                || error?.response?.data?.error
+                || error?.message
+                || 'Unknown error';
+            alert('Error: ' + message);
         }
     };
 
@@ -959,91 +1003,101 @@ export default function Pembelian() {
                                 </div>
 
                                 {/* Searchable Vendor */}
-                                <div className="md:col-span-2 relative">
+                                <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Vendor *
+                                        Cari Vendor *
                                     </label>
                                     <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none pr-10"
-                                            placeholder="Cari nama atau kode vendor..."
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Cari kode atau nama vendor..."
                                             value={vendorSearch}
-                                            onChange={(e) => {
-                                                setVendorSearch(e.target.value);
-                                                setShowVendorList(true);
-                                            }}
+                                            onChange={(e) => { setVendorSearch(e.target.value); setShowVendorList(true); }}
                                             onFocus={() => setShowVendorList(true)}
                                         />
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     </div>
 
-                                    {showVendorList && (
-                                        <div className="absolute z-[60] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    {showVendorList && vendorSearch && (
+                                        <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
                                             {filteredVendors.length > 0 ? (
                                                 filteredVendors.map((v) => (
                                                     <div
                                                         key={v.kode_vendor}
-                                                        className="px-4 py-2 hover:bg-green-50 cursor-pointer flex items-center justify-between border-b last:border-0"
                                                         onClick={() => selectVendor(v)}
+                                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-gray-800">{v.nama_vendor}</p>
-                                                            <p className="text-xs text-gray-500">{v.kode_vendor}</p>
-                                                        </div>
-                                                        {formData.kode_vendor === v.kode_vendor && <Check className="w-4 h-4 text-green-600" />}
+                                                        <div className="text-sm font-bold text-gray-800">{v.kode_vendor}</div>
+                                                        <div className="text-xs text-gray-600">{v.nama_vendor}</div>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-4 py-3 text-sm text-gray-500">Vendor tidak ditemukan</div>
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">Vendor tidak ditemukan</div>
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Preview Vendor terpilih */}
+                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Vendor</span>
+                                            <span className="text-sm font-mono font-semibold">{formData.kode_vendor || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Vendor</span>
+                                            <span className="text-sm">{formData.nama_vendor || '-'}</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Searchable Barang */}
-                                <div className="md:col-span-2 relative">
+                                <div className="md:col-span-2 relative" ref={barangDropdownRef}>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Barang *
+                                        Cari Barang *
                                     </label>
                                     <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none pr-10"
-                                            placeholder="Cari nama atau kode barang..."
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Cari kode atau nama barang..."
                                             value={barangSearch}
-                                            onChange={(e) => {
-                                                setBarangSearch(e.target.value);
-                                                setShowBarangList(true);
-                                            }}
+                                            onChange={(e) => { setBarangSearch(e.target.value); setShowBarangList(true); }}
                                             onFocus={() => setShowBarangList(true)}
                                         />
-                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     </div>
 
-                                    {showBarangList && (
-                                        <div className="absolute z-[60] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                    {showBarangList && barangSearch && (
+                                        <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
                                             {filteredBarang.length > 0 ? (
                                                 filteredBarang.map((b) => (
                                                     <div
                                                         key={b.kode_barang}
-                                                        className="px-4 py-2 hover:bg-green-50 cursor-pointer flex items-center justify-between border-b last:border-0"
                                                         onClick={() => selectBarang(b)}
+                                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-gray-800">{b.nama_barang}</p>
-                                                            <p className="text-xs text-gray-500">
-                                                                {b.kode_barang} • Rp {b.harga_satuan?.toLocaleString('id-ID')}
-                                                            </p>
-                                                        </div>
-                                                        {formData.kode_barang === b.kode_barang && <Check className="w-4 h-4 text-green-600" />}
+                                                        <div className="text-sm font-bold text-gray-800">{b.kode_barang}</div>
+                                                        <div className="text-xs text-gray-600">{b.nama_barang} ({b.satuan})</div>
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-4 py-3 text-sm text-gray-500">Barang tidak ditemukan</div>
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">Barang tidak ditemukan</div>
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Preview Barang terpilih */}
+                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
+                                            <span className="text-sm font-mono font-semibold">{formData.kode_barang || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
+                                            <span className="text-sm">{formData.nama_barang || '-'}</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Qty Order */}
@@ -1121,8 +1175,9 @@ export default function Pembelian() {
                                     >
                                         <option value="Pending">Pending</option>
                                         <option value="Received">Received</option>
-                                        <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
+                                        {/* 'Completed' dihapus — tidak ada di CHECK constraint database.
+                                            Untuk menambahkan, jalankan SQL migration di bawah. */}
                                     </select>
                                 </div>
 
@@ -1164,16 +1219,6 @@ export default function Pembelian() {
                         </form>
                     </div>
 
-                    {/* Backdrop click to close dropdowns */}
-                    {(showVendorList || showBarangList) && (
-                        <div
-                            className="fixed inset-0 z-[55]"
-                            onClick={() => {
-                                setShowVendorList(false);
-                                setShowBarangList(false);
-                            }}
-                        />
-                    )}
                 </div>
             )}
         </MainLayout>

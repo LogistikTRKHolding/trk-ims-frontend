@@ -472,8 +472,9 @@ export const pembelianAPI = {
       nama_barang: data.nama_barang,
       qty_order: data.qty_order,
       harga_satuan: data.harga_satuan,
-      total_harga: data.total_harga || (data.qty_order * data.harga_satuan),
-      tanggal_terima: data.tanggal_terima || '',
+      // FIX: total_harga adalah kolom GENERATED ALWAYS di PostgreSQL.
+      // DILARANG dikirim dalam payload — database hitung otomatis: qty_order * harga_satuan.
+      tanggal_terima: data.tanggal_terima || null,
       status: data.status || 'Pending',
       keterangan: data.keterangan,
       created_by: data.created_by,
@@ -496,8 +497,8 @@ export const pembelianAPI = {
       nama_barang: data.nama_barang,
       qty_order: data.qty_order,
       harga_satuan: data.harga_satuan,
-      total_harga: data.total_harga,
-      tanggal_terima: data.tanggal_terima,
+      // FIX: total_harga adalah kolom GENERATED ALWAYS — tidak boleh dikirim saat UPDATE.
+      tanggal_terima: data.tanggal_terima || null,
       status: data.status,
       keterangan: data.keterangan,
       updated_by: data.updated_by,

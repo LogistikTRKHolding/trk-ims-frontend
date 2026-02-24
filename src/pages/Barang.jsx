@@ -610,6 +610,7 @@ export default function Barang() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Armada</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min/Max</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Harga</th>
                   {(canEdit || canDelete) && (
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
                   )}
@@ -684,6 +685,9 @@ export default function Barang() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.min_stok || '-'}/{item.max_stok || '-'}</td>
+                        <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
+                          Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
+                        </td>
                         {(canEdit || canDelete) && (
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-2">
