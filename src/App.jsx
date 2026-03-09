@@ -15,6 +15,7 @@ import Stok from './pages/Stok';
 import KartuStok from './pages/KartuStok';
 import Barang from './pages/Barang';
 import Kategori from './pages/Kategori';
+import SubKategori from './pages/SubKategori';
 import Armada from './pages/Armada';
 import Vendor from './pages/Vendor';
 import MutasiGudang from './pages/MutasiGudang';
@@ -58,122 +59,131 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Public Route */}
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-          } 
+          }
         />
 
         {/* Protected Routes - Wrapped in MainLayout */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
-                <Dashboard />
+              <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/summary" 
+        <Route
+          path="/summary"
           element={
             <ProtectedRoute>
               <Summary />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/stok" 
+        <Route
+          path="/stok"
           element={
             <ProtectedRoute>
               <Stok />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/kartu-stok" 
+        <Route
+          path="/kartu-stok"
           element={
             <ProtectedRoute>
               <KartuStok />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/barang" 
+        <Route
+          path="/barang"
           element={
             <ProtectedRoute>
               <Barang />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/kategori" 
+        <Route
+          path="/kategori"
           element={
             <ProtectedRoute>
               <Kategori />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/armada" 
+        <Route
+          path="/sub_kategori"
+          element={
+            <ProtectedRoute>
+              <SubKategori />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/armada"
           element={
             <ProtectedRoute>
               <Armada />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/vendor" 
+        <Route
+          path="/vendor"
           element={
             <ProtectedRoute>
               <Vendor />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/mutasi_gudang" 
+        <Route
+          path="/mutasi_gudang"
           element={
             <ProtectedRoute>
               <MutasiGudang />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/pembelian" 
+        <Route
+          path="/pembelian"
           element={
             <ProtectedRoute>
               <Pembelian />
             </ProtectedRoute>
-          } 
+          }
         />
 
-        <Route 
-          path="/users" 
+        <Route
+          path="/users"
           element={
             <ProtectedRoute requiredRole="Admin">
               <Users />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Default redirect */}
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} 
+        <Route
+          path="/"
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
         />
 
         {/* 404 */}
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
               <div className="text-center">
@@ -184,7 +194,7 @@ function App() {
                 </a>
               </div>
             </div>
-          } 
+          }
         />
       </Routes>
     </BrowserRouter>

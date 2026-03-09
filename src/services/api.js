@@ -205,6 +205,7 @@ export const barangAPI = {
     const payload = {
       kode_barang: data.kode_barang,
       nama_barang: data.nama_barang,
+      part_number: data.part_number || null,
       satuan: data.satuan,
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok || 0,
@@ -216,6 +217,7 @@ export const barangAPI = {
 
       // Foreign keys - simpan KODE saja
       kode_kategori: data.kode_kategori,
+      kode_sub_kategori: data.kode_sub_kategori || null,
       // FIX: Form MutasiGudang mengirim nama_armada (bukan kode_armada).
       // Prioritaskan kode_armada jika ada, fallback ke nama_armada agar
       // backend bisa resolve sendiri, atau kirim keduanya.
@@ -244,6 +246,7 @@ export const barangAPI = {
     // Prepare data - hanya kode, bukan nama
     const payload = {
       nama_barang: data.nama_barang,
+      part_number: data.part_number ?? null,
       satuan: data.satuan,
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok,
@@ -255,6 +258,7 @@ export const barangAPI = {
       
       // Foreign keys - update KODE saja
       kode_kategori: data.kode_kategori,
+      kode_sub_kategori: data.kode_sub_kategori ?? null,
       kode_armada: data.kode_armada,
       
       // Update is_stocked
@@ -328,6 +332,72 @@ export const kategoriAPI = {
       is_active: false,
       updated_by: userId,
     });
+  },
+};
+
+// ============================================
+// SUB-KATEGORI API
+// ============================================
+
+export const subKategoriAPI = {
+  // READ Operations — gunakan VIEW (dapat nama_kategori dari join)
+  async getAll(filters = {}) {
+    return viewAPI.getAll('v_sub_kategori', filters);
+  },
+
+  async getById(id) {
+    return viewAPI.getById('v_sub_kategori', id);
+  },
+
+  async getByKategori(kodeKategori) {
+    return viewAPI.getAll('v_sub_kategori', { kode_kategori: kodeKategori });
+  },
+
+  async getActive() {
+    return viewAPI.getAll('v_sub_kategori', { is_active: true });
+  },
+
+  // WRITE Operations — gunakan BASE TABLE
+  async create(data) {
+    const payload = {
+      kode_kategori: data.kode_kategori,
+      kode_sub_kategori: data.kode_sub_kategori,
+      nama_sub_kategori: data.nama_sub_kategori,
+      is_active: true,
+      created_by: data.created_by || authAPI.getCurrentUser()?.id,
+    };
+    const result = await baseTableAPI.create('sub_kategori', payload);
+
+    // Fetch kembali dari VIEW untuk dapat nama_kategori dari join
+    if (result.id) {
+      return this.getById(result.id);
+    }
+    return result;
+  },
+
+  async update(id, data) {
+    const payload = {
+      nama_sub_kategori: data.nama_sub_kategori,
+      is_active: data.is_active,
+      updated_by: data.updated_by || authAPI.getCurrentUser()?.id,
+    };
+    await baseTableAPI.update('sub_kategori', id, payload);
+
+    // Fetch kembali dari VIEW
+    return this.getById(id);
+  },
+
+  // Soft delete — set is_active = false
+  async delete(id) {
+    return baseTableAPI.update('sub_kategori', id, {
+      is_active: false,
+      updated_by: authAPI.getCurrentUser()?.id,
+    });
+  },
+
+  // Hard delete — hanya untuk Admin
+  async hardDelete(id) {
+    return baseTableAPI.delete('sub_kategori', id);
   },
 };
 
@@ -736,6 +806,7 @@ export default {
   auth: authAPI,
   barang: barangAPI,
   kategori: kategoriAPI,
+  sub_kategori: subKategoriAPI,
   armada: armadaAPI,
   vendor: vendorAPI,
   pembelian: pembelianAPI,
@@ -744,4 +815,4 @@ export default {
   users: usersAPI,
   dashboard: dashboardAPI,
   health: healthAPI,
-};
+}

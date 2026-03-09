@@ -1,19 +1,19 @@
-// src/pages/Kategori.jsx
+// src/pages/SubKategori.jsx
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Edit, Trash2, Download, Search, X, Save } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Edit, Trash2, Download, Search, X } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { authAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import * as XLSX from 'xlsx';
 
-export default function Kategori() {
+export default function SubKategori() {
   // ============================================
-  // Define fetchData with useCallback
+  // STEP 1: Define fetchData with useCallback
   // ============================================
-  const fetchKategoriData = useCallback(async () => {
+  const fetchSubKategoriData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/data/kategori`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/views/v_sub_kategori`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to load data');
@@ -21,7 +21,7 @@ export default function Kategori() {
   }, []);
 
   // ============================================
-  // Configure useDataTable Hook
+  // STEP 2: Configure useDataTable Hook
   // ============================================
   const {
     data: paginatedData,
@@ -50,35 +50,76 @@ export default function Kategori() {
     totalPages,
     totalRows,
 
-    refresh, // ✅ Important for CRUD operations
+    refresh,
   } = useDataTable({
-    fetchData: fetchKategoriData,
-    filterKeys: ['is_active'],
-    searchKeys: ['kode_kategori', 'nama_kategori'],
-    defaultSort: { key: 'nama_kategori', direction: 'asc' },
+    fetchData: fetchSubKategoriData,
+    filterKeys: ['is_active', 'kode_kategori', 'kode_sub_kategori'],
+    searchKeys: ['kode_sub_kategori', 'nama_sub_kategori', 'kode_kategori', 'nama_kategori'],
+    defaultSort: { key: 'kode_sub_kategori', direction: 'asc' },
     defaultRowsPerPage: 10,
   });
 
   // ============================================
-  // CRUD State Management
+  // STEP 3: CRUD State & Kategori Dropdown
   // ============================================
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [kategoriList, setKategoriList] = useState([]);
+  const [allSubKategoriList, setAllSubKategoriList] = useState([]);
   const [formData, setFormData] = useState({
-    // CUSTOMIZE: Initial form state
     kode_kategori: '',
-    nama_kategori: '',
-    deskripsi: '',
+    kode_sub_kategori: '',
+    nama_sub_kategori: '',
     is_active: true,
   });
 
-  // Get current user for permissions
   const currentUser = authAPI.getCurrentUser();
   const canEdit = ['Admin', 'Manager'].includes(currentUser?.role);
   const canDelete = currentUser?.role === 'Admin';
 
+  // Opsi Sub-Kategori untuk filter — ter-filter berdasarkan pilihan Kategori
+  const subKategoriOptions = useMemo(() => {
+    if (!filters.kode_kategori || filters.kode_kategori === 'all') {
+      return allSubKategoriList;
+    }
+    return allSubKategoriList.filter(sk => sk.kode_kategori === filters.kode_kategori);
+  }, [allSubKategoriList, filters.kode_kategori]);
+
+  // Handler filter Kategori: reset filter Sub-Kategori saat Kategori berubah
+  const handleKategoriFilterChange = (e) => {
+    setFilter('kode_kategori', e.target.value);
+    setFilter('kode_sub_kategori', 'all'); // reset sub-kategori
+    setCurrentPage(1);
+  };
+
+  const handleSubKategoriFilterChange = (e) => {
+    setFilter('kode_sub_kategori', e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Fetch kategori list & full sub-kategori list untuk dropdown filter
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        const [katRes, subKatRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/data/kategori?is_active=true`, { headers }),
+          fetch(`${import.meta.env.VITE_API_URL}/views/v_sub_kategori`, { headers }),
+        ]);
+
+        if (katRes.ok) setKategoriList(await katRes.json());
+        if (subKatRes.ok) setAllSubKategoriList(await subKatRes.json());
+      } catch (err) {
+        console.error('Failed to load dropdown data:', err);
+      }
+    };
+    fetchDropdownData();
+  }, []);
+
   // ============================================
-  // Form Handlers
+  // STEP 4: Form Handlers
   // ============================================
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -91,10 +132,9 @@ export default function Kategori() {
   const resetForm = () => {
     setEditingItem(null);
     setFormData({
-      // CUSTOMIZE: Reset to initial values
       kode_kategori: '',
-      nama_kategori: '',
-      deskripsi: '',
+      kode_sub_kategori: '',
+      nama_sub_kategori: '',
       is_active: true,
     });
   };
@@ -107,50 +147,51 @@ export default function Kategori() {
   const openEditModal = (item) => {
     setEditingItem(item);
     setFormData({
-      // CUSTOMIZE: Map item to form state
       kode_kategori: item.kode_kategori || '',
-      nama_kategori: item.nama_kategori || '',
-      deskripsi: item.deskripsi || '',
-      is_active: item.is_active || true,
+      kode_sub_kategori: item.kode_sub_kategori || '',
+      nama_sub_kategori: item.nama_sub_kategori || '',
+      is_active: item.is_active ?? true,
     });
     setShowModal(true);
   };
 
   // ============================================
-  // CRUD Operations
+  // STEP 5: CRUD Operations
   // ============================================
 
   // CREATE & UPDATE
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // CUSTOMIZE: Validation
-    if (!formData.kode_kategori || !formData.nama_kategori) {
-      alert('Kode Kategori and Nama Kategori wajib diisi!');
+    if (!formData.kode_kategori) {
+      alert('Kategori wajib dipilih!');
+      return;
+    }
+    if (!formData.kode_sub_kategori || !formData.nama_sub_kategori) {
+      alert('Kode dan Nama Sub-Kategori wajib diisi!');
       return;
     }
 
     try {
       const token = localStorage.getItem('authToken');
 
-      // Determine endpoint and method
       const url = editingItem
-        ? `${import.meta.env.VITE_API_URL}/data/kategori/${editingItem.id}`
-        : '${import.meta.env.VITE_API_URL}/data/kategori';
+        ? `${import.meta.env.VITE_API_URL}/data/sub_kategori/${editingItem.id}`
+        : `${import.meta.env.VITE_API_URL}/data/sub_kategori`;
 
       const method = editingItem ? 'PUT' : 'POST';
 
-      // CUSTOMIZE: Prepare payload
-      const payload = editingItem ? {
-        // UPDATE: Only send changed fields
-        nama_kategori: formData.nama_kategori,
-        deskripsi: formData.deskripsi,
-        is_active: formData.is_active,
-      } : {
-        // CREATE: Send all fields
-        ...formData,
-        is_active: true,
-      };
+      const payload = editingItem
+        ? {
+            nama_sub_kategori: formData.nama_sub_kategori,
+            is_active: formData.is_active === 'true' || formData.is_active === true,
+          }
+        : {
+            kode_kategori: formData.kode_kategori,
+            kode_sub_kategori: formData.kode_sub_kategori,
+            nama_sub_kategori: formData.nama_sub_kategori,
+            is_active: true,
+          };
 
       const response = await fetch(url, {
         method,
@@ -163,108 +204,137 @@ export default function Kategori() {
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || 'Operation failed');
+        throw new Error(result.error || 'Operasi gagal');
       }
 
-      alert(editingItem ? 'Berhasil di-update!' : 'Berhasil dibuat!');
+      alert(editingItem ? 'Data berhasil diperbarui!' : 'Data berhasil ditambahkan!');
       setShowModal(false);
       resetForm();
-
-      // ✅ Refresh data after CRUD
       await refresh();
 
-    } catch (error) {
-      alert('Error: ' + error.message);
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   };
 
-  // DELETE
+  // DELETE (soft delete: set is_active = false)
   const handleDelete = async (item) => {
-    // CUSTOMIZE: Confirmation message
-    if (!confirm(`Yakin ingin mengahapus "${item.name}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+    if (!confirm(`Hapus sub-kategori "${item.nama_sub_kategori}"? Tindakan ini tidak dapat dibatalkan.`)) return;
 
     try {
       const token = localStorage.getItem('authToken');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/data/kategori/${item.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/data/sub_kategori/${item.id}`,
+        {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        }
+      );
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || 'Gagal dihapus');
+        throw new Error(result.error || 'Gagal menghapus data');
       }
 
-      alert('Berhasil dihapus!');
-
-      // ✅ Refresh data after delete
+      alert('Data berhasil dihapus!');
       await refresh();
 
-    } catch (error) {
-      alert('Error: ' + error.message);
+    } catch (err) {
+      alert('Error: ' + err.message);
     }
   };
 
   // ============================================
-  // Export Function
+  // STEP 6: Export Function
   // ============================================
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
-      // CUSTOMIZE: Export columns
       'Kode Kategori': item.kode_kategori,
       'Nama Kategori': item.nama_kategori,
-      'Deskripsi': item.deskripsi,
-      'Aktif': item.is_active,
+      'Kode Sub-Kategori': item.kode_sub_kategori,
+      'Nama Sub-Kategori': item.nama_sub_kategori,
+      'Aktif': item.is_active ? 'Ya' : 'Tidak',
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Kategori');
-    XLSX.writeFile(wb, `export_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'SubKategori');
+    XLSX.writeFile(wb, `export_sub_kategori_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // ============================================
   // RENDER
   // ============================================
   return (
-    <MainLayout title="Kategori">
+    <MainLayout title="Sub-Kategori">
       <div className="space-y-6">
+
         {/* Control Panel */}
         <div className="bg-white p-4 rounded-lg border">
           <div className="flex flex-col lg:flex-row gap-4">
+
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Cari kode atau nama sub-kategori..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
               />
             </div>
 
-            {/* Filter */}
+            {/* Filter Kategori */}
             <select
-              value={filters.is_active}
+              value={filters.kode_kategori ?? 'all'}
+              onChange={handleKategoriFilterChange}
+              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+            >
+              <option value="all">Semua Kategori</option>
+              {kategoriList.map((kat) => (
+                <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                  {kat.kode_kategori} — {kat.nama_kategori}
+                </option>
+              ))}
+            </select>
+
+            {/* Filter Sub-Kategori — opsi mengikuti pilihan Kategori */}
+            <select
+              value={filters.kode_sub_kategori ?? 'all'}
+              onChange={handleSubKategoriFilterChange}
+              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+            >
+              <option value="all">Semua Sub-Kategori</option>
+              {subKategoriOptions.map((sk) => (
+                <option key={sk.kode_sub_kategori} value={sk.kode_sub_kategori}>
+                  {sk.kode_sub_kategori} — {sk.nama_sub_kategori}
+                </option>
+              ))}
+            </select>
+
+            {/* Filter Status */}
+            <select
+              value={filters.is_active ?? 'all'}
               onChange={(e) => setFilter('is_active', e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
             >
               <option value="all">Semua Status</option>
-              <option value='true'>Aktif</option>
-              <option value="false">Non-aktif</option>
+              <option value="true">Aktif</option>
+              <option value="false">Non-Aktif</option>
             </select>
 
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
                 className="p-2 text-red-500 hover:bg-red-50 rounded"
+                title="Hapus semua filter"
               >
                 <X className="w-5 h-5" />
               </button>
             )}
 
-            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
+            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 self-center" />
 
             {/* Action Buttons */}
             <div className="flex gap-2 w-full lg:w-auto">
@@ -289,35 +359,61 @@ export default function Kategori() {
           </div>
         </div>
 
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            Gagal memuat data: {error}
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-white rounded-lg border overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {/* Table headers */}
                 <th
                   onClick={() => requestSort('kode_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
-                  Kode Kategori{sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Kode Kategori{' '}
+                  {sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
-                  Nama Kategori{sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Nama Kategori{' '}
+                  {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deskripsi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th
+                  onClick={() => requestSort('kode_sub_kategori')}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                >
+                  Kode Sub-Kategori{' '}
+                  {sortConfig.key === 'kode_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th
+                  onClick={() => requestSort('nama_sub_kategori')}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                >
+                  Nama Sub-Kategori{' '}
+                  {sortConfig.key === 'nama_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Tindakan
+                  </th>
                 )}
               </tr>
             </thead>
+
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center">
+                  <td colSpan="6" className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                       <span className="text-sm text-gray-500">Memuat data...</span>
@@ -326,17 +422,19 @@ export default function Kategori() {
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
-                    {hasActiveFilters ? 'Tidak ada data yang sesuai dengan filter' : 'Data tidak tersedia'}
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    {hasActiveFilters || searchQuery
+                      ? 'Tidak ada data yang sesuai dengan pencarian / filter'
+                      : 'Data tidak tersedia'}
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    {/* Table cells */}
-                    <td className="px-6 py-4 font-mono text-sm">{item.kode_kategori}</td>
-                    <td className="px-6 py-4 font-medium">{item.nama_kategori}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.deskripsi}</td>
+                    <td className="px-6 py-4 font-mono text-sm text-gray-700">{item.kode_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_kategori}</td>
+                    <td className="px-6 py-4 font-mono text-sm text-gray-700">{item.kode_sub_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_sub_kategori}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
@@ -364,7 +462,7 @@ export default function Kategori() {
                             <button
                               onClick={() => handleDelete(item)}
                               className="p-1 text-red-600 hover:bg-red-50 rounded"
-                              title="Delete"
+                              title="Hapus"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -377,8 +475,10 @@ export default function Kategori() {
               )}
             </tbody>
           </table>
+
           {/* Pagination Controls */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+            {/* Mobile */}
             <div className="flex-1 flex justify-between sm:hidden">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -396,9 +496,10 @@ export default function Kategori() {
               </button>
             </div>
 
+            {/* Desktop */}
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                {/* Rows Per Page Selector */}
+                {/* Rows Per Page */}
                 <div className="flex items-center gap-2 text-sm text-gray-700">
                   <span>Show</span>
                   <select
@@ -437,14 +538,14 @@ export default function Kategori() {
                 </div>
 
                 <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * rowsPerPage, totalRows)}
-                  </span> of{' '}
+                  Showing{' '}
+                  <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(currentPage * rowsPerPage, totalRows)}</span> of{' '}
                   <span className="font-medium">{totalRows}</span> results
                 </p>
               </div>
 
+              {/* Page Navigation */}
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
@@ -487,15 +588,17 @@ export default function Kategori() {
         </div>
       </div>
 
-      {/* Modal Form */}
+      {/* ============================================
+          MODAL FORM (Create / Edit)
+          ============================================ */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
 
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
-                {editingItem ? 'Edit Kategori' : 'Tambah Kategori'} {/* CUSTOMIZE */}
+                {editingItem ? 'Edit Sub-Kategori' : 'Tambah Sub-Kategori'}
               </h3>
               <button
                 onClick={() => { setShowModal(false); resetForm(); }}
@@ -508,78 +611,107 @@ export default function Kategori() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Kode Kategori */}
+              {/* Pilihan Kategori — dropdown kode + nama */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kode Kategori *
+                  Kategori <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="kode_kategori"
                   value={formData.kode_kategori}
                   onChange={handleInputChange}
-                  disabled={!!editingItem} // Disable on edit
+                  disabled={!!editingItem} // Kode kategori tidak boleh diubah saat edit
                   required
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">-- Pilih Kategori --</option>
+                  {kategoriList.map((kat) => (
+                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                      {kat.kode_kategori} — {kat.nama_kategori}
+                    </option>
+                  ))}
+                </select>
+                {editingItem && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Kategori tidak dapat diubah setelah disimpan.
+                  </p>
+                )}
               </div>
 
-              {/* Nama Kategori */}
+              {/* Kode Sub-Kategori */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Kategori *
+                  Kode Sub-Kategori <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="nama_kategori"
-                  value={formData.nama_kategori}
+                  name="kode_sub_kategori"
+                  value={formData.kode_sub_kategori}
+                  onChange={handleInputChange}
+                  disabled={!!editingItem} // Kode tidak boleh diubah saat edit
+                  required
+                  placeholder="Contoh: SUBKAT001"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed font-mono"
+                />
+                {editingItem && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Kode tidak dapat diubah setelah disimpan.
+                  </p>
+                )}
+              </div>
+
+              {/* Nama Sub-Kategori */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nama Sub-Kategori <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="nama_sub_kategori"
+                  value={formData.nama_sub_kategori}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Contoh: Oli Mesin"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                 />
               </div>
 
-              {/* Deskripsi */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Deskripsi
-                </label>
-                <textarea
-                  name="deskripsi"
-                  value={formData.deskripsi}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="true">Aktif</option>
-                  <option value="false">Non-Aaktif</option>
-                </select>
-              </div>
+              {/* Status — hanya tampil saat Edit */}
+              {editingItem && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    name="is_active"
+                    value={String(formData.is_active)}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                  >
+                    <option value="true">Aktif</option>
+                    <option value="false">Non-Aktif</option>
+                  </select>
+                </div>
+              )}
 
               {/* Form Actions */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex space-x-3 pt-4 border-t border-gray-100">
                 <button
-                  type="button" onClick={() => { setShowModal(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                >Batal</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg">
+                  type="button"
+                  onClick={() => { setShowModal(false); resetForm(); }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                >
                   {editingItem ? 'Update' : 'Simpan'}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}

@@ -18,7 +18,7 @@ import {
 import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
-import { mutasiAPI, barangAPI, authAPI, kategoriAPI, armadaAPI } from '../services/api';
+import { mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 
 export default function MutasiGudang() {
   // Current user & permissions
@@ -36,6 +36,7 @@ export default function MutasiGudang() {
     tanggal: new Date().toISOString().split('T')[0],
     jenis_transaksi: 'Masuk',
     kode_barang: '',
+    part_number: '',
     nama_barang: '',
     qty: 0,
     satuan: '',
@@ -51,15 +52,21 @@ export default function MutasiGudang() {
   // State untuk Modal Tambah Barang Baru
   const [showAddBarangModal, setShowAddBarangModal] = useState(false);
   const [kategoriListModal, setKategoriListModal] = useState([]);
+  const [subKategoriListModal, setSubKategoriListModal] = useState([]);
   const [armadaListModal, setArmadaListModal] = useState([]);
   const [newBarangData, setNewBarangData] = useState({
     kode_barang: '',
+    part_number: '',
     nama_barang: '',
     satuan: '',
     kode_kategori: '',
+    kode_sub_kategori: '',
     kode_armada: '',   // FIX: foreign key ke tabel armada
     nama_armada: '',
   });
+
+  // State sub kategori untuk filter toolbar (cascading dari filter Kategori)
+  const [subKategoriList, setSubKategoriList] = useState([]);
 
   // Load barang list untuk dropdown
   useEffect(() => {
@@ -89,13 +96,32 @@ export default function MutasiGudang() {
     }
   };
 
+  const loadSubKategoriByKategori = async (kode_kategori, target) => {
+    // target: 'modal' | 'filter'
+    if (!kode_kategori || kode_kategori === 'all') {
+      if (target === 'modal') setSubKategoriListModal([]);
+      else setSubKategoriList([]);
+      return;
+    }
+    try {
+      const result = await subKategoriAPI.getByKategori(kode_kategori);
+      if (target === 'modal') setSubKategoriListModal(result);
+      else setSubKategoriList(result);
+    } catch (error) {
+      console.error('Error loading sub kategori:', error);
+      if (target === 'modal') setSubKategoriListModal([]);
+      else setSubKategoriList([]);
+    }
+  };
+
   // Filter barang berdasarkan input search di modal
   const filteredBarangSearch = useMemo(() => {
     if (!searchTermBarang) return [];
     const term = searchTermBarang.toLowerCase();
     return barangList.filter(b =>
       b.kode_barang.toLowerCase().includes(term) ||
-      b.nama_barang.toLowerCase().includes(term)
+      b.nama_barang.toLowerCase().includes(term) ||
+      (b.part_number && b.part_number.toLowerCase().includes(term))
     ).slice(0, 10); // Batasi 10 hasil untuk kenyamanan visual
   }, [searchTermBarang, barangList]);
 
@@ -170,7 +196,7 @@ export default function MutasiGudang() {
     refresh,
   } = useDataTable({
     fetchData: fetchMutasiData,
-    filterKeys: ['jenis_transaksi', 'kode_kategori', 'nama_armada'],
+    filterKeys: ['jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
     searchKeys: ['kode_barang', 'nama_barang', 'keterangan', 'referensi'],
     dateFilterKey: 'tanggal',
     defaultSort: { key: 'tanggal', direction: 'desc' },
@@ -239,6 +265,7 @@ export default function MutasiGudang() {
     setFormData(prev => ({
       ...prev,
       kode_barang: barang.kode_barang,
+      part_number: barang.part_number || '',
       nama_barang: barang.nama_barang,
       satuan: barang.satuan,
     }));
@@ -270,7 +297,13 @@ export default function MutasiGudang() {
     setNewBarangData(prev => ({
       ...prev,
       [name]: finalValue,
+      ...(name === 'kode_kategori' ? { kode_sub_kategori: '' } : {}),
     }));
+
+    // Load sub kategori dari API saat kategori berubah
+    if (name === 'kode_kategori') {
+      loadSubKategoriByKategori(finalValue, 'modal');
+    }
   };
 
   const handleAddNewBarang = async (e) => {
@@ -300,9 +333,11 @@ export default function MutasiGudang() {
       // Reset form barang baru dan tutup modal
       setNewBarangData({
         kode_barang: '',
+        part_number: '',
         nama_barang: '',
         satuan: '',
         kode_kategori: '',
+        kode_sub_kategori: '',
         kode_armada: '',
         nama_armada: '',
       });
@@ -333,6 +368,7 @@ export default function MutasiGudang() {
       tanggal: new Date().toISOString().split('T')[0],
       jenis_transaksi: 'Masuk',
       kode_barang: '',
+      part_number: '',
       nama_barang: '',
       qty: 0,
       satuan: '',
@@ -354,6 +390,7 @@ export default function MutasiGudang() {
       tanggal: item.tanggal || new Date().toISOString().split('T')[0],
       jenis_transaksi: item.jenis_transaksi || 'Masuk',
       kode_barang: item.kode_barang || '',
+      part_number: item.part_number || '',
       nama_barang: item.nama_barang || '',
       qty: item.qty || 0,
       satuan: item.satuan || '',
@@ -495,13 +532,32 @@ export default function MutasiGudang() {
               {/* Filter Kategori */}
               <select
                 value={filters.kode_kategori || 'all'}
-                onChange={(e) => setFilter('kode_kategori', e.target.value)}
+                onChange={(e) => {
+                  setFilter('kode_kategori', e.target.value);
+                  setFilter('kode_sub_kategori', 'all');
+                  loadSubKategoriByKategori(e.target.value, 'filter');
+                }}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
               >
                 <option value="all">Semua Kategori</option>
                 {kategoriList.map((kat) => (
                   <option key={kat.kode} value={kat.kode}>
                     {kat.nama}
+                  </option>
+                ))}
+              </select>
+
+              {/* Filter Sub Kategori (cascading dari Kategori, bersumber dari API) */}
+              <select
+                value={filters.kode_sub_kategori || 'all'}
+                onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="all">Semua Sub Kategori</option>
+                {subKategoriList.map((sub) => (
+                  <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                    {sub.nama_sub_kategori}
                   </option>
                 ))}
               </select>
@@ -645,16 +701,19 @@ export default function MutasiGudang() {
 
                 const displayValue = filter.key === 'kode_kategori'
                   ? kategoriList.find(k => k.kode === filter.value)?.nama || filter.value
-                  : filter.key === 'kode_armada'
-                    ? armadaOptions.find(a => a.kode === filter.value)?.nama || filter.value
-                    : filter.value;
+                  : filter.key === 'kode_sub_kategori'
+                    ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
+                    : filter.key === 'kode_armada'
+                      ? armadaList.find(a => a === filter.value) || filter.value
+                      : filter.value;
 
                 return (
                   <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
                     <Filter className="w-3 h-3" />
+                    {filter.key === 'jenis_transaksi' && 'Jenis: '}
                     {filter.key === 'kode_kategori' && 'Kategori: '}
-                    {filter.key === 'kode_armada' && 'Armada: '}
-                    {filter.key === 'status' && 'Status: '}
+                    {filter.key === 'kode_sub_kategori' && 'Sub Kategori: '}
+                    {filter.key === 'nama_armada' && 'Armada: '}
                     {displayValue}
                     <button onClick={() => setFilter(filter.key, 'all')} className="hover:bg-green-100 rounded-full p-0.5">
                       <X className="w-3 h-3" />
@@ -726,7 +785,10 @@ export default function MutasiGudang() {
                     onClick={() => requestSort('kode_barang')}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   >
-                    Kode {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kode Barang {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Part Number
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nama Barang
@@ -750,7 +812,7 @@ export default function MutasiGudang() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center">
+                    <td colSpan="9" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                         <span className="text-sm text-gray-500">Memuat data...</span>
@@ -760,7 +822,7 @@ export default function MutasiGudang() {
                 ) : (
                   paginatedData.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
                         {hasActiveFilters
                           ? 'Tidak ada data yang sesuai dengan filter'
                           : 'Belum ada data mutasi gudang'}
@@ -789,6 +851,9 @@ export default function MutasiGudang() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
                           {item.kode_barang}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                          {item.part_number || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {item.nama_barang}
@@ -1024,7 +1089,14 @@ export default function MutasiGudang() {
                               onClick={() => handleSelectBarang(barang)}
                               className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                             >
-                              <div className="text-sm font-bold text-gray-800">{barang.kode_barang}</div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-gray-800">{barang.kode_barang}</span>
+                                {barang.part_number && (
+                                  <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
+                                    PN: {barang.part_number}
+                                  </span>
+                                )}
+                              </div>
                               <div className="text-xs text-gray-600">{barang.nama_barang} ({barang.satuan})</div>
                             </div>
                           ))
@@ -1048,12 +1120,16 @@ export default function MutasiGudang() {
                   </div>
 
                   {/* Preview Auto-fill */}
-                  <div className="grid grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border">
+                  <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
                       <span className="text-sm font-mono font-semibold">{formData.kode_barang || '-'}</span>
                     </div>
-                    <div className="col-span-1">
+                    <div>
+                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
+                      <span className="text-sm font-mono text-blue-600">{formData.part_number || '-'}</span>
+                    </div>
+                    <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
                       <span className="text-sm">{formData.nama_barang || '-'}</span>
                     </div>
@@ -1115,7 +1191,8 @@ export default function MutasiGudang() {
       {/* Modal Tambah Barang Baru (Nested Modal) */}
       {
         showAddBarangModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+          //<div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
               <form onSubmit={handleAddNewBarang}>
                 {/* Modal Header */}
@@ -1127,9 +1204,11 @@ export default function MutasiGudang() {
                       setShowAddBarangModal(false);
                       setNewBarangData({
                         kode_barang: '',
+                        part_number: '',
                         nama_barang: '',
                         satuan: '',
                         kode_kategori: '',
+                        kode_sub_kategori: '',
                         kode_armada: '',
                         nama_armada: '',
                       });
@@ -1164,6 +1243,21 @@ export default function MutasiGudang() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Part Number
+                      </label>
+                      <input
+                        type="text"
+                        name="part_number"
+                        value={newBarangData.part_number}
+                        onChange={handleNewBarangChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                        placeholder="Contoh: PN-12345"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Nama Barang *
                       </label>
                       <input
@@ -1175,6 +1269,27 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
                         placeholder="Contoh: OLI MESIN"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Satuan *
+                      </label>
+                      <select
+                        name="satuan"
+                        value={newBarangData.satuan}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                      >
+                        <option value="">Pilih Satuan</option>
+                        <option value="Pcs">PCS</option>
+                        <option value="Unit">UNIT</option>
+                        <option value="Box">BOX</option>
+                        <option value="Liter">LITER</option>
+                        <option value="Kg">KG</option>
+                        <option value="Meter">METER</option>
+                        <option value="Set">SET</option>
+                      </select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -1197,6 +1312,30 @@ export default function MutasiGudang() {
                         ))}
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sub Kategori
+                      </label>
+                      <select
+                        name="kode_sub_kategori"
+                        value={newBarangData.kode_sub_kategori}
+                        onChange={handleNewBarangChange}
+                        disabled={!newBarangData.kode_kategori || subKategoriListModal.length === 0}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Pilih Sub Kategori</option>
+                        {subKategoriListModal.map((sub) => (
+                          <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                            {sub.nama_sub_kategori}
+                          </option>
+                        ))}
+                      </select>
+                      {!newBarangData.kode_kategori && (
+                        <p className="mt-1 text-xs text-gray-400">Pilih Kategori terlebih dahulu</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Armada {newBarangData.kode_kategori === 'KAT001' && <span className="text-red-500">*</span>}
@@ -1224,30 +1363,7 @@ export default function MutasiGudang() {
                           Armada wajib diisi untuk kategori Suku Cadang
                         </p>
                       )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Satuan *
-                      </label>
-                      <select
-                        name="satuan"
-                        value={newBarangData.satuan}
-                        onChange={handleNewBarangChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                      >
-                        <option value="">Pilih Satuan</option>
-                        <option value="Pcs">PCS</option>
-                        <option value="Unit">UNIT</option>
-                        <option value="Box">BOX</option>
-                        <option value="Liter">LITER</option>
-                        <option value="Kg">KG</option>
-                        <option value="Meter">METER</option>
-                        <option value="Set">SET</option>
-                      </select>
-                    </div>
+                    </div>                  
                   </div>
                 </div>
 
@@ -1259,9 +1375,11 @@ export default function MutasiGudang() {
                       setShowAddBarangModal(false);
                       setNewBarangData({
                         kode_barang: '',
+                        part_number: '',
                         nama_barang: '',
                         satuan: '',
                         kode_kategori: '',
+                        kode_sub_kategori: '',
                         kode_armada: '',
                         nama_armada: '',
                       });

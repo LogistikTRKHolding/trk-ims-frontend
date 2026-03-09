@@ -38,6 +38,10 @@ export default function MainLayout({ children }) {
       title: 'Master Kategori',
       description: 'Kelola kategori barang'
     },
+    '/sub_kategori': {
+      title: 'Master Sub Kategori',
+      description: 'Kelola sub kategori barang'
+    },
     '/armada': {
       title: 'Master Armada',
       description: 'Kelola data armada/mesin'

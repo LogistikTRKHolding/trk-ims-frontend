@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
-import { barangAPI, kategoriAPI, armadaAPI } from '../services/api';
+import { barangAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { cloudinaryService } from '../services/cloudinary';
 import * as XLSX from 'xlsx';
 import {
@@ -33,12 +33,14 @@ export default function Barang() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     kode_barang: '',
+    part_number: '',
     nama_barang: '',
     satuan: '',
     harga_satuan: 0,
     min_stok: 0,
     max_stok: 0,
     kode_kategori: '',
+    kode_sub_kategori: '',
     kode_armada: '',
     lokasi_gudang: '',
     supplier_utama: '',
@@ -60,6 +62,7 @@ export default function Barang() {
 
   // Master Data States
   const [kategoriList, setKategoriList] = useState([]);
+  const [subKategoriList, setSubKategoriList] = useState([]);
   const [armadaList, setArmadaList] = useState([]);
 
   // Fetch Data
@@ -67,12 +70,14 @@ export default function Barang() {
     const result = await barangAPI.getAll();
 
     // Load master data
-    const [kategori, armada] = await Promise.all([
+    const [kategori, subKategori, armada] = await Promise.all([
       kategoriAPI.getAll(),
+      subKategoriAPI.getAll(),
       armadaAPI.getAll()
     ]);
 
     setKategoriList(kategori);
+    setSubKategoriList(subKategori);
     setArmadaList(armada);
 
     return result;
@@ -107,7 +112,7 @@ export default function Barang() {
   } = useDataTable({
     fetchData: fetchBarangData,
     filterKeys: ['kode_kategori', 'kode_armada', 'is_stocked'],
-    searchKeys: ['kode_barang', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan', 'supplier_utama'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan', 'supplier_utama'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
   });
@@ -266,12 +271,14 @@ export default function Barang() {
 
       const payload = {
         kode_barang: formData.kode_barang,
+        part_number: formData.part_number,
         nama_barang: formData.nama_barang,
         satuan: formData.satuan,
         harga_satuan: parseFloat(formData.harga_satuan) || 0,
         min_stok: parseInt(formData.min_stok) || 0,
         max_stok: parseInt(formData.max_stok) || 0,
         kode_kategori: formData.kode_kategori,
+        kode_sub_kategori: formData.kode_sub_kategori || null,
         kode_armada: formData.kode_armada || null,
         lokasi_gudang: formData.lokasi_gudang || null,
         supplier_utama: formData.supplier_utama || null,
@@ -349,12 +356,14 @@ export default function Barang() {
     setEditingItem(item);
     setFormData({
       kode_barang: item.kode_barang || '',
+      part_number: item.part_number || '',
       nama_barang: item.nama_barang || '',
       satuan: item.satuan || '',
       harga_satuan: item.harga_satuan || 0,
       min_stok: item.min_stok || 0,
       max_stok: item.max_stok || 0,
       kode_kategori: item.kode_kategori || '',
+      kode_sub_kategori: item.kode_sub_kategori || '',
       kode_armada: item.kode_armada || '',
       lokasi_gudang: item.lokasi_gudang || '',
       supplier_utama: item.supplier_utama || '',
@@ -375,12 +384,14 @@ export default function Barang() {
     setEditingItem(null);
     setFormData({
       kode_barang: '',
+      part_number: '',
       nama_barang: '',
       satuan: '',
       harga_satuan: 0,
       min_stok: 0,
       max_stok: 0,
       kode_kategori: '',
+      kode_sub_kategori: '',
       kode_armada: '',
       lokasi_gudang: '',
       supplier_utama: '',
@@ -398,8 +409,15 @@ export default function Barang() {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
+      // Reset sub kategori saat kategori berubah
+      ...(name === 'kode_kategori' ? { kode_sub_kategori: '' } : {}),
     }));
   };
+
+  // Sub Kategori yang tersedia berdasarkan Kategori yang dipilih (cascade dari API)
+  const filteredSubKategori = formData.kode_kategori
+    ? subKategoriList.filter(sub => sub.kode_kategori === formData.kode_kategori)
+    : [];
 
   // ============================================
   // Export Handler
@@ -408,8 +426,10 @@ export default function Barang() {
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
       'Kode': item.kode_barang,
+      'Part Number': item.part_number,
       'Nama Barang': item.nama_barang,
       'Kategori': item.nama_kategori,
+      'Sub Kategori': item.nama_sub_kategori,
       'Armada': item.nama_armada,
       'Satuan': item.satuan,
       'Harga Satuan': item.harga_satuan,
@@ -598,7 +618,13 @@ export default function Barang() {
                     onClick={() => requestSort('kode_barang')}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
-                    Kode {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th
+                    onClick={() => requestSort('part_number')}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  >
+                    Part Number {sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th
                     onClick={() => requestSort('nama_barang')}
@@ -607,6 +633,7 @@ export default function Barang() {
                     Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sub Kategori</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Armada</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min/Max</th>
@@ -670,8 +697,10 @@ export default function Barang() {
                         </td>
 
                         <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>
+                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.part_number}</td>
                         <td className="px-6 py-4 font-medium">{item.nama_barang}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_sub_kategori}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada}</td>
                         <td className="px-6 py-4">
                           {item.is_stocked ? (
@@ -982,7 +1011,7 @@ export default function Barang() {
                   </div>
 
                   {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Kode Barang <span className="text-red-500">*</span>
@@ -997,7 +1026,18 @@ export default function Barang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
                       />
                     </div>
-
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Part Number
+                      </label>
+                      <input
+                        type="text"
+                        name="part_number"
+                        value={formData.part_number}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nama Barang <span className="text-red-500">*</span>
@@ -1011,7 +1051,10 @@ export default function Barang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
+                  </div>
 
+                  {/* Kategori, Sub Kategori & Armada — satu row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Kategori <span className="text-red-500">*</span>
@@ -1027,6 +1070,32 @@ export default function Barang() {
                         {kategoriList.map((kat) => (
                           <option key={kat.kode_kategori} value={kat.kode_kategori}>
                             {kat.nama_kategori}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sub Kategori
+                      </label>
+                      <select
+                        name="kode_sub_kategori"
+                        value={formData.kode_sub_kategori}
+                        onChange={handleInputChange}
+                        disabled={!formData.kode_kategori || filteredSubKategori.length === 0}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">
+                          {!formData.kode_kategori
+                            ? '-- Pilih Kategori dulu --'
+                            : filteredSubKategori.length === 0
+                              ? '-- Tidak ada sub kategori --'
+                              : '-- Pilih Sub Kategori --'}
+                        </option>
+                        {filteredSubKategori.map((sub) => (
+                          <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                            {sub.nama_sub_kategori}
                           </option>
                         ))}
                       </select>
