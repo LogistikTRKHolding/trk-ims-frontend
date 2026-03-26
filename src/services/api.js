@@ -502,6 +502,51 @@ export const vendorAPI = {
 };
 
 // ============================================
+// GUDANG API
+// ============================================
+
+export const gudangAPI = {
+  // READ Operations
+  async getAll() {
+    return baseTableAPI.getAll('gudang');
+  },
+
+  async getById(id) {
+    return baseTableAPI.getById('gudang', id);
+  },
+
+  async getActive() {
+    return fetchWithAuth(`${API_URL}/data/gudang?is_active=true`);
+  },
+
+  // WRITE Operations
+  async create(data) {
+    const payload = {
+      kode_gudang: data.kode_gudang,
+      nama_gudang: data.nama_gudang,
+      is_active: true,
+      created_by: data.created_by,
+    };
+    return baseTableAPI.create('gudang', payload);
+  },
+
+  async update(id, data) {
+    const payload = {
+      nama_gudang: data.nama_gudang,
+      updated_by: data.updated_by,
+    };
+    return baseTableAPI.update('gudang', id, payload);
+  },
+
+  async delete(id, userId) {
+    return baseTableAPI.update('gudang', id, {
+      is_active: false,
+      updated_by: userId,
+    });
+  },
+};
+
+// ============================================
 // PEMBELIAN API (with VIEWs)
 // ============================================
 

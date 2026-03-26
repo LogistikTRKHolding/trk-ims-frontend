@@ -18,7 +18,7 @@ import {
 import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
-import { mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
+import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 
 export default function MutasiGudang() {
   // Current user & permissions
@@ -33,6 +33,7 @@ export default function MutasiGudang() {
   const [barangList, setBarangList] = useState([]);
   const [formData, setFormData] = useState({
     no_transaksi: '',
+    gudang: '',
     tanggal: new Date().toISOString().split('T')[0],
     jenis_transaksi: 'Masuk',
     kode_barang: '',
@@ -196,14 +197,27 @@ export default function MutasiGudang() {
     refresh,
   } = useDataTable({
     fetchData: fetchMutasiData,
-    filterKeys: ['jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
+    filterKeys: ['nama_gudang', 'jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
     searchKeys: ['kode_barang', 'nama_barang', 'keterangan', 'referensi'],
     dateFilterKey: 'tanggal',
     defaultSort: { key: 'tanggal', direction: 'desc' },
     defaultRowsPerPage: 10
   });
 
-  // Extract kategori & armada list dari data
+  // Extract gudang, kategori & armada list dari data
+  const gudangList = useMemo(() => {
+    const unique = new Set();
+    allData.forEach(item => {
+      if (item.kode_gudang && item.nama_gudang) {
+        unique.add(JSON.stringify({
+          kode: item.kode_gudang,
+          nama: item.nama_gudang
+        }));
+      }
+    });
+    return Array.from(unique).map(str => JSON.parse(str));
+  }, [allData]);
+
   const kategoriList = useMemo(() => {
     const unique = new Set();
     allData.forEach(item => {
@@ -365,6 +379,7 @@ export default function MutasiGudang() {
   const resetForm = () => {
     setFormData({
       no_transaksi: '',
+      gudang: '',
       tanggal: new Date().toISOString().split('T')[0],
       jenis_transaksi: 'Masuk',
       kode_barang: '',
@@ -387,6 +402,7 @@ export default function MutasiGudang() {
   const openEditModal = (item) => {
     setFormData({
       no_transaksi: item.no_transaksi || '',
+      gudang: item.nama_gudang,
       tanggal: item.tanggal || new Date().toISOString().split('T')[0],
       jenis_transaksi: item.jenis_transaksi || 'Masuk',
       kode_barang: item.kode_barang || '',
@@ -407,7 +423,7 @@ export default function MutasiGudang() {
     e.preventDefault();
 
     // Validation
-    if (!formData.tanggal || !formData.kode_barang || !formData.qty) {
+    if (!formData.gudang || !formData.tanggal || !formData.kode_barang || !formData.qty) {
       alert('Mohon lengkapi semua field yang wajib diisi!');
       return;
     }
@@ -460,6 +476,8 @@ export default function MutasiGudang() {
     setEditingItem(item);
     setFormData({
       no_transaksi: item.no_transaksi || '',
+      kode_gudang: item.kode_gudang,
+      nama_gudang: item.nama_gudang,
       tanggal: item.tanggal.split('T')[0],
       jenis_transaksi: item.jenis_transaksi,
       kode_barang: item.kode_barang,
@@ -475,6 +493,7 @@ export default function MutasiGudang() {
   // Export to Excel
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
+      'Gudang': item.nama_gudang,
       'Tanggal': formatDate(item.tanggal),
       'No Transaksi': item.no_transaksi,
       'Jenis': item.jenis_transaksi,
@@ -498,165 +517,184 @@ export default function MutasiGudang() {
 
   return (
     <MainLayout title="Mutasi Gudang">
-      {/* Toolbar: Search, Filters, Actions - All in one row */}
       <div className="space-y-6">
+        
+        {/* Toolbar: Two-row layout — Row 1: Search | Row 2: Filters + Actions */}
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
+          <div className="flex flex-col gap-3">
+           
+            {/* ── Row 1: Search ── */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Cari transaksi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              />
+            </div>
 
-            {/* Left side: Search + Filters */}
-            <div className="flex flex-col sm:flex-row gap-2 flex-1 w-full lg:w-auto">
+            {/* ── Row 2: Filters + Actions ── */}
+            <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center justify-between">
 
-              {/* Search */}
-              <div className="relative flex-grow min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Cari transaksi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                />
+              {/* Left: Filter Controls */}
+              <div className="flex flex-wrap gap-2 flex-1">
+
+                {/* Filter Gudang */}
+                <select
+                  value={filters.kode_gudang || 'all'}
+                  onChange={(e) => setFilter('kode_gudang', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Gudang</option>
+                  {gudangList.map((gud) => (
+                    <option key={gud.kode} value={gud.kode}>
+                      {gud.nama}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Jenis Transaksi */}
+                <select
+                  value={filters.jenis_transaksi || 'all'}
+                  onChange={(e) => setFilter('jenis_transaksi', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Jenis</option>
+                  <option value="Masuk">Masuk</option>
+                  <option value="Keluar">Keluar</option>
+                </select>
+
+                {/* Filter Kategori */}
+                <select
+                  value={filters.kode_kategori || 'all'}
+                  onChange={(e) => {
+                    setFilter('kode_kategori', e.target.value);
+                    setFilter('kode_sub_kategori', 'all');
+                    loadSubKategoriByKategori(e.target.value, 'filter');
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Kategori</option>
+                  {kategoriList.map((kat) => (
+                    <option key={kat.kode} value={kat.kode}>
+                      {kat.nama}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Sub Kategori (cascading dari Kategori) */}
+                <select
+                  value={filters.kode_sub_kategori || 'all'}
+                  onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                  disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="all">Semua Sub Kategori</option>
+                  {subKategoriList.map((sub) => (
+                    <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                      {sub.nama_sub_kategori}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Armada */}
+                <select
+                  value={filters.nama_armada || 'all'}
+                  onChange={(e) => setFilter('nama_armada', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Armada</option>
+                  {armadaList.map((armada) => (
+                    <option key={armada} value={armada}>
+                      {armada}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Date Filter Mode */}
+                <select
+                  value={dateFilterMode}
+                  onChange={(e) => {
+                    setDateFilterMode(e.target.value);
+                    if (e.target.value === 'all') {
+                      clearDateFilter();
+                    }
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Tanggal</option>
+                  <option value="single">Tanggal Spesifik</option>
+                  <option value="range">Rentang Tanggal</option>
+                </select>
+
+                {/* Single Date Input */}
+                {dateFilterMode === 'single' && (
+                  <input
+                    type="date"
+                    value={singleDate}
+                    onChange={(e) => setSingleDate(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                  />
+                )}
+
+                {/* Date Range Inputs */}
+                {dateFilterMode === 'range' && (
+                  <>
+                    <input
+                      type="date"
+                      value={dateRangeStart}
+                      onChange={(e) => setDateRangeStart(e.target.value)}
+                      placeholder="Start"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    />
+                    <input
+                      type="date"
+                      value={dateRangeEnd}
+                      onChange={(e) => setDateRangeEnd(e.target.value)}
+                      placeholder="End"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    />
+                  </>
+                )}
+
+                {/* Clear All Filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Clear all filters"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
 
-              {/* Filter Jenis Transaksi */}
-              <select
-                value={filters.jenis_transaksi || 'all'}
-                onChange={(e) => setFilter('jenis_transaksi', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Jenis</option>
-                <option value="Masuk">Masuk</option>
-                <option value="Keluar">Keluar</option>
-              </select>
+              <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
 
-              {/* Filter Kategori */}
-              <select
-                value={filters.kode_kategori || 'all'}
-                onChange={(e) => {
-                  setFilter('kode_kategori', e.target.value);
-                  setFilter('kode_sub_kategori', 'all');
-                  loadSubKategoriByKategori(e.target.value, 'filter');
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Kategori</option>
-                {kategoriList.map((kat) => (
-                  <option key={kat.kode} value={kat.kode}>
-                    {kat.nama}
-                  </option>
-                ))}
-              </select>
-
-              {/* Filter Sub Kategori (cascading dari Kategori, bersumber dari API) */}
-              <select
-                value={filters.kode_sub_kategori || 'all'}
-                onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
-                disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="all">Semua Sub Kategori</option>
-                {subKategoriList.map((sub) => (
-                  <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
-                    {sub.nama_sub_kategori}
-                  </option>
-                ))}
-              </select>
-
-              {/* Filter Armada */}
-              <select
-                value={filters.nama_armada || 'all'}
-                onChange={(e) => setFilter('nama_armada', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Armada</option>
-                {armadaList.map((armada) => (
-                  <option key={armada} value={armada}>
-                    {armada}
-                  </option>
-                ))}
-              </select>
-
-              {/* Date Filter Mode */}
-              <select
-                value={dateFilterMode}
-                onChange={(e) => {
-                  setDateFilterMode(e.target.value);
-                  if (e.target.value === 'all') {
-                    clearDateFilter();
-                  }
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Tanggal</option>
-                <option value="single">Tanggal Spesifik</option>
-                <option value="range">Rentang Tanggal</option>
-              </select>
-
-              {/* Single Date Input */}
-              {dateFilterMode === 'single' && (
-                <input
-                  type="date"
-                  value={singleDate}
-                  onChange={(e) => setSingleDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                />
-              )}
-
-              {/* Date Range Inputs */}
-              {dateFilterMode === 'range' && (
-                <>
-                  <input
-
-                    type="date"
-                    value={dateRangeStart}
-                    onChange={(e) => setDateRangeStart(e.target.value)}
-                    placeholder="Start"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                  />
-                  <input
-                    type="date"
-                    value={dateRangeEnd}
-                    onChange={(e) => setDateRangeEnd(e.target.value)}
-                    placeholder="End"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                  />
-                </>
-              )}
-
-              {/* Clear All Filters */}
-              {hasActiveFilters && (
+              {/* Right: Action Buttons */}
+              <div className="flex gap-2 w-full lg:w-auto shrink-0">
                 <button
-                  onClick={clearAllFilters}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Clear all filters"
+                  onClick={handleExport}
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                 >
-                  <X className="w-5 h-5" />
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
                 </button>
-              )}
+
+                {canCreate && (
+                  <button
+                    onClick={openCreateModal}
+                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
-
-            {/* Right side: Action Buttons */}
-            <div className="flex gap-2 w-full lg:w-auto">
-              <button
-                onClick={handleExport}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-
-              {canCreate && (
-                <button
-                  onClick={openCreateModal}
-                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Tambah</span>
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Active Filters Display */}
@@ -699,17 +737,20 @@ export default function MutasiGudang() {
                   );
                 }
 
-                const displayValue = filter.key === 'kode_kategori'
-                  ? kategoriList.find(k => k.kode === filter.value)?.nama || filter.value
-                  : filter.key === 'kode_sub_kategori'
-                    ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
-                    : filter.key === 'kode_armada'
-                      ? armadaList.find(a => a === filter.value) || filter.value
-                      : filter.value;
+                const displayValue = filter.key === 'kode_gudang'
+                  ? gudangList.find(g => g.kode === filter.value)?.nama || filter.value
+                  : filter.key === 'kode_kategori'
+                    ? kategoriList.find(k => k.kode === filter.value)?.nama || filter.value
+                    : filter.key === 'kode_sub_kategori'
+                      ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
+                      : filter.key === 'kode_armada'
+                        ? armadaList.find(a => a === filter.value) || filter.value
+                        : filter.value;
 
                 return (
                   <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
                     <Filter className="w-3 h-3" />
+                    {filter.key === 'kode_gudang' && 'Gudang: '}
                     {filter.key === 'jenis_transaksi' && 'Jenis: '}
                     {filter.key === 'kode_kategori' && 'Kategori: '}
                     {filter.key === 'kode_sub_kategori' && 'Sub Kategori: '}
@@ -772,6 +813,9 @@ export default function MutasiGudang() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Gudang
+                  </th>
                   <th
                     onClick={() => requestSort('tanggal')}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -831,6 +875,9 @@ export default function MutasiGudang() {
                   ) : (
                     paginatedData.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {item.nama_gudang}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {formatDate(item.tanggal)}
                         </td>
@@ -1034,7 +1081,26 @@ export default function MutasiGudang() {
                 {/* Modal Body */}
                 <div className="px-6 py-4 space-y-6">
                   {/* Tanggal & Jenis Transaksi*/}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Gudang *
+                      </label>
+                      <select
+                        name="nama_gudang"
+                        value={formData.nama_gudang}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="all">-- Pilih Gudang --</option>
+                        {gudangList.map((gud) => (
+                          <option key={gud.kode} value={gud.kode}>
+                            {gud.nama}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tanggal *
@@ -1191,8 +1257,7 @@ export default function MutasiGudang() {
       {/* Modal Tambah Barang Baru (Nested Modal) */}
       {
         showAddBarangModal && (
-          //<div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
               <form onSubmit={handleAddNewBarang}>
                 {/* Modal Header */}
@@ -1270,27 +1335,6 @@ export default function MutasiGudang() {
                         placeholder="Contoh: OLI MESIN"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Satuan *
-                      </label>
-                      <select
-                        name="satuan"
-                        value={newBarangData.satuan}
-                        onChange={handleNewBarangChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                      >
-                        <option value="">Pilih Satuan</option>
-                        <option value="Pcs">PCS</option>
-                        <option value="Unit">UNIT</option>
-                        <option value="Box">BOX</option>
-                        <option value="Liter">LITER</option>
-                        <option value="Kg">KG</option>
-                        <option value="Meter">METER</option>
-                        <option value="Set">SET</option>
-                      </select>
-                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1363,7 +1407,30 @@ export default function MutasiGudang() {
                           Armada wajib diisi untuk kategori Suku Cadang
                         </p>
                       )}
-                    </div>                  
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Satuan *
+                      </label>
+                      <select
+                        name="satuan"
+                        value={newBarangData.satuan}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                      >
+                        <option value="">Pilih Satuan</option>
+                        <option value="Pcs">PCS</option>
+                        <option value="Unit">UNIT</option>
+                        <option value="Box">BOX</option>
+                        <option value="Liter">LITER</option>
+                        <option value="Kg">KG</option>
+                        <option value="Meter">METER</option>
+                        <option value="Set">SET</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
