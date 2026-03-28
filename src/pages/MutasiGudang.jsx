@@ -33,7 +33,8 @@ export default function MutasiGudang() {
   const [barangList, setBarangList] = useState([]);
   const [formData, setFormData] = useState({
     no_transaksi: '',
-    gudang: '',
+    kode_gudang: '',
+    nama_gudang: '',
     tanggal: new Date().toISOString().split('T')[0],
     jenis_transaksi: 'Masuk',
     kode_barang: '',
@@ -52,9 +53,12 @@ export default function MutasiGudang() {
 
   // State untuk Modal Tambah Barang Baru
   const [showAddBarangModal, setShowAddBarangModal] = useState(false);
-  const [kategoriListModal, setKategoriListModal] = useState([]);
   const [subKategoriListModal, setSubKategoriListModal] = useState([]);
-  const [armadaListModal, setArmadaListModal] = useState([]);
+
+  // State Dropdown — diisi dari API masing-masing
+  const [gudangList, setGudangList] = useState([]);
+  const [kategoriList, setKategoriList] = useState([]);
+  const [armadaList, setArmadaList] = useState([]);
   const [newBarangData, setNewBarangData] = useState({
     kode_barang: '',
     part_number: '',
@@ -72,7 +76,7 @@ export default function MutasiGudang() {
   // Load barang list untuk dropdown
   useEffect(() => {
     loadBarangList();
-    loadKategoriArmadaList();
+    loadDropdownData();
   }, []);
 
   const loadBarangList = async () => {
@@ -84,16 +88,18 @@ export default function MutasiGudang() {
     }
   };
 
-  const loadKategoriArmadaList = async () => {
+  const loadDropdownData = async () => {
     try {
-      const [kategoriResult, armadaResult] = await Promise.all([
+      const [gudangResult, kategoriResult, armadaResult] = await Promise.all([
+        gudangAPI.getAll(),
         kategoriAPI.getAll(),
         armadaAPI.getAll()
       ]);
-      setKategoriListModal(kategoriResult);
-      setArmadaListModal(armadaResult);
+      setGudangList(gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
+      setKategoriList(kategoriResult);
+      setArmadaList(armadaResult);
     } catch (error) {
-      console.error('Error loading kategori/armada:', error);
+      console.error('Error loading dropdown data:', error);
     }
   };
 
@@ -197,55 +203,25 @@ export default function MutasiGudang() {
     refresh,
   } = useDataTable({
     fetchData: fetchMutasiData,
-    filterKeys: ['nama_gudang', 'jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
+    filterKeys: ['kode_gudang', 'jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
     searchKeys: ['kode_barang', 'nama_barang', 'keterangan', 'referensi'],
     dateFilterKey: 'tanggal',
     defaultSort: { key: 'tanggal', direction: 'desc' },
     defaultRowsPerPage: 10
   });
 
-  // Extract gudang, kategori & armada list dari data
-  const gudangList = useMemo(() => {
-    const unique = new Set();
-    allData.forEach(item => {
-      if (item.kode_gudang && item.nama_gudang) {
-        unique.add(JSON.stringify({
-          kode: item.kode_gudang,
-          nama: item.nama_gudang
-        }));
-      }
-    });
-    return Array.from(unique).map(str => JSON.parse(str));
-  }, [allData]);
-
-  const kategoriList = useMemo(() => {
-    const unique = new Set();
-    allData.forEach(item => {
-      if (item.kode_kategori && item.nama_kategori) {
-        unique.add(JSON.stringify({
-          kode: item.kode_kategori,
-          nama: item.nama_kategori
-        }));
-      }
-    });
-    return Array.from(unique).map(str => JSON.parse(str));
-  }, [allData]);
-
-  const armadaList = useMemo(() => {
-    const unique = new Set();
-    allData.forEach(item => {
-      if (item.nama_armada) {
-        unique.add(item.nama_armada);
-      }
-    });
-    return Array.from(unique).sort();
-  }, [allData]);
-
   // Form handlers
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
 
-    if (name === 'kode_barang') {
+    if (name === 'kode_gudang') {
+      const selectedGudang = gudangList.find(g => g.kode === value);
+      setFormData(prev => ({
+        ...prev,
+        kode_gudang: value,
+        nama_gudang: selectedGudang?.nama || '',
+      }));
+    } else if (name === 'kode_barang') {
       const selectedBarang = barangList.find(b => b.kode_barang === value);
       if (selectedBarang) {
         setFormData(prev => ({
@@ -379,7 +355,8 @@ export default function MutasiGudang() {
   const resetForm = () => {
     setFormData({
       no_transaksi: '',
-      gudang: '',
+      kode_gudang: '',
+      nama_gudang: '',
       tanggal: new Date().toISOString().split('T')[0],
       jenis_transaksi: 'Masuk',
       kode_barang: '',
@@ -402,8 +379,9 @@ export default function MutasiGudang() {
   const openEditModal = (item) => {
     setFormData({
       no_transaksi: item.no_transaksi || '',
-      gudang: item.nama_gudang,
-      tanggal: item.tanggal || new Date().toISOString().split('T')[0],
+      kode_gudang: item.kode_gudang || '',
+      nama_gudang: item.nama_gudang || '',
+      tanggal: item.tanggal ? item.tanggal.split('T')[0] : new Date().toISOString().split('T')[0],
       jenis_transaksi: item.jenis_transaksi || 'Masuk',
       kode_barang: item.kode_barang || '',
       part_number: item.part_number || '',
@@ -423,7 +401,7 @@ export default function MutasiGudang() {
     e.preventDefault();
 
     // Validation
-    if (!formData.gudang || !formData.tanggal || !formData.kode_barang || !formData.qty) {
+    if (!formData.kode_gudang || !formData.tanggal || !formData.kode_barang || !formData.qty) {
       alert('Mohon lengkapi semua field yang wajib diisi!');
       return;
     }
@@ -578,8 +556,8 @@ export default function MutasiGudang() {
                 >
                   <option value="all">Semua Kategori</option>
                   {kategoriList.map((kat) => (
-                    <option key={kat.kode} value={kat.kode}>
-                      {kat.nama}
+                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                      {kat.nama_kategori}
                     </option>
                   ))}
                 </select>
@@ -607,8 +585,8 @@ export default function MutasiGudang() {
                 >
                   <option value="all">Semua Armada</option>
                   {armadaList.map((armada) => (
-                    <option key={armada} value={armada}>
-                      {armada}
+                    <option key={armada.kode_armada || armada.nama_armada} value={armada.nama_armada}>
+                      {armada.nama_armada}
                     </option>
                   ))}
                 </select>
@@ -740,11 +718,11 @@ export default function MutasiGudang() {
                 const displayValue = filter.key === 'kode_gudang'
                   ? gudangList.find(g => g.kode === filter.value)?.nama || filter.value
                   : filter.key === 'kode_kategori'
-                    ? kategoriList.find(k => k.kode === filter.value)?.nama || filter.value
+                    ? kategoriList.find(k => k.kode_kategori === filter.value)?.nama_kategori || filter.value
                     : filter.key === 'kode_sub_kategori'
                       ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
-                      : filter.key === 'kode_armada'
-                        ? armadaList.find(a => a === filter.value) || filter.value
+                      : filter.key === 'nama_armada'
+                        ? armadaList.find(a => a.nama_armada === filter.value)?.nama_armada || filter.value
                         : filter.value;
 
                 return (
@@ -1087,13 +1065,13 @@ export default function MutasiGudang() {
                         Gudang *
                       </label>
                       <select
-                        name="nama_gudang"
-                        value={formData.nama_gudang}
+                        name="kode_gudang"
+                        value={formData.kode_gudang}
                         onChange={handleInputChange}
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       >
-                        <option value="all">-- Pilih Gudang --</option>
+                        <option value="">-- Pilih Gudang --</option>
                         {gudangList.map((gud) => (
                           <option key={gud.kode} value={gud.kode}>
                             {gud.nama}
@@ -1349,7 +1327,7 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       >
                         <option value="">Pilih Kategori</option>
-                        {kategoriListModal.map((kategori) => (
+                        {kategoriList.map((kategori) => (
                           <option key={kategori.kode_kategori} value={kategori.kode_kategori}>
                             {kategori.nama_kategori}
                           </option>
@@ -1392,7 +1370,7 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       >
                         <option value="">Pilih Armada</option>
-                        {armadaListModal.map((armada) => (
+                        {armadaList.map((armada) => (
                           <option
                             key={armada.kode_armada || armada.nama_armada}
                             value={armada.nama_armada}
