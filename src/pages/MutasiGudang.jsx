@@ -204,7 +204,7 @@ export default function MutasiGudang() {
   } = useDataTable({
     fetchData: fetchMutasiData,
     filterKeys: ['kode_gudang', 'jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
-    searchKeys: ['kode_barang', 'nama_barang', 'keterangan', 'referensi'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'keterangan', 'referensi'],
     dateFilterKey: 'tanggal',
     defaultSort: { key: 'tanggal', direction: 'desc' },
     defaultRowsPerPage: 10

@@ -191,6 +191,7 @@ export default function KartuStok() {
     const filteredItems = items.filter(item => {
         const searchMatch = item.nama_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.kode_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase());
 
         if (!searchMatch) return false;
@@ -397,12 +398,7 @@ export default function KartuStok() {
                                                                 <span className="font-semibold text-gray-800 truncate text-sm">{item.nama_barang}</span>
                                                             </div>
                                                             <p className="text-xs text-gray-500 mb-1">{item.kode_barang}</p>
-                                                            <div className="flex gap-1 flex-wrap">
-                                                                <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{item.nama_kategori}</span>
-                                                                {item.nama_armada && (
-                                                                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">{item.nama_armada}</span>
-                                                                )}
-                                                            </div>
+                                                            <p className="text-xs text-gray-500 mb-1">{item.part_number}</p>
                                                         </div>
                                                         <div className="text-right flex-shrink-0">
                                                             <div className={`text-base font-bold ${parseInt(item.stok_akhir) <= parseInt(item.min_stok || 0) ? 'text-red-600' : 'text-green-600'}`}>
