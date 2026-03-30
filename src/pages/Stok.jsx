@@ -1,9 +1,9 @@
 // src/pages/Stok.jsx
 
-import { useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Download, Filter, Search, TrendingUp, TrendingDown, X, Package } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import { stokAPI, kategoriAPI } from '../services/api';
+import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import * as XLSX from 'xlsx';
 
@@ -14,16 +14,44 @@ export default function Stok() {
     return result;
   }, []);
 
-  // Kategori untuk filter dropdown
-  const fetchKategoriList = useCallback(async () => {
-    const result = await kategoriAPI.getAll();
-    return result;
+  // Dropdown states — dari API masing-masing
+  const [kategoriList, setKategoriList] = useState([]);
+  const [subKategoriList, setSubKategoriList] = useState([]);
+  const [armadaList, setArmadaList] = useState([]);
+
+  useEffect(() => {
+    const loadDropdownData = async () => {
+      try {
+        const [kategoriResult, armadaResult] = await Promise.all([
+          kategoriAPI.getAll(),
+          armadaAPI.getAll(),
+        ]);
+        setKategoriList(kategoriResult);
+        setArmadaList(armadaResult);
+      } catch (error) {
+        console.error('Error loading dropdown data:', error);
+      }
+    };
+    loadDropdownData();
   }, []);
+
+  const loadSubKategoriByKategori = async (kode_kategori) => {
+    if (!kode_kategori || kode_kategori === 'all') {
+      setSubKategoriList([]);
+      return;
+    }
+    try {
+      const result = await subKategoriAPI.getByKategori(kode_kategori);
+      setSubKategoriList(result);
+    } catch (error) {
+      console.error('Error loading sub kategori:', error);
+      setSubKategoriList([]);
+    }
+  };
 
   // useDataTable hook
   const {
     data: paginatedData,
-    allData,
     filteredData,
     loading,
     error,
@@ -58,8 +86,8 @@ export default function Stok() {
     stats,
   } = useDataTable({
     fetchData: fetchStokData,
-    filterKeys: ['kode_kategori', 'nama_armada'],
-    searchKeys: ['kode_barang', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan'],
+    filterKeys: ['kode_kategori', 'kode_sub_kategori', 'nama_armada'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
 
@@ -85,14 +113,6 @@ export default function Stok() {
     },
   });
 
-  // Get unique kategori and armada for filter dropdowns
-  const kategoriList = [...new Set(allData.map(item => ({
-    kode: item.kode_kategori,
-    nama: item.nama_kategori
-  })).filter(k => k.kode).map(k => JSON.stringify(k)))].map(k => JSON.parse(k));
-
-  const armadaList = [...new Set(allData.map(item => item.nama_armada).filter(Boolean))].sort();
-
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -104,6 +124,7 @@ export default function Stok() {
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
       'Kode': item.kode_barang,
+      'Part Number': item.part_number,
       'Nama Barang': item.nama_barang,
       'Kategori': item.nama_kategori || '',
       'Armada': item.nama_armada || '',
@@ -188,137 +209,133 @@ export default function Stok() {
           </div>
         )}
 
-        {/* Toolbar: Search, Filters, Actions - All in one row */}
+        {/* Toolbar: Two-row layout */}
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
+          <div className="flex flex-col gap-3">
 
-            {/* Left side: Search + Filters */}
-            <div className="flex flex-col sm:flex-row gap-2 flex-1 w-full lg:w-auto">
-
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Cari koode barang, nama barang..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                />
-              </div>
-
-              {/* Filter Kategori */}
-              <select
-                value={filters.kode_kategori || 'all'}
-                onChange={(e) => setFilter('kode_kategori', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Kategori</option>
-                {kategoriList.map((kat) => (
-                  <option key={kat.kode} value={kat.kode}>
-                    {kat.nama}
-                  </option>
-                ))}
-              </select>
-
-              {/* Filter Armada */}
-              <select
-                value={filters.nama_armada || 'all'}
-                onChange={(e) => setFilter('nama_armada', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Armada</option>
-                {armadaList.map((armada) => (
-                  <option key={armada} value={armada}>
-                    {armada}
-                  </option>
-                ))}
-              </select>
-
-              {/* Clear All Filters */}
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Clear all filters"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+            {/* ── Row 1: Search ── */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Cari kode barang, nama barang..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              />
             </div>
 
-            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
+            {/* ── Row 2: Filters + Actions ── */}
+            <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center justify-between">
 
-            {/* Right side: Action Buttons */}
-            <div className="flex gap-2 w-full lg:w-auto">
-              <button
-                onClick={handleExport}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export</span>
-              </button>
+              {/* Left: Filter Controls */}
+              <div className="flex flex-wrap gap-2 flex-1">
+
+                {/* Filter Kategori */}
+                <select
+                  value={filters.kode_kategori || 'all'}
+                  onChange={(e) => {
+                    setFilter('kode_kategori', e.target.value);
+                    setFilter('kode_sub_kategori', 'all');
+                    loadSubKategoriByKategori(e.target.value);
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Kategori</option>
+                  {kategoriList.map((kat) => (
+                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                      {kat.nama_kategori}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Sub Kategori (cascading) */}
+                <select
+                  value={filters.kode_sub_kategori || 'all'}
+                  onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                  disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="all">Semua Sub Kategori</option>
+                  {subKategoriList.map((sub) => (
+                    <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                      {sub.nama_sub_kategori}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Armada */}
+                <select
+                  value={filters.nama_armada || 'all'}
+                  onChange={(e) => setFilter('nama_armada', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Armada</option>
+                  {armadaList.map((armada) => (
+                    <option key={armada.kode_armada || armada.nama_armada} value={armada.nama_armada}>
+                      {armada.nama_armada}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Clear All Filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Clear all filters"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
+
+              {/* Right: Action Buttons */}
+              <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <button
+                  onClick={handleExport}
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Active Filters Display */}
-          {activeFilters.length > 0 && (
+          {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
-              <span className="text-sm text-gray-600">Filter aktif:</span>
               {activeFilters.map((filter, idx) => {
                 if (filter.type === 'search') {
                   return (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-                    >
+                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200">
+                      <Search className="w-3 h-3" />
                       Search: "{filter.value}"
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="hover:bg-blue-200 rounded-full p-0.5"
-                      >
+                      <button onClick={() => setSearchQuery('')} className="hover:bg-blue-100 rounded-full p-0.5">
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   );
                 }
 
-                if (filter.key === 'kode_kategori') {
-                  const kat = kategoriList.find(k => k.kode === filter.value);
-                  return (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full"
-                    >
-                      Kategori: {kat?.nama || filter.value}
-                      <button
-                        onClick={() => setFilter('kode_kategori', 'all')}
-                        className="hover:bg-purple-200 rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                }
+                const label =
+                  filter.key === 'kode_kategori' ? `Kategori: ${kategoriList.find(k => k.kode_kategori === filter.value)?.nama_kategori || filter.value}` :
+                  filter.key === 'kode_sub_kategori' ? `Sub Kategori: ${subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value}` :
+                  filter.key === 'nama_armada' ? `Armada: ${filter.value}` :
+                  filter.value;
 
-                if (filter.key === 'nama_armada') {
-                  return (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-sm rounded-full"
-                    >
-                      Armada: {filter.value}
-                      <button
-                        onClick={() => setFilter('nama_armada', 'all')}
-                        className="hover:bg-orange-200 rounded-full p-0.5"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                }
-
-                return null;
+                return (
+                  <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
+                    <Filter className="w-3 h-3" />
+                    {label}
+                    <button onClick={() => setFilter(filter.key, 'all')} className="hover:bg-green-100 rounded-full p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
               })}
             </div>
           )}
@@ -336,6 +353,7 @@ export default function Stok() {
                   >
                     Kode {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('nama_barang')}
@@ -409,6 +427,9 @@ export default function Stok() {
                         >
                           {item.kode_barang}
                         </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{item.part_number || '-'}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div>

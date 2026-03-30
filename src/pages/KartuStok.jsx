@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
     Filter, X, ChevronLeft, Menu,
-    // NEW: Icons for Image Modal
+    // Icons for Image Modal
     ZoomIn, Download, ExternalLink, Image as ImageIcon, Maximize2
 } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import { mutasiAPI, stokAPI } from '../services/api';
+import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import { cloudinaryService } from '../services/cloudinary'; // Import cloudinary service
 
@@ -35,11 +35,16 @@ export default function KartuStok() {
     const [showSidebar, setShowSidebar] = useState(true);
     const isDesktop = useDesktopMediaQuery();
 
-    // Filter Kategori (untuk sidebar)
+    // Filter sidebar states
     const [filterKategori, setFilterKategori] = useState('all');
+    const [filterSubKategori, setFilterSubKategori] = useState('all');
+
+    // Dropdown states — dari API masing-masing
+    const [kategoriList, setKategoriList] = useState([]);
+    const [subKategoriList, setSubKategoriList] = useState([]);
 
     // ============================================
-    // NEW: Image Modal States
+    // Image Modal States
     // ============================================
     const [showImagePreview, setShowImagePreview] = useState(false);
     const [previewImageUrl, setPreviewImageUrl] = useState(null);
@@ -66,7 +71,31 @@ export default function KartuStok() {
     // Load items list on mount
     useEffect(() => {
         loadItems();
+        loadDropdownData();
     }, []);
+
+    const loadDropdownData = async () => {
+        try {
+            const result = await kategoriAPI.getAll();
+            setKategoriList(result);
+        } catch (error) {
+            console.error('Error loading kategori:', error);
+        }
+    };
+
+    const loadSubKategoriByKategori = async (kode_kategori) => {
+        if (!kode_kategori || kode_kategori === 'all') {
+            setSubKategoriList([]);
+            return;
+        }
+        try {
+            const result = await subKategoriAPI.getByKategori(kode_kategori);
+            setSubKategoriList(result);
+        } catch (error) {
+            console.error('Error loading sub kategori:', error);
+            setSubKategoriList([]);
+        }
+    };
 
     const loadItems = async () => {
         setLoading(true);
@@ -158,7 +187,7 @@ export default function KartuStok() {
         }
     }, [selectedItem, refresh]);
 
-    // Filter items berdasarkan pencarian dan kategori
+    // Filter items berdasarkan pencarian, kategori, dan sub kategori
     const filteredItems = items.filter(item => {
         const searchMatch = item.nama_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.kode_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,17 +195,18 @@ export default function KartuStok() {
 
         if (!searchMatch) return false;
 
-        if (filterKategori !== 'all' && item.nama_kategori !== filterKategori) {
+        if (filterKategori !== 'all' && item.kode_kategori !== filterKategori) {
+            return false;
+        }
+
+        if (filterSubKategori !== 'all' && item.kode_sub_kategori !== filterSubKategori) {
             return false;
         }
 
         return true;
     });
 
-    // Get unique categories for sidebar filter
-    const kategoriList = [...new Set(items.map(item => item.nama_kategori).filter(Boolean))].sort();
-
-    const hasItemFilter = filterKategori !== 'all' || searchTerm !== '';
+    const hasItemFilter = filterKategori !== 'all' || filterSubKategori !== 'all' || searchTerm !== '';
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '-';
@@ -185,7 +215,7 @@ export default function KartuStok() {
     };
 
     // ============================================
-    // NEW: Image Modal Handlers
+    // Image Modal Handlers
     // ============================================
     const handleImageClick = () => {
         if (!selectedItem?.gambar_url) return;
@@ -295,18 +325,50 @@ export default function KartuStok() {
                                             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                             <select
                                                 value={filterKategori}
-                                                onChange={(e) => setFilterKategori(e.target.value)}
+                                                onChange={(e) => {
+                                                    setFilterKategori(e.target.value);
+                                                    setFilterSubKategori('all');
+                                                    loadSubKategoriByKategori(e.target.value);
+                                                }}
                                                 className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                                             >
                                                 <option value="all">Semua Kategori</option>
-                                                {kategoriList.map(cat => (
-                                                    <option key={cat} value={cat}>{cat}</option>
+                                                {kategoriList.map(kat => (
+                                                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                                                        {kat.nama_kategori}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Filter Sub Kategori (cascading) */}
+                                        <div className="relative">
+                                            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                            <select
+                                                value={filterSubKategori}
+                                                onChange={(e) => setFilterSubKategori(e.target.value)}
+                                                disabled={filterKategori === 'all' || subKategoriList.length === 0}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="all">Semua Sub Kategori</option>
+                                                {subKategoriList.map(sub => (
+                                                    <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                                                        {sub.nama_sub_kategori}
+                                                    </option>
                                                 ))}
                                             </select>
                                         </div>
 
                                         {hasItemFilter && (
-                                            <button onClick={() => setFilterKategori('all') || setSearchTerm('')} className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+                                            <button
+                                                onClick={() => {
+                                                    setFilterKategori('all');
+                                                    setFilterSubKategori('all');
+                                                    setSubKategoriList([]);
+                                                    setSearchTerm('');
+                                                }}
+                                                className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                                            >
                                                 <X className="w-4 h-4" /> Clear Filter
                                             </button>
                                         )}
@@ -422,7 +484,9 @@ export default function KartuStok() {
                                                     title={`Lihat barang ${selectedItem.nama_barang} di halaman Barang`}
                                                 > {selectedItem.kode_barang}
                                                 </button></p>
+                                                <p>Part Number: <span className="font-medium">{selectedItem.part_number}</span></p>
                                                 <p>Kategori: <span className="font-medium">{selectedItem.nama_kategori}</span></p>
+                                                <p>Sub Kategori: <span className="font-medium">{selectedItem.nama_sub_kategori}</span></p>
                                                 {selectedItem.nama_armada && (
                                                     <p>Armada: <span className="font-medium">{selectedItem.nama_armada}</span></p>
                                                 )}
@@ -589,7 +653,7 @@ export default function KartuStok() {
             </div>
 
             {/* ============================================
-                NEW: Image Preview Modal
+                Image Preview Modal
                 ============================================ */}
             {
                 showImagePreview && (
