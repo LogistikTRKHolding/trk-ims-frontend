@@ -9,7 +9,7 @@ import {
     ZoomIn, Download, ExternalLink, Image as ImageIcon, Maximize2
 } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI } from '../services/api';
+import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI, gudangAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import { cloudinaryService } from '../services/cloudinary'; // Import cloudinary service
 
@@ -42,6 +42,7 @@ export default function KartuStok() {
     // Dropdown states — dari API masing-masing
     const [kategoriList, setKategoriList] = useState([]);
     const [subKategoriList, setSubKategoriList] = useState([]);
+    const [gudangList, setGudangList] = useState([]);
 
     // ============================================
     // Image Modal States
@@ -76,10 +77,14 @@ export default function KartuStok() {
 
     const loadDropdownData = async () => {
         try {
-            const result = await kategoriAPI.getAll();
-            setKategoriList(result);
+            const [kategoriResult, gudangResult] = await Promise.all([
+                kategoriAPI.getAll(),
+                gudangAPI.getAll(),
+            ]);
+            setKategoriList(kategoriResult);
+            setGudangList(gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
         } catch (error) {
-            console.error('Error loading kategori:', error);
+            console.error('Error loading dropdown data:', error);
         }
     };
 
@@ -163,7 +168,7 @@ export default function KartuStok() {
         stats,
     } = useDataTable({
         fetchData: fetchMutasiData,
-        filterKeys: ['jenis_transaksi'],
+        filterKeys: ['jenis_transaksi', 'kode_gudang'],
         dateFilterKey: 'tanggal',
         defaultSort: { key: 'tanggal', direction: 'desc' },
         defaultRowsPerPage: 50,
@@ -524,6 +529,19 @@ export default function KartuStok() {
                                 <div className="p-4 border-b overflow-x-auto scrollbar-hide">
                                     <div className="flex gap-2 items-center min-w-max">
                                         <Filter className="w-4 h-4 text-gray-600" />
+                                        <select
+                                            value={filters.kode_gudang || 'all'}
+                                            onChange={(e) => setFilter('kode_gudang', e.target.value)}
+                                            className="px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        >
+                                            <option value="all">Semua Gudang</option>
+                                            {gudangList.map((g) => (
+                                                <option key={g.kode} value={g.kode}>
+                                                    {g.nama}
+                                                </option>
+                                            ))}
+                                        </select>
+
                                         <select
                                             value={filters.jenis_transaksi || 'all'}
                                             onChange={(e) => setFilter('jenis_transaksi', e.target.value)}
