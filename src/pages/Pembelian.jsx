@@ -1,8 +1,9 @@
 // src/pages/Pembelian.jsx
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
-import { pembelianAPI, barangAPI, vendorAPI, authAPI } from '../services/api';
+import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 import {
     Search,
@@ -50,13 +51,38 @@ export default function Pembelian() {
     });
     const [loadingMaster, setLoadingMaster] = useState(false);
 
-    // State baru untuk search di dalam modal
+    // State untuk search di dalam modal
     const [vendorSearch, setVendorSearch] = useState('');
     const [barangSearch, setBarangSearch] = useState('');
     const [showVendorList, setShowVendorList] = useState(false);
     const [showBarangList, setShowBarangList] = useState(false);
     const vendorDropdownRef = useRef(null);
     const barangDropdownRef = useRef(null);
+
+    // ── State untuk Nested Modal: Tambah Barang Baru ──
+    const [showAddBarangModal, setShowAddBarangModal] = useState(false);
+    const [subKategoriListModal, setSubKategoriListModal] = useState([]);
+    const [newBarangData, setNewBarangData] = useState({
+        kode_barang: '',
+        part_number: '',
+        nama_barang: '',
+        satuan: '',
+        kode_kategori: '',
+        kode_sub_kategori: '',
+        kode_armada: '',
+        nama_armada: '',
+    });
+
+    // ── State untuk Nested Modal: Tambah Vendor Baru ──
+    const [showAddVendorModal, setShowAddVendorModal] = useState(false);
+    const [newVendorData, setNewVendorData] = useState({
+        kode_vendor: '',
+        nama_vendor: '',
+        alamat: '',
+        telepon: '',
+        email: '',
+        contact_person: '',
+    });
 
     // Tutup dropdown saat klik di luar
     useEffect(() => {
@@ -129,7 +155,7 @@ export default function Pembelian() {
         fetchData: fetchPembelianData,
         filterKeys: ['kode_kategori', 'kode_armada', 'status'],
         searchKeys: ['no_po', 'kode_barang', 'nama_barang', 'nama_vendor', 'keterangan'],
-        dateFilterKey: 'tanggal_po', // Filter berdasarkan tanggal PO
+        dateFilterKey: 'tanggal_po',
         defaultSort: { key: 'tanggal_po', direction: 'desc' },
         defaultRowsPerPage: 10,
         calculateStats: (filtered, all) => {
@@ -159,7 +185,7 @@ export default function Pembelian() {
         },
     });
 
-    // Extract kategori dan armada dari allData
+    // Extract kategori dan armada dari allData (untuk filter toolbar)
     const kategoriOptions = useMemo(() => {
         const unique = new Map();
         allData.forEach(item => {
@@ -185,39 +211,42 @@ export default function Pembelian() {
     const canEdit = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
     const canDelete = ['Admin', 'Manager'].includes(currentUser?.role);
 
-    // Load master data untuk form
+    // Load master data untuk form — sekarang menggunakan API dedicated
     const loadMasterData = async () => {
         setLoadingMaster(true);
         try {
-            const [barang, vendor] = await Promise.all([
+            const [barang, vendor, kategori, armada] = await Promise.all([
                 barangAPI.getAll(),
                 vendorAPI.getAll(),
+                kategoriAPI.getAll(),
+                armadaAPI.getAll(),
             ]);
 
             setBarangList(barang.filter(b => b.is_active));
             setVendorList(vendor.filter(v => v.is_active));
-
-            // Extract kategori dan armada dari barang
-            const kategoriMap = new Map();
-            const armadaMap = new Map();
-
-            barang.forEach(item => {
-                if (item.kode_kategori && item.nama_kategori) {
-                    kategoriMap.set(item.kode_kategori, item.nama_kategori);
-                }
-                if (item.kode_armada && item.nama_armada) {
-                    armadaMap.set(item.kode_armada, item.nama_armada);
-                }
-            });
-
-            setKategoriList(Array.from(kategoriMap, ([kode, nama]) => ({ kode, nama })));
-            setArmadaList(Array.from(armadaMap, ([kode, nama]) => ({ kode, nama })));
+            setKategoriList(kategori);
+            setArmadaList(armada);
 
         } catch (error) {
             console.error('Error loading master data:', error);
             alert('Gagal memuat data master: ' + error.message);
         } finally {
             setLoadingMaster(false);
+        }
+    };
+
+    // Load sub kategori berdasarkan kategori (untuk modal Tambah Barang)
+    const loadSubKategoriByKategori = async (kode_kategori) => {
+        if (!kode_kategori) {
+            setSubKategoriListModal([]);
+            return;
+        }
+        try {
+            const result = await subKategoriAPI.getByKategori(kode_kategori);
+            setSubKategoriListModal(result);
+        } catch (error) {
+            console.error('Error loading sub kategori:', error);
+            setSubKategoriListModal([]);
         }
     };
 
@@ -314,6 +343,7 @@ export default function Pembelian() {
         setVendorSearch('');
         setBarangSearch('');
     };
+
     const handleInputChange = (e) => {
         const { name, value, type } = e.target;
 
@@ -332,7 +362,6 @@ export default function Pembelian() {
         });
     };
 
-    // JSX Bagian Modal Form (Ganti bagian Vendor dan Barang)
     const handleBarangSelect = (e) => {
         const kode = e.target.value;
         const selectedBarang = barangList.find(b => b.kode_barang === kode);
@@ -362,11 +391,154 @@ export default function Pembelian() {
         }
     };
 
+    // ── Handler: Nested Modal Tambah Barang Baru ──
+    const handleNewBarangChange = (e) => {
+        const { name, value, type } = e.target;
+        let finalValue = type === 'number' ? parseFloat(value) || 0 : value;
+
+        if (name === 'nama_barang') {
+            finalValue = value.toUpperCase();
+        }
+
+        if (name === 'nama_armada') {
+            const kodeArmada = e.target.selectedOptions[0]?.dataset.kode || '';
+            setNewBarangData(prev => ({
+                ...prev,
+                nama_armada: finalValue,
+                kode_armada: kodeArmada,
+            }));
+            return;
+        }
+
+        setNewBarangData(prev => ({
+            ...prev,
+            [name]: finalValue,
+            ...(name === 'kode_kategori' ? { kode_sub_kategori: '' } : {}),
+        }));
+
+        if (name === 'kode_kategori') {
+            loadSubKategoriByKategori(finalValue);
+        }
+    };
+
+    const resetNewBarangData = () => {
+        setNewBarangData({
+            kode_barang: '',
+            part_number: '',
+            nama_barang: '',
+            satuan: '',
+            kode_kategori: '',
+            kode_sub_kategori: '',
+            kode_armada: '',
+            nama_armada: '',
+        });
+        setSubKategoriListModal([]);
+    };
+
+    const openAddBarangModal = () => {
+        // Pre-fill dari search term jika ada
+        setNewBarangData(prev => ({
+            ...prev,
+            kode_barang: barangSearch.toUpperCase(),
+            nama_barang: barangSearch.toUpperCase(),
+        }));
+        setShowAddBarangModal(true);
+    };
+
+    const handleAddNewBarang = async (e) => {
+        e.preventDefault();
+
+        if (newBarangData.kode_kategori === 'KAT001' && !newBarangData.nama_armada) {
+            alert('Armada wajib diisi untuk kategori Suku Cadang!');
+            return;
+        }
+
+        try {
+            const savedBarang = await barangAPI.create(newBarangData);
+
+            // Reload barang list dan auto-select barang baru
+            const updatedBarang = await barangAPI.getAll();
+            setBarangList(updatedBarang.filter(b => b.is_active));
+
+            setFormData(prev => ({
+                ...prev,
+                kode_barang: savedBarang.kode_barang,
+                nama_barang: savedBarang.nama_barang,
+                harga_satuan: savedBarang.harga_satuan || 0,
+                total_harga: prev.qty_order * (savedBarang.harga_satuan || 0),
+            }));
+
+            resetNewBarangData();
+            setShowAddBarangModal(false);
+            setBarangSearch('');
+            setShowBarangList(false);
+            alert('Barang berhasil ditambahkan!');
+        } catch (error) {
+            console.error('Error adding barang:', error);
+            alert('Gagal menambahkan barang: ' + (error.message || 'Unknown error'));
+        }
+    };
+
+    // ── Handler: Nested Modal Tambah Vendor Baru ──
+    const handleNewVendorChange = (e) => {
+        const { name, value } = e.target;
+        setNewVendorData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const resetNewVendorData = () => {
+        setNewVendorData({
+            kode_vendor: '',
+            nama_vendor: '',
+            alamat: '',
+            telepon: '',
+            email: '',
+            contact_person: '',
+        });
+    };
+
+    const openAddVendorModal = () => {
+        // Pre-fill nama vendor dari search term jika ada
+        setNewVendorData(prev => ({
+            ...prev,
+            nama_vendor: vendorSearch,
+        }));
+        setShowAddVendorModal(true);
+    };
+
+    const handleAddNewVendor = async (e) => {
+        e.preventDefault();
+
+        try {
+            const savedVendor = await vendorAPI.create({
+                ...newVendorData,
+                is_active: true,
+            });
+
+            // Reload vendor list dan auto-select vendor baru
+            const updatedVendor = await vendorAPI.getAll();
+            setVendorList(updatedVendor.filter(v => v.is_active));
+
+            setFormData(prev => ({
+                ...prev,
+                kode_vendor: savedVendor.kode_vendor,
+                nama_vendor: savedVendor.nama_vendor,
+            }));
+
+            resetNewVendorData();
+            setShowAddVendorModal(false);
+            setVendorSearch('');
+            setShowVendorList(false);
+            alert('Vendor berhasil ditambahkan!');
+        } catch (error) {
+            console.error('Error adding vendor:', error);
+            alert('Gagal menambahkan vendor: ' + (error.message || 'Unknown error'));
+        }
+    };
+
     // CRUD Operations
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validation
         if (!formData.no_po || !formData.kode_vendor || !formData.kode_barang) {
             alert('No. PO, Vendor, dan Kode Barang wajib diisi!');
             return;
@@ -378,8 +550,6 @@ export default function Pembelian() {
         }
 
         try {
-            // Sanitize: ubah string kosong pada field tanggal menjadi null
-            // agar tidak menyebabkan error validasi di database
             const sanitizedForm = {
                 ...formData,
                 tanggal_terima: formData.tanggal_terima || null,
@@ -387,15 +557,12 @@ export default function Pembelian() {
 
             let payload;
             if (editingItem) {
-                // Saat update: jangan kirim created_by agar tidak
-                // menimpa nilai asli di database
                 const { created_by, ...updateFields } = sanitizedForm;
                 payload = {
                     ...updateFields,
                     updated_by: currentUser?.userId,
                 };
             } else {
-                // Saat create: kirim created_by
                 payload = {
                     ...sanitizedForm,
                     created_by: currentUser?.userId,
@@ -403,7 +570,7 @@ export default function Pembelian() {
                 };
             }
 
-            console.log('[Pembelian] Payload dikirim:', payload); // untuk debugging
+            console.log('[Pembelian] Payload dikirim:', payload);
 
             if (editingItem) {
                 await pembelianAPI.update(editingItem.id, payload);
@@ -419,7 +586,6 @@ export default function Pembelian() {
 
         } catch (error) {
             console.error('Submit error:', error);
-            // Tampilkan detail error dari server jika tersedia
             const message = error?.response?.data?.message
                 || error?.response?.data?.error
                 || error?.message
@@ -491,205 +657,210 @@ export default function Pembelian() {
     return (
         <MainLayout>
             <div className="space-y-6">
-                {/* Toolbar: Search, Filters, Actions - All in one row */}
+
+                {/* ── Toolbar: Two-row layout — Row 1: Search | Row 2: Filters + Actions ── */}
                 <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
+                    <div className="flex flex-col gap-3">
 
-                        {/* Left side: Search + Filters */}
-                        <div className="flex flex-col sm:flex-row gap-2 flex-1 w-full lg:w-auto">
+                        {/* ── Row 1: Search ── */}
+                        <div className="relative w-full">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <input
+                                type="text"
+                                placeholder="Cari PO, barang, vendor..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                            />
+                        </div>
 
-                            {/* Search */}
-                            <div className="relative flex-1 min-w-[200px]">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari PO, barang, vendor..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                                />
+                        {/* ── Row 2: Filters + Actions ── */}
+                        <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center justify-between">
+
+                            {/* Left: Filter Controls */}
+                            <div className="flex flex-wrap gap-2 flex-1">
+
+                                {/* Filter Kategori */}
+                                <select
+                                    value={filters.kode_kategori || 'all'}
+                                    onChange={(e) => setFilter('kode_kategori', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                                >
+                                    <option value="all">Semua Kategori</option>
+                                    {kategoriOptions.map(kat => (
+                                        <option key={kat.kode} value={kat.kode}>{kat.nama}</option>
+                                    ))}
+                                </select>
+
+                                {/* Filter Armada */}
+                                <select
+                                    value={filters.kode_armada || 'all'}
+                                    onChange={(e) => setFilter('kode_armada', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                                >
+                                    <option value="all">Semua Armada</option>
+                                    {armadaOptions.map(arm => (
+                                        <option key={arm.kode} value={arm.kode}>{arm.nama}</option>
+                                    ))}
+                                </select>
+
+                                {/* Filter Status */}
+                                <select
+                                    value={filters.status || 'all'}
+                                    onChange={(e) => setFilter('status', e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                                >
+                                    <option value="all">Semua Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Received">Received</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+
+                                {/* Date Filter Mode */}
+                                <select
+                                    value={dateFilterMode}
+                                    onChange={(e) => {
+                                        setDateFilterMode(e.target.value);
+                                        if (e.target.value === 'all') {
+                                            clearDateFilter();
+                                        }
+                                    }}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                                >
+                                    <option value="all">Semua Tanggal</option>
+                                    <option value="single">Tanggal Spesifik</option>
+                                    <option value="range">Rentang Tanggal</option>
+                                </select>
+
+                                {/* Single Date Input */}
+                                {dateFilterMode === 'single' && (
+                                    <input
+                                        type="date"
+                                        value={singleDate}
+                                        onChange={(e) => setSingleDate(e.target.value)}
+                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                    />
+                                )}
+
+                                {/* Date Range Inputs */}
+                                {dateFilterMode === 'range' && (
+                                    <>
+                                        <input
+                                            type="date"
+                                            value={dateRangeStart}
+                                            onChange={(e) => setDateRangeStart(e.target.value)}
+                                            placeholder="Start"
+                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                        />
+                                        <input
+                                            type="date"
+                                            value={dateRangeEnd}
+                                            onChange={(e) => setDateRangeEnd(e.target.value)}
+                                            placeholder="End"
+                                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                                        />
+                                    </>
+                                )}
+
+                                {/* Clear All Filters */}
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={clearAllFilters}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Clear all filters"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
 
-                            {/* Filter Kategori */}
-                            <select
-                                value={filters.kode_kategori || 'all'}
-                                onChange={(e) => setFilter('kode_kategori', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                            >
-                                <option value="all">Semua Kategori</option>
-                                {kategoriOptions.map(kat => (
-                                    <option key={kat.kode} value={kat.kode}>{kat.nama}</option>
-                                ))}
-                            </select>
+                            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
 
-                            {/* Filter Armada */}
-                            <select
-                                value={filters.kode_armada || 'all'}
-                                onChange={(e) => setFilter('kode_armada', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                            >
-                                <option value="all">Semua Armada</option>
-                                {armadaOptions.map(arm => (
-                                    <option key={arm.kode} value={arm.kode}>{arm.nama}</option>
-                                ))}
-                            </select>
+                            {/* Right: Action Buttons */}
+                            <div className="flex gap-2 w-full lg:w-auto">
+                                <button
+                                    onClick={handleExport}
+                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    <span>Export</span>
+                                </button>
 
-                            {/* Filter Status */}
-                            <select
-                                value={filters.status || 'all'}
-                                onChange={(e) => setFilter('status', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                            >
-                                <option value="all">Semua Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Received">Received</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
+                                {canCreate && (
+                                    <button
+                                        onClick={openCreateModal}
+                                        className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        <span>Tambah</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
-                            {/* Date Filter Mode */}
-                            <select
-                                value={dateFilterMode}
-                                onChange={(e) => {
-                                    setDateFilterMode(e.target.value);
-                                    if (e.target.value === 'all') {
-                                        clearDateFilter();
+                        {/* Active Filters Display */}
+                        {hasActiveFilters && (
+                            <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-200">
+                                {activeFilters.map((filter, idx) => {
+                                    if (filter.type === 'search') {
+                                        return (
+                                            <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200">
+                                                <Search className="w-3 h-3" />
+                                                Search: "{filter.value}"
+                                                <button onClick={() => setSearchQuery('')} className="hover:bg-blue-100 rounded-full p-0.5">
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        );
                                     }
-                                }}
-                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                            >
-                                <option value="all">Semua Tanggal</option>
-                                <option value="single">Tanggal Spesifik</option>
-                                <option value="range">Rentang Tanggal</option>
-                            </select>
 
-                            {/* Single Date Input */}
-                            {dateFilterMode === 'single' && (
-                                <input
-                                    type="date"
-                                    value={singleDate}
-                                    onChange={(e) => setSingleDate(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                                />
-                            )}
+                                    if (filter.type === 'date-single') {
+                                        return (
+                                            <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
+                                                <Calendar className="w-3 h-3" />
+                                                Date: {filter.value}
+                                                <button onClick={clearDateFilter} className="hover:bg-purple-100 rounded-full p-0.5">
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        );
+                                    }
 
-                            {/* Date Range Inputs */}
-                            {dateFilterMode === 'range' && (
-                                <>
-                                    <input
-                                        type="date"
-                                        value={dateRangeStart}
-                                        onChange={(e) => setDateRangeStart(e.target.value)}
-                                        placeholder="Start"
-                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                                    />
-                                    <input
-                                        type="date"
-                                        value={dateRangeEnd}
-                                        onChange={(e) => setDateRangeEnd(e.target.value)}
-                                        placeholder="End"
-                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-                                    />
-                                </>
-                            )}
+                                    if (filter.type === 'date-range') {
+                                        return (
+                                            <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
+                                                <Calendar className="w-3 h-3" />
+                                                Range: {filter.value}
+                                                <button onClick={clearDateFilter} className="hover:bg-purple-100 rounded-full p-0.5">
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        );
+                                    }
 
-                            {/* Clear All Filters */}
-                            {hasActiveFilters && (
-                                <button
-                                    onClick={clearAllFilters}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Clear all filters"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            )}
-                        </div>
+                                    const displayValue = filter.key === 'kode_kategori'
+                                        ? kategoriOptions.find(k => k.kode === filter.value)?.nama || filter.value
+                                        : filter.key === 'kode_armada'
+                                            ? armadaOptions.find(a => a.kode === filter.value)?.nama || filter.value
+                                            : filter.value;
 
-                        <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
-
-                        {/* Right side: Action Buttons */}
-                        <div className="flex gap-2 w-full lg:w-auto">
-                            <button
-                                onClick={handleExport}
-                                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-                            >
-                                <Download className="w-4 h-4" />
-                                <span>Export</span>
-                            </button>
-
-                            {canCreate && (
-                                <button
-                                    onClick={openCreateModal}
-                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Tambah</span>
-                                </button>
-                            )}
-                        </div>
+                                    return (
+                                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
+                                            <Filter className="w-3 h-3" />
+                                            {filter.key === 'kode_kategori' && 'Kategori: '}
+                                            {filter.key === 'kode_armada' && 'Armada: '}
+                                            {filter.key === 'status' && 'Status: '}
+                                            {displayValue}
+                                            <button onClick={() => setFilter(filter.key, 'all')} className="hover:bg-green-100 rounded-full p-0.5">
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
-
-                    {/* Active Filters Display */}
-                    {hasActiveFilters && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
-                            {activeFilters.map((filter, idx) => {
-                                if (filter.type === 'search') {
-                                    return (
-                                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200">
-                                            <Search className="w-3 h-3" />
-                                            Search: "{filter.value}"
-                                            <button onClick={() => setSearchQuery('')} className="hover:bg-blue-100 rounded-full p-0.5">
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </span>
-                                    );
-                                }
-
-                                if (filter.type === 'date-single') {
-                                    return (
-                                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
-                                            <Calendar className="w-3 h-3" />
-                                            Date: {filter.value}
-                                            <button onClick={clearDateFilter} className="hover:bg-purple-100 rounded-full p-0.5">
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </span>
-                                    );
-                                }
-
-                                if (filter.type === 'date-range') {
-                                    return (
-                                        <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium border border-purple-200">
-                                            <Calendar className="w-3 h-3" />
-                                            Range: {filter.value}
-                                            <button onClick={clearDateFilter} className="hover:bg-purple-100 rounded-full p-0.5">
-                                                <X className="w-3 h-3" />
-                                            </button>
-                                        </span>
-                                    );
-                                }
-
-                                const displayValue = filter.key === 'kode_kategori'
-                                    ? kategoriOptions.find(k => k.kode === filter.value)?.nama || filter.value
-                                    : filter.key === 'kode_armada'
-                                        ? armadaOptions.find(a => a.kode === filter.value)?.nama || filter.value
-                                        : filter.value;
-
-                                return (
-                                    <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
-                                        <Filter className="w-3 h-3" />
-                                        {filter.key === 'kode_kategori' && 'Kategori: '}
-                                        {filter.key === 'kode_armada' && 'Armada: '}
-                                        {filter.key === 'status' && 'Status: '}
-                                        {displayValue}
-                                        <button onClick={() => setFilter(filter.key, 'all')} className="hover:bg-green-100 rounded-full p-0.5">
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </span>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
 
                 {/* Quick Date Filters (if date mode active) */}
@@ -697,36 +868,11 @@ export default function Pembelian() {
                     <div className="bg-white rounded-lg shadow p-4">
                         <div className="flex flex-wrap gap-2">
                             <span className="text-sm text-gray-600 font-medium mr-2">Quick Filters:</span>
-                            <button
-                                onClick={() => setQuickDateFilter('today')}
-                                className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Hari Ini
-                            </button>
-                            <button
-                                onClick={() => setQuickDateFilter('yesterday')}
-                                className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Kemarin
-                            </button>
-                            <button
-                                onClick={() => setQuickDateFilter('this-week')}
-                                className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Minggu Ini
-                            </button>
-                            <button
-                                onClick={() => setQuickDateFilter('this-month')}
-                                className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Bulan Ini
-                            </button>
-                            <button
-                                onClick={() => setQuickDateFilter('last-month')}
-                                className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
-                            >
-                                Bulan Lalu
-                            </button>
+                            <button onClick={() => setQuickDateFilter('today')} className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Hari Ini</button>
+                            <button onClick={() => setQuickDateFilter('yesterday')} className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Kemarin</button>
+                            <button onClick={() => setQuickDateFilter('this-week')} className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Minggu Ini</button>
+                            <button onClick={() => setQuickDateFilter('this-month')} className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Bulan Ini</button>
+                            <button onClick={() => setQuickDateFilter('last-month')} className="px-3 py-1 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Bulan Lalu</button>
                         </div>
                     </div>
                 )}
@@ -737,20 +883,14 @@ export default function Pembelian() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <th
-                                        onClick={() => requestSort('no_po')}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                                    >
+                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         No. PO {sortConfig.key === 'no_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
-                                    <th
-                                        onClick={() => requestSort('tanggal_po')}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                                    >
+                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         Tanggal PO {sortConfig.key === 'tanggal_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barang</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama/Kode Barang</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty Order</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Harga</th>
@@ -832,7 +972,8 @@ export default function Pembelian() {
                                                     </td>
                                                 )}
                                             </tr>
-                                        )))
+                                        ))
+                                    )
                                 )}
                             </tbody>
                         </table>
@@ -859,7 +1000,6 @@ export default function Pembelian() {
 
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
-                                {/* Rows Per Page Selector */}
                                 <div className="flex items-center gap-2 text-sm text-gray-700">
                                     <span>Show</span>
                                     <select
@@ -879,7 +1019,6 @@ export default function Pembelian() {
                                         </option>
                                     </select>
 
-                                    {/* Custom Rows Input */}
                                     <div className="flex items-center border border-gray-300 rounded ml-1">
                                         <input
                                             type="number"
@@ -899,48 +1038,18 @@ export default function Pembelian() {
 
                                 <p className="text-sm text-gray-700">
                                     Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
-                                    <span className="font-medium">
-                                        {Math.min(currentPage * rowsPerPage, totalRows)}
-                                    </span> of{' '}
+                                    <span className="font-medium">{Math.min(currentPage * rowsPerPage, totalRows)}</span> of{' '}
                                     <span className="font-medium">{totalRows}</span> results
                                 </p>
                             </div>
 
                             <div>
                                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <button
-                                        onClick={() => setCurrentPage(1)}
-                                        disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        First
-                                    </button>
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Prev
-                                    </button>
-
-                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">
-                                        Page {currentPage} of {totalPages || 1}
-                                    </span>
-
-                                    <button
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages || totalPages === 0}
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Next
-                                    </button>
-                                    <button
-                                        onClick={() => setCurrentPage(totalPages)}
-                                        disabled={currentPage === totalPages || totalPages === 0}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Last
-                                    </button>
+                                    <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">First</button>
+                                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Prev</button>
+                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">Page {currentPage} of {totalPages || 1}</span>
+                                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0} className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Next</button>
+                                    <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Last</button>
                                 </nav>
                             </div>
                         </div>
@@ -948,7 +1057,9 @@ export default function Pembelian() {
                 </div>
             </div>
 
-            {/* Modal Form */}
+            {/* ══════════════════════════════════════════════════════
+                Modal Form: Tambah / Edit Purchase Order
+            ══════════════════════════════════════════════════════ */}
             {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -958,10 +1069,7 @@ export default function Pembelian() {
                                 {editingItem ? 'Edit Purchase Order' : 'Tambah Purchase Order Baru'}
                             </h2>
                             <button
-                                onClick={() => {
-                                    setShowModal(false);
-                                    resetForm();
-                                }}
+                                onClick={() => { setShowModal(false); resetForm(); }}
                                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
                                 <X className="w-5 h-5" />
@@ -970,11 +1078,10 @@ export default function Pembelian() {
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                                 {/* No. PO */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        No. PO *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">No. PO *</label>
                                     <input
                                         type="text"
                                         name="no_po"
@@ -989,9 +1096,7 @@ export default function Pembelian() {
 
                                 {/* Tanggal PO */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Tanggal PO *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal PO *</label>
                                     <input
                                         type="date"
                                         name="tanggal_po"
@@ -1002,11 +1107,19 @@ export default function Pembelian() {
                                     />
                                 </div>
 
-                                {/* Searchable Vendor */}
+                                {/* ── Searchable Vendor ── */}
                                 <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Cari Vendor *
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">Cari Vendor *</label>
+                                        <button
+                                            type="button"
+                                            onClick={openAddVendorModal}
+                                            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Tambah Vendor Baru
+                                        </button>
+                                    </div>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
@@ -1033,7 +1146,12 @@ export default function Pembelian() {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">Vendor tidak ditemukan</div>
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                    Vendor tidak ditemukan —{' '}
+                                                    <button type="button" onClick={openAddVendorModal} className="text-green-600 font-medium hover:underline">
+                                                        Tambah baru
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -1051,11 +1169,19 @@ export default function Pembelian() {
                                     </div>
                                 </div>
 
-                                {/* Searchable Barang */}
+                                {/* ── Searchable Barang ── */}
                                 <div className="md:col-span-2 relative" ref={barangDropdownRef}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Cari Barang *
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium text-gray-700">Cari Barang *</label>
+                                        <button
+                                            type="button"
+                                            onClick={openAddBarangModal}
+                                            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                            Tambah Barang Baru
+                                        </button>
+                                    </div>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
@@ -1082,7 +1208,12 @@ export default function Pembelian() {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">Barang tidak ditemukan</div>
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                    Barang tidak ditemukan —{' '}
+                                                    <button type="button" onClick={openAddBarangModal} className="text-green-600 font-medium hover:underline">
+                                                        Tambah baru
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -1102,9 +1233,7 @@ export default function Pembelian() {
 
                                 {/* Qty Order */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Qty Order *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Qty Order *</label>
                                     <input
                                         type="number"
                                         name="qty_order"
@@ -1119,9 +1248,7 @@ export default function Pembelian() {
 
                                 {/* Harga Satuan */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Harga Satuan *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Harga Satuan *</label>
                                     <input
                                         type="number"
                                         name="harga_satuan"
@@ -1136,9 +1263,7 @@ export default function Pembelian() {
 
                                 {/* Total Harga (Auto-calculated) */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Total Harga
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Total Harga</label>
                                     <input
                                         type="number"
                                         value={formData.total_harga}
@@ -1149,9 +1274,7 @@ export default function Pembelian() {
 
                                 {/* Tanggal Terima */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Tanggal Terima
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Terima</label>
                                     <input
                                         type="date"
                                         name="tanggal_terima"
@@ -1163,9 +1286,7 @@ export default function Pembelian() {
 
                                 {/* Status */}
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Status *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                                     <select
                                         name="status"
                                         value={formData.status}
@@ -1176,16 +1297,13 @@ export default function Pembelian() {
                                         <option value="Pending">Pending</option>
                                         <option value="Received">Received</option>
                                         <option value="Cancelled">Cancelled</option>
-                                        {/* 'Completed' dihapus — tidak ada di CHECK constraint database.
-                                            Untuk menambahkan, jalankan SQL migration di bawah. */}
+                                        {/* 'Completed' tidak ada di CHECK constraint database */}
                                     </select>
                                 </div>
 
                                 {/* Keterangan */}
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Keterangan
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
                                     <textarea
                                         name="keterangan"
                                         value={formData.keterangan}
@@ -1198,13 +1316,10 @@ export default function Pembelian() {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+                            <div className="px-0 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setShowModal(false);
-                                        resetForm();
-                                    }}
+                                    onClick={() => { setShowModal(false); resetForm(); }}
                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
                                 >
                                     Batal
@@ -1218,9 +1333,310 @@ export default function Pembelian() {
                             </div>
                         </form>
                     </div>
-
                 </div>
             )}
+
+            {/* ══════════════════════════════════════════════════════
+                Nested Modal: Tambah Barang Baru
+            ══════════════════════════════════════════════════════ */}
+            {showAddBarangModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <form onSubmit={handleAddNewBarang}>
+                            {/* Header */}
+                            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold">Tambah Barang Baru</h2>
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowAddBarangModal(false); resetNewBarangData(); }}
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="px-6 py-4 space-y-4">
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <p className="text-sm text-green-800">
+                                        <strong>Info:</strong> Barang yang ditambahkan akan otomatis dipilih untuk transaksi pembelian.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kode Barang *</label>
+                                        <input
+                                            type="text"
+                                            name="kode_barang"
+                                            value={newBarangData.kode_barang}
+                                            onChange={handleNewBarangChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                                            placeholder="Contoh: BRG001"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Part Number</label>
+                                        <input
+                                            type="text"
+                                            name="part_number"
+                                            value={newBarangData.part_number}
+                                            onChange={handleNewBarangChange}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Contoh: PN-12345"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
+                                    <input
+                                        type="text"
+                                        name="nama_barang"
+                                        value={newBarangData.nama_barang}
+                                        onChange={handleNewBarangChange}
+                                        required
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                                        placeholder="Contoh: OLI MESIN"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                                        <select
+                                            name="kode_kategori"
+                                            value={newBarangData.kode_kategori}
+                                            onChange={handleNewBarangChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                        >
+                                            <option value="">Pilih Kategori</option>
+                                            {kategoriList.map((kategori) => (
+                                                <option key={kategori.kode_kategori} value={kategori.kode_kategori}>
+                                                    {kategori.nama_kategori}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sub Kategori</label>
+                                        <select
+                                            name="kode_sub_kategori"
+                                            value={newBarangData.kode_sub_kategori}
+                                            onChange={handleNewBarangChange}
+                                            disabled={!newBarangData.kode_kategori || subKategoriListModal.length === 0}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">Pilih Sub Kategori</option>
+                                            {subKategoriListModal.map((sub) => (
+                                                <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                                                    {sub.nama_sub_kategori}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {!newBarangData.kode_kategori && (
+                                            <p className="mt-1 text-xs text-gray-400">Pilih Kategori terlebih dahulu</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Armada {newBarangData.kode_kategori === 'KAT001' && <span className="text-red-500">*</span>}
+                                        </label>
+                                        <select
+                                            name="nama_armada"
+                                            value={newBarangData.nama_armada}
+                                            onChange={handleNewBarangChange}
+                                            required={newBarangData.kode_kategori === 'KAT001'}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                        >
+                                            <option value="">Pilih Armada</option>
+                                            {armadaList.map((armada) => (
+                                                <option
+                                                    key={armada.kode_armada || armada.nama_armada}
+                                                    value={armada.nama_armada}
+                                                    data-kode={armada.kode_armada || ''}
+                                                >
+                                                    {armada.nama_armada}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {newBarangData.kode_kategori === 'KAT001' && (
+                                            <p className="mt-1 text-xs text-red-500">Armada wajib diisi untuk kategori Suku Cadang</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Satuan *</label>
+                                        <select
+                                            name="satuan"
+                                            value={newBarangData.satuan}
+                                            onChange={handleNewBarangChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                        >
+                                            <option value="">Pilih Satuan</option>
+                                            <option value="Pcs">PCS</option>
+                                            <option value="Unit">UNIT</option>
+                                            <option value="Box">BOX</option>
+                                            <option value="Liter">LITER</option>
+                                            <option value="Kg">KG</option>
+                                            <option value="Meter">METER</option>
+                                            <option value="Set">SET</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowAddBarangModal(false); resetNewBarangData(); }}
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
+                                >
+                                    Simpan Barang
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════
+                Nested Modal: Tambah Vendor Baru
+            ══════════════════════════════════════════════════════ */}
+            {showAddVendorModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <form onSubmit={handleAddNewVendor}>
+                            {/* Header */}
+                            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold">Tambah Vendor Baru</h2>
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowAddVendorModal(false); resetNewVendorData(); }}
+                                    className="p-1 hover:bg-gray-100 rounded"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="px-6 py-4 space-y-4">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Info:</strong> Vendor yang ditambahkan akan otomatis dipilih untuk transaksi pembelian.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kode Vendor *</label>
+                                        <input
+                                            type="text"
+                                            name="kode_vendor"
+                                            value={newVendorData.kode_vendor}
+                                            onChange={handleNewVendorChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                                            placeholder="Contoh: VND001"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Vendor *</label>
+                                        <input
+                                            type="text"
+                                            name="nama_vendor"
+                                            value={newVendorData.nama_vendor}
+                                            onChange={handleNewVendorChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Contoh: PT. Maju Jaya"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+                                    <textarea
+                                        name="alamat"
+                                        value={newVendorData.alamat}
+                                        onChange={handleNewVendorChange}
+                                        rows="2"
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Jl. Contoh No. 123, Kota"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+                                        <input
+                                            type="text"
+                                            name="telepon"
+                                            value={newVendorData.telepon}
+                                            onChange={handleNewVendorChange}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="08xxxxxxxxxx"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={newVendorData.email}
+                                            onChange={handleNewVendorChange}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="vendor@email.com"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                                    <input
+                                        type="text"
+                                        name="contact_person"
+                                        value={newVendorData.contact_person}
+                                        onChange={handleNewVendorChange}
+                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Nama PIC"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowAddVendorModal(false); resetNewVendorData(); }}
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg"
+                                >
+                                    Simpan Vendor
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </MainLayout>
     );
 }

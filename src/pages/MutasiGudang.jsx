@@ -496,11 +496,11 @@ export default function MutasiGudang() {
   return (
     <MainLayout title="Mutasi Gudang">
       <div className="space-y-6">
-        
+
         {/* Toolbar: Two-row layout — Row 1: Search | Row 2: Filters + Actions */}
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex flex-col gap-3">
-           
+
             {/* ── Row 1: Search ── */}
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -803,19 +803,13 @@ export default function MutasiGudang() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Jenis
                   </th>
-                  <th
-                    onClick={() => requestSort('kode_barang')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  >
-                    Kode Barang {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Kode/Nama Barang
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Part Number
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nama Barang
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Qty
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -874,16 +868,16 @@ export default function MutasiGudang() {
                             {item.jenis_transaksi}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-                          {item.kode_barang}
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-semibold">{item.nama_barang}</p>
+                            <p className="text-xs text-gray-500">{item.kode_barang}</p>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                           {item.part_number || '-'}
-                        </td>
+                        </td>                  
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {item.nama_barang}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900">
                           {item.qty} {item.satuan}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
@@ -1116,7 +1110,7 @@ export default function MutasiGudang() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Cari kode atau nama barang..."
+                        placeholder="Cari kode, nama barang atau part number..."
                         value={searchTermBarang}
                         onChange={(e) => { setSearchTermBarang(e.target.value); setShowBarangDropdown(true); }}
                         onFocus={() => setShowBarangDropdown(true)}
@@ -1134,14 +1128,20 @@ export default function MutasiGudang() {
                               className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-gray-800">{barang.kode_barang}</span>
+                                <span className="text-sm font-bold text-gray-800">{barang.nama_barang} ({barang.satuan})</span>
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {barang.kode_barang && (
+                                  <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
+                                    KODE: {barang.kode_barang}
+                                  </span>
+                                )}
                                 {barang.part_number && (
                                   <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
                                     PN: {barang.part_number}
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-600">{barang.nama_barang} ({barang.satuan})</div>
                             </div>
                           ))
                         ) : (
@@ -1166,16 +1166,16 @@ export default function MutasiGudang() {
                   {/* Preview Auto-fill */}
                   <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                     <div>
+                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
+                      <span className="text-sm font-mono font-semibold">{formData.nama_barang || '-'}</span>
+                    </div>
+                    <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
-                      <span className="text-sm font-mono font-semibold">{formData.kode_barang || '-'}</span>
+                      <span className="text-sm">{formData.kode_barang || '-'}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
                       <span className="text-sm font-mono text-blue-600">{formData.part_number || '-'}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                      <span className="text-sm">{formData.nama_barang || '-'}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
