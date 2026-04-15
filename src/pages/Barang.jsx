@@ -111,7 +111,7 @@ export default function Barang() {
     refresh,
   } = useDataTable({
     fetchData: fetchBarangData,
-    filterKeys: ['kode_kategori', 'kode_armada', 'is_stocked'],
+    filterKeys: ['kode_kategori', 'kode_sub_kategori', 'kode_armada', 'is_stocked'],
     searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan', 'supplier_utama'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
@@ -414,9 +414,14 @@ export default function Barang() {
     }));
   };
 
-  // Sub Kategori yang tersedia berdasarkan Kategori yang dipilih (cascade dari API)
+  // Sub Kategori yang tersedia berdasarkan Kategori yang dipilih di form (cascade dari API)
   const filteredSubKategori = formData.kode_kategori
     ? subKategoriList.filter(sub => sub.kode_kategori === formData.kode_kategori)
+    : [];
+
+  // Sub Kategori yang tersedia berdasarkan filter Kategori di toolbar (cascade)
+  const filteredSubKategoriToolbar = filters.kode_kategori && filters.kode_kategori !== 'all'
+    ? subKategoriList.filter(sub => sub.kode_kategori === filters.kode_kategori)
     : [];
 
   // ============================================
@@ -425,9 +430,9 @@ export default function Barang() {
 
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
-      'Kode': item.kode_barang,
-      'Part Number': item.part_number,
+      'Kode Barang': item.kode_barang,
       'Nama Barang': item.nama_barang,
+      'Part Number': item.part_number,
       'Kategori': item.nama_kategori,
       'Sub Kategori': item.nama_sub_kategori,
       'Armada': item.nama_armada,
@@ -454,152 +459,162 @@ export default function Barang() {
   return (
     <MainLayout title="Barang">
       <div className="space-y-6">
-        {/* Toolbar: Search, Filters, Actions - All in one row */}
+        {/* Toolbar: Two-row layout — Row 1: Search | Row 2: Filters + Actions */}
         <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
+          <div className="flex flex-col gap-3">
 
-            {/* Left side: Search + Filters */}
-            <div className="flex flex-col sm:flex-row gap-2 flex-1 w-full lg:w-auto">
+            {/* ── Row 1: Search ── */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Cari kode barang, nama barang..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+              />
+            </div>
 
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Cari kode barang, nama barang..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-sm"
-                />
+            {/* ── Row 2: Filters + Actions ── */}
+            <div className="flex flex-col lg:flex-row gap-2 items-start lg:items-center justify-between">
+
+              {/* Left: Filter Controls */}
+              <div className="flex flex-wrap gap-2 flex-1">
+
+                {/* Filter Kategori */}
+                <select
+                  value={filters.kode_kategori || 'all'}
+                  onChange={(e) => {
+                    setFilter('kode_kategori', e.target.value);
+                    setFilter('kode_sub_kategori', 'all');
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Kategori</option>
+                  {kategoriList.map((kat) => (
+                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                      {kat.nama_kategori}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Sub Kategori (cascading dari Kategori) */}
+                <select
+                  value={filters.kode_sub_kategori || 'all'}
+                  onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                  disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || filteredSubKategoriToolbar.length === 0}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="all">Semua Sub Kategori</option>
+                  {filteredSubKategoriToolbar.map((sub) => (
+                    <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                      {sub.nama_sub_kategori}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Armada */}
+                <select
+                  value={filters.kode_armada || 'all'}
+                  onChange={(e) => setFilter('kode_armada', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Armada</option>
+                  {armadaList.map((arm) => (
+                    <option key={arm.kode_armada} value={arm.kode_armada}>
+                      {arm.nama_armada}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Filter Tipe Stok */}
+                <select
+                  value={filters.is_stocked || 'all'}
+                  onChange={(e) => setFilter('is_stocked', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
+                >
+                  <option value="all">Semua Tipe</option>
+                  <option value="true">Di-Stok</option>
+                  <option value="false">Non-Stok</option>
+                </select>
+
+                {/* Clear All Filters */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Clear all filters"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
 
-              {/* Filter Kategori */}
-              <select
-                value={filters.kode_kategori || 'all'}
-                onChange={(e) => setFilter('kode_kategori', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Kategori</option>
-                {kategoriList.map((kat) => (
-                  <option key={kat.kode_kategori} value={kat.kode_kategori}>
-                    {kat.nama_kategori}
-                  </option>
-                ))}
-              </select>
+              <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
 
-              {/* Filter Armada */}
-              <select
-                value={filters.kode_armada || 'all'}
-                onChange={(e) => setFilter('kode_armada', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Armada</option>
-                {armadaList.map((arm) => (
-                  <option key={arm.kode_armada} value={arm.kode_armada}>
-                    {arm.nama_armada}
-                  </option>
-                ))}
-              </select>
-
-              {/* Filter Tipe Stok */}
-              <select
-                value={filters.is_stocked || 'all'}
-                onChange={(e) => setFilter('is_stocked', e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-              >
-                <option value="all">Semua Tipe</option>
-                <option value="true">Di-Stok</option>
-                <option value="false">Non-Stok</option>
-              </select>
-
-              {/* Clear All Filters */}
-              {hasActiveFilters && (
+              {/* Right: Action Buttons */}
+              <div className="flex gap-2 w-full lg:w-auto shrink-0">
                 <button
-                  onClick={clearAllFilters}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Clear all filters"
+                  onClick={handleExport}
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                 >
-                  <X className="w-5 h-5" />
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
                 </button>
-              )}
+
+                {canCreate && (
+                  <button
+                    onClick={() => { resetForm(); setShowModal(true); }}
+                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
-
-            {/* Right side: Action Buttons */}
-            <div className="flex gap-2 w-full lg:w-auto">
-              <button
-                onClick={handleExport}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-              </button>
-
-              {canCreate && (
-                <button
-                  onClick={() => { resetForm(); setShowModal(true); }}
-                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Tambah</span>
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Active Filters Display */}
-          {activeFilters.length > 0 && (
+          {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
-              <span className="text-sm text-gray-600">Filter aktif:</span>
               {activeFilters.map((filter, idx) => {
                 if (filter.type === 'search') {
                   return (
-                    <span key={`search-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                      Cari: "{filter.value}"
-                      <button onClick={() => setSearchQuery('')} className="hover:bg-blue-200 rounded-full p-0.5">
+                    <span key={`search-${idx}`} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-200">
+                      <Search className="w-3 h-3" />
+                      Search: "{filter.value}"
+                      <button onClick={() => setSearchQuery('')} className="hover:bg-blue-100 rounded-full p-0.5">
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   );
                 }
 
-                if (filter.key === 'kode_kategori') {
-                  const kat = kategoriList.find(k => k.kode_kategori === filter.value);
-                  return (
-                    <span key={`kat-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
-                      Kategori: {kat?.nama_kategori || filter.value}
-                      <button onClick={() => setFilter('kode_kategori', 'all')} className="hover:bg-purple-200 rounded-full p-0.5">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                }
+                const displayValue = filter.key === 'kode_kategori'
+                  ? kategoriList.find(k => k.kode_kategori === filter.value)?.nama_kategori || filter.value
+                  : filter.key === 'kode_sub_kategori'
+                    ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
+                    : filter.key === 'kode_armada'
+                      ? armadaList.find(a => a.kode_armada === filter.value)?.nama_armada || filter.value
+                      : filter.key === 'is_stocked'
+                        ? (filter.value === 'true' ? 'Di-Stok' : 'Non-Stok')
+                        : filter.value;
 
-                if (filter.key === 'kode_armada') {
-                  const arm = armadaList.find(a => a.kode_armada === filter.value);
-                  return (
-                    <span key={`arm-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">
-                      Armada: {arm?.nama_armada || filter.value}
-                      <button onClick={() => setFilter('kode_armada', 'all')} className="hover:bg-orange-200 rounded-full p-0.5">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                }
-
-                if (filter.key === 'is_stocked') {
-                  const label = filter.value === 'true' ? 'Di-Stok' : 'Non-Stok';
-                  return (
-                    <span key={`stock-${idx}`} className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-                      Tipe: {label}
-                      <button onClick={() => setFilter('is_stocked', 'all')} className="hover:bg-green-200 rounded-full p-0.5">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  );
-                }
-                return null;
+                return (
+                  <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
+                    <Filter className="w-3 h-3" />
+                    {filter.key === 'kode_kategori' && 'Kategori: '}
+                    {filter.key === 'kode_sub_kategori' && 'Sub Kategori: '}
+                    {filter.key === 'kode_armada' && 'Armada: '}
+                    {filter.key === 'is_stocked' && 'Tipe: '}
+                    {displayValue}
+                    <button onClick={() => setFilter(filter.key, 'all')} className="hover:bg-green-100 rounded-full p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                );
               })}
             </div>
           )}
@@ -615,22 +630,22 @@ export default function Barang() {
                     Gambar
                   </th>
                   <th
+                    onClick={() => requestSort('nama_barang')}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  >
+                    Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th
                     onClick={() => requestSort('kode_barang')}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
                     Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
+                  </th>                  
                   <th
                     onClick={() => requestSort('part_number')}
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
                     Part Number {sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th
-                    onClick={() => requestSort('nama_barang')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                  >
-                    Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sub Kategori</th>
@@ -695,10 +710,9 @@ export default function Barang() {
                             </div>
                           )}
                         </td>
-
-                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>
-                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.part_number}</td>
-                        <td className="px-6 py-4 font-medium">{item.nama_barang}</td>
+                        <td className="px-6 py-4 text-sm">{item.nama_barang}</td>
+                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>                        
+                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.part_number}</td>              
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_sub_kategori}</td>
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada}</td>

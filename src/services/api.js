@@ -47,7 +47,7 @@ async function fetchWithAuth(url, options = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || error.details || 'Request failed');
+    throw new Error(error.details || error.error || 'Request failed');
   }
 
   return response.json();
@@ -210,8 +210,8 @@ export const barangAPI = {
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok || 0,
       max_stok: data.max_stok || 0,
-      lokasi_gudang: data.lokasi_gudang,
-      supplier_utama: data.supplier_utama,
+      // lokasi_gudang: data.lokasi_gudang,
+      // supplier_utama: data.supplier_utama,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
 
@@ -222,7 +222,7 @@ export const barangAPI = {
       // Prioritaskan kode_armada jika ada, fallback ke nama_armada agar
       // backend bisa resolve sendiri, atau kirim keduanya.
       kode_armada: data.kode_armada || undefined,
-      nama_armada: data.nama_armada || undefined,
+      //nama_armada: data.nama_armada || undefined,
 
       // New field
       is_stocked: data.is_stocked ?? true,
@@ -251,8 +251,8 @@ export const barangAPI = {
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok,
       max_stok: data.max_stok,
-      lokasi_gudang: data.lokasi_gudang,
-      supplier_utama: data.supplier_utama,
+      // lokasi_gudang: data.lokasi_gudang,
+      // supplier_utama: data.supplier_utama,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
       
@@ -582,9 +582,9 @@ export const pembelianAPI = {
       no_po: data.no_po,
       tanggal_po: data.tanggal_po,
       kode_vendor: data.kode_vendor,
-      nama_vendor: data.nama_vendor,
+      //nama_vendor: data.nama_vendor,
       kode_barang: data.kode_barang,
-      nama_barang: data.nama_barang,
+      //nama_barang: data.nama_barang,
       qty_order: data.qty_order,
       harga_satuan: data.harga_satuan,
       // FIX: total_harga adalah kolom GENERATED ALWAYS di PostgreSQL.
@@ -661,9 +661,9 @@ export const mutasiAPI = {
       tanggal: data.tanggal,
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
-      nama_barang: data.nama_barang,
+      //nama_barang: data.nama_barang,
       qty: data.qty,
-      satuan: data.satuan,
+      //satuan: data.satuan,
       keterangan: data.keterangan,
       referensi: data.referensi,
       created_by: data.created_by,
@@ -682,9 +682,9 @@ export const mutasiAPI = {
       tanggal: data.tanggal,
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
-      nama_barang: data.nama_barang,
+      //nama_barang: data.nama_barang,
       qty: data.qty,
-      satuan: data.satuan,
+      //satuan: data.satuan,
       keterangan: data.keterangan,
       referensi: data.referensi,
       updated_by: data.updated_by,

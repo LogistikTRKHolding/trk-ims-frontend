@@ -62,6 +62,9 @@ export default function Pembelian() {
     // ── State untuk Nested Modal: Tambah Barang Baru ──
     const [showAddBarangModal, setShowAddBarangModal] = useState(false);
     const [subKategoriListModal, setSubKategoriListModal] = useState([]);
+
+    // ── State Sub Kategori untuk filter toolbar (cascading dari filter Kategori) ──
+    const [subKategoriList, setSubKategoriList] = useState([]);
     const [newBarangData, setNewBarangData] = useState({
         kode_barang: '',
         part_number: '',
@@ -98,7 +101,6 @@ export default function Pembelian() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Fetch pembelian data dengan useCallback
     const fetchPembelianData = useCallback(async () => {
         const result = await pembelianAPI.getAll();
         return result;
@@ -153,7 +155,7 @@ export default function Pembelian() {
         clearDateFilter,
     } = useDataTable({
         fetchData: fetchPembelianData,
-        filterKeys: ['kode_kategori', 'kode_armada', 'status'],
+        filterKeys: ['kode_kategori', 'kode_sub_kategori', 'kode_armada', 'status'],
         searchKeys: ['no_po', 'kode_barang', 'nama_barang', 'nama_vendor', 'keterangan'],
         dateFilterKey: 'tanggal_po',
         defaultSort: { key: 'tanggal_po', direction: 'desc' },
@@ -235,18 +237,21 @@ export default function Pembelian() {
         }
     };
 
-    // Load sub kategori berdasarkan kategori (untuk modal Tambah Barang)
-    const loadSubKategoriByKategori = async (kode_kategori) => {
-        if (!kode_kategori) {
-            setSubKategoriListModal([]);
+    // Load sub kategori berdasarkan kategori — target: 'modal' | 'filter'
+    const loadSubKategoriByKategori = async (kode_kategori, target = 'modal') => {
+        if (!kode_kategori || kode_kategori === 'all') {
+            if (target === 'modal') setSubKategoriListModal([]);
+            else setSubKategoriList([]);
             return;
         }
         try {
             const result = await subKategoriAPI.getByKategori(kode_kategori);
-            setSubKategoriListModal(result);
+            if (target === 'modal') setSubKategoriListModal(result);
+            else setSubKategoriList(result);
         } catch (error) {
             console.error('Error loading sub kategori:', error);
-            setSubKategoriListModal([]);
+            if (target === 'modal') setSubKategoriListModal([]);
+            else setSubKategoriList([]);
         }
     };
 
@@ -417,7 +422,7 @@ export default function Pembelian() {
         }));
 
         if (name === 'kode_kategori') {
-            loadSubKategoriByKategori(finalValue);
+            loadSubKategoriByKategori(finalValue, 'modal');
         }
     };
 
@@ -683,12 +688,31 @@ export default function Pembelian() {
                                 {/* Filter Kategori */}
                                 <select
                                     value={filters.kode_kategori || 'all'}
-                                    onChange={(e) => setFilter('kode_kategori', e.target.value)}
+                                    onChange={(e) => {
+                                        setFilter('kode_kategori', e.target.value);
+                                        setFilter('kode_sub_kategori', 'all');
+                                        loadSubKategoriByKategori(e.target.value, 'filter');
+                                    }}
                                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
                                 >
                                     <option value="all">Semua Kategori</option>
                                     {kategoriOptions.map(kat => (
                                         <option key={kat.kode} value={kat.kode}>{kat.nama}</option>
+                                    ))}
+                                </select>
+
+                                {/* Filter Sub Kategori (cascading dari Kategori) */}
+                                <select
+                                    value={filters.kode_sub_kategori || 'all'}
+                                    onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                                    disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                    <option value="all">Semua Sub Kategori</option>
+                                    {subKategoriList.map((sub) => (
+                                        <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                                            {sub.nama_sub_kategori}
+                                        </option>
                                     ))}
                                 </select>
 
@@ -841,14 +865,17 @@ export default function Pembelian() {
 
                                     const displayValue = filter.key === 'kode_kategori'
                                         ? kategoriOptions.find(k => k.kode === filter.value)?.nama || filter.value
-                                        : filter.key === 'kode_armada'
-                                            ? armadaOptions.find(a => a.kode === filter.value)?.nama || filter.value
-                                            : filter.value;
+                                        : filter.key === 'kode_sub_kategori'
+                                            ? subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value
+                                            : filter.key === 'kode_armada'
+                                                ? armadaOptions.find(a => a.kode === filter.value)?.nama || filter.value
+                                                : filter.value;
 
                                     return (
                                         <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
                                             <Filter className="w-3 h-3" />
                                             {filter.key === 'kode_kategori' && 'Kategori: '}
+                                            {filter.key === 'kode_sub_kategori' && 'Sub Kategori: '}
                                             {filter.key === 'kode_armada' && 'Armada: '}
                                             {filter.key === 'status' && 'Status: '}
                                             {displayValue}
