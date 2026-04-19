@@ -239,8 +239,8 @@ export default function Barang() {
     e.preventDefault();
 
     // Validation
-    if (!formData.kode_barang || !formData.nama_barang) {
-      alert('Kode Barang dan Nama Barang wajib diisi!');
+    if (!formData.nama_barang) {
+      alert('Nama Barang wajib diisi!');
       return;
     }
 
@@ -1024,20 +1024,40 @@ export default function Barang() {
                     )}
                   </div>
 
+                  {/* Stock Type */}
+                  <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="is_stocked"
+                        name="is_stocked"
+                        checked={formData.is_stocked}
+                        onChange={handleInputChange}
+                        className="mt-1 w-4 h-4 text-green-600"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="is_stocked" className="font-medium text-gray-900 cursor-pointer">
+                          Barang Di-Stok di Gudang
+                        </label>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Centang jika barang disimpan di gudang dengan tracking inventory
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Basic Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Kode Barang <span className="text-red-500">*</span>
+                        Kode Barang
                       </label>
                       <input
                         type="text"
                         name="kode_barang"
-                        value={formData.kode_barang}
-                        onChange={handleInputChange}
-                        disabled={!!editingItem}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 disabled:bg-gray-100"
+                        value={formData.kode_barang || '(dibuat otomatis)'}
+                        readOnly
+                        className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                       />
                     </div>
                     <div>
@@ -1051,8 +1071,9 @@ export default function Barang() {
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
-                    </div>
-                    <div>
+                    </div>                    
+                  </div>
+                  <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nama Barang <span className="text-red-500">*</span>
                       </label>
@@ -1065,9 +1086,8 @@ export default function Barang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
-                  </div>
 
-                  {/* Kategori, Sub Kategori & Armada — satu row */}
+                  {/* Kategori, Sub Kategori & Armada */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1088,7 +1108,6 @@ export default function Barang() {
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Sub Kategori
@@ -1114,7 +1133,6 @@ export default function Barang() {
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {/* Armada <span className="text-red-500">*</span> */}
@@ -1136,29 +1154,7 @@ export default function Barang() {
                       </select>
                     </div>
                   </div>
-
-                  {/* Stock Type */}
-                  <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="is_stocked"
-                        name="is_stocked"
-                        checked={formData.is_stocked}
-                        onChange={handleInputChange}
-                        className="mt-1 w-4 h-4 text-green-600"
-                      />
-                      <div className="flex-1">
-                        <label htmlFor="is_stocked" className="font-medium text-gray-900 cursor-pointer">
-                          Barang Di-Stok di Gudang
-                        </label>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Centang jika barang disimpan di gudang dengan tracking inventory
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
+                  
                   {/* Pricing & Inventory */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -1174,7 +1170,6 @@ export default function Barang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Harga Satuan
@@ -1189,24 +1184,9 @@ export default function Barang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Supplier Utama
-                      </label>
-                      <input
-                        type="text"
-                        name="supplier_utama"
-                        value={formData.supplier_utama}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Stock Limits (only for stocked items) */}
+                    {/* Stock Limits (only for stocked items) */}
                   {formData.is_stocked && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Min Stok
@@ -1234,22 +1214,9 @@ export default function Barang() {
                           className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                         />
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Lokasi Gudang
-                        </label>
-                        <input
-                          type="text"
-                          name="lokasi_gudang"
-                          value={formData.lokasi_gudang}
-                          onChange={handleInputChange}
-                          placeholder="Rak A1, Bin 12, dll"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
                     </div>
                   )}
+                  </div>                  
 
                   {/* Notes */}
                   <div>

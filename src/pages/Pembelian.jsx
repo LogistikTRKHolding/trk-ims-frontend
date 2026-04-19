@@ -441,10 +441,9 @@ export default function Pembelian() {
     };
 
     const openAddBarangModal = () => {
-        // Pre-fill dari search term jika ada
+        // Pre-fill nama barang dari search term jika ada (kode_barang di-generate otomatis oleh database)
         setNewBarangData(prev => ({
             ...prev,
-            kode_barang: barangSearch.toUpperCase(),
             nama_barang: barangSearch.toUpperCase(),
         }));
         setShowAddBarangModal(true);
@@ -1084,7 +1083,7 @@ export default function Pembelian() {
                 </div>
             </div>
 
-            {/* ══════════════════════════════════════════════════════
+        {/* ══════════════════════════════════════════════════════
                 Modal Form: Tambah / Edit Purchase Order
             ══════════════════════════════════════════════════════ */}
             {showModal && (
@@ -1137,15 +1136,7 @@ export default function Pembelian() {
                                 {/* ── Searchable Vendor ── */}
                                 <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">Cari Vendor *</label>
-                                        <button
-                                            type="button"
-                                            onClick={openAddVendorModal}
-                                            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                            Tambah Vendor Baru
-                                        </button>
+                                        <label className="block text-sm font-medium text-gray-700">Cari Vendor *</label>            
                                     </div>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1199,15 +1190,7 @@ export default function Pembelian() {
                                 {/* ── Searchable Barang ── */}
                                 <div className="md:col-span-2 relative" ref={barangDropdownRef}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">Cari Barang *</label>
-                                        <button
-                                            type="button"
-                                            onClick={openAddBarangModal}
-                                            className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 font-medium"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                            Tambah Barang Baru
-                                        </button>
+                                        <label className="block text-sm font-medium text-gray-700">Cari Barang *</label>                                        
                                     </div>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1363,12 +1346,12 @@ export default function Pembelian() {
                 </div>
             )}
 
-            {/* ══════════════════════════════════════════════════════
+        {/* ══════════════════════════════════════════════════════
                 Nested Modal: Tambah Barang Baru
             ══════════════════════════════════════════════════════ */}
             {showAddBarangModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] p-4">
-                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
                         <form onSubmit={handleAddNewBarang}>
                             {/* Header */}
                             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
@@ -1392,15 +1375,14 @@ export default function Pembelian() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kode Barang *</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Kode Barang</label>
                                         <input
                                             type="text"
                                             name="kode_barang"
                                             value={newBarangData.kode_barang}
-                                            onChange={handleNewBarangChange}
-                                            required
-                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                                            placeholder="Contoh: BRG001"
+                                            readOnly
+                                            className="w-full px-3 py-2 border rounded-lg outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
+                                            placeholder="Digenerate otomatis"
                                         />
                                     </div>
                                     <div>
@@ -1543,8 +1525,8 @@ export default function Pembelian() {
                 Nested Modal: Tambah Vendor Baru
             ══════════════════════════════════════════════════════ */}
             {showAddVendorModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] p-4">
-                    <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
                         <form onSubmit={handleAddNewVendor}>
                             {/* Header */}
                             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
@@ -1560,8 +1542,8 @@ export default function Pembelian() {
 
                             {/* Body */}
                             <div className="px-6 py-4 space-y-4">
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <p className="text-sm text-blue-800">
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <p className="text-sm text-green-800">
                                         <strong>Info:</strong> Vendor yang ditambahkan akan otomatis dipilih untuk transaksi pembelian.
                                     </p>
                                 </div>
@@ -1654,7 +1636,7 @@ export default function Pembelian() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg"
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                                 >
                                     Simpan Vendor
                                 </button>
@@ -1663,7 +1645,6 @@ export default function Pembelian() {
                     </div>
                 </div>
             )}
-
         </MainLayout>
     );
 }

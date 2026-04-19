@@ -343,10 +343,9 @@ export default function MutasiGudang() {
   };
 
   const openAddBarangModal = () => {
-    // Pre-fill kode/nama barang dari search term jika ada
+    // Pre-fill nama barang dari search term jika ada (kode_barang di-generate otomatis oleh database)
     setNewBarangData(prev => ({
       ...prev,
-      kode_barang: searchTermBarang.toUpperCase(),
       nama_barang: searchTermBarang.toUpperCase(),
     }));
     setShowAddBarangModal(true);
@@ -474,7 +473,7 @@ export default function MutasiGudang() {
       'Gudang': item.nama_gudang,
       'Tanggal': formatDate(item.tanggal),
       'No Transaksi': item.no_transaksi,
-      'Jenis': item.jenis_transaksi,
+      'Transaksi': item.jenis_transaksi,
       'Kode Barang': item.kode_barang,
       'Nama Barang': item.nama_barang,
       'Qty': item.qty,
@@ -539,7 +538,7 @@ export default function MutasiGudang() {
                   onChange={(e) => setFilter('jenis_transaksi', e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
                 >
-                  <option value="all">Semua Jenis</option>
+                  <option value="all">Semua Transaksi</option>
                   <option value="Masuk">Masuk</option>
                   <option value="Keluar">Keluar</option>
                 </select>
@@ -672,7 +671,6 @@ export default function MutasiGudang() {
                 )}
               </div>
             </div>
-
           </div>
 
           {/* Active Filters Display */}
@@ -729,7 +727,7 @@ export default function MutasiGudang() {
                   <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
                     <Filter className="w-3 h-3" />
                     {filter.key === 'kode_gudang' && 'Gudang: '}
-                    {filter.key === 'jenis_transaksi' && 'Jenis: '}
+                    {filter.key === 'jenis_transaksi' && 'Transaksi: '}
                     {filter.key === 'kode_kategori' && 'Kategori: '}
                     {filter.key === 'kode_sub_kategori' && 'Sub Kategori: '}
                     {filter.key === 'nama_armada' && 'Armada: '}
@@ -801,7 +799,7 @@ export default function MutasiGudang() {
                     Tanggal {sortConfig.key === 'tanggal' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Jenis
+                    Transaksi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nama/Kode Barang
@@ -876,7 +874,7 @@ export default function MutasiGudang() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
                           {item.part_number || '-'}
-                        </td>                  
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {item.qty} {item.satuan}
                         </td>
@@ -1145,17 +1143,10 @@ export default function MutasiGudang() {
                             </div>
                           ))
                         ) : (
-                          <div className="p-4">
-                            <div className="text-sm text-gray-500 text-center mb-3">
-                              Barang tidak ditemukan
-                            </div>
-                            <button
-                              type="button"
-                              onClick={openAddBarangModal}
-                              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-                            >
-                              <Plus className="w-4 h-4" />
-                              Tambah Barang Baru
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            Barang tidak ditemukan —{' '}
+                            <button type="button" onClick={openAddBarangModal} className="text-green-600 font-medium hover:underline">
+                              Tambah baru
                             </button>
                           </div>
                         )}
@@ -1232,7 +1223,9 @@ export default function MutasiGudang() {
         )
       }
 
-      {/* Modal Tambah Barang Baru (Nested Modal) */}
+      {/* ══════════════════════════════════════════════════════
+                Nested Modal: Tambah Barang Baru
+          ══════════════════════════════════════════════════════ */}
       {
         showAddBarangModal && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
@@ -1272,16 +1265,15 @@ export default function MutasiGudang() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Kode Barang *
+                        Kode Barang
                       </label>
                       <input
                         type="text"
                         name="kode_barang"
                         value={newBarangData.kode_barang}
-                        onChange={handleNewBarangChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                        placeholder="Contoh: BRG001"
+                        readOnly
+                        className="w-full px-3 py-2 border rounded-lg outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
+                        placeholder="(dibuat otomatis)"
                       />
                     </div>
                     <div>
@@ -1298,22 +1290,21 @@ export default function MutasiGudang() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nama Barang *
-                      </label>
-                      <input
-                        type="text"
-                        name="nama_barang"
-                        value={newBarangData.nama_barang}
-                        onChange={handleNewBarangChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                        placeholder="Contoh: OLI MESIN"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nama Barang [-Spesifikasi (jika ada)]*
+                    </label>
+                    <input
+                      type="text"
+                      name="nama_barang"
+                      value={newBarangData.nama_barang}
+                      onChange={handleNewBarangChange}
+                      required
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                      placeholder="Contoh: OLI MESIN - SAE40"
+                    />
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1386,8 +1377,6 @@ export default function MutasiGudang() {
                         </p>
                       )}
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Satuan *

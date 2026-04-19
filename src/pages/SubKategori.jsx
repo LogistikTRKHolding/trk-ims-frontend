@@ -294,7 +294,7 @@ export default function SubKategori() {
               <option value="all">Semua Kategori</option>
               {kategoriList.map((kat) => (
                 <option key={kat.kode_kategori} value={kat.kode_kategori}>
-                  {kat.kode_kategori} — {kat.nama_kategori}
+                  {kat.nama_kategori}
                 </option>
               ))}
             </select>
@@ -308,7 +308,7 @@ export default function SubKategori() {
               <option value="all">Semua Sub-Kategori</option>
               {subKategoriOptions.map((sk) => (
                 <option key={sk.kode_sub_kategori} value={sk.kode_sub_kategori}>
-                  {sk.kode_sub_kategori} — {sk.nama_sub_kategori}
+                  {sk.nama_sub_kategori}
                 </option>
               ))}
             </select>

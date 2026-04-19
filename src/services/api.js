@@ -658,12 +658,11 @@ export const mutasiAPI = {
   async create(data) {
     const payload = {
       no_transaksi: data.no_transaksi,
+      kode_gudang: data.kode_gudang,
       tanggal: data.tanggal,
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
-      //nama_barang: data.nama_barang,
       qty: data.qty,
-      //satuan: data.satuan,
       keterangan: data.keterangan,
       referensi: data.referensi,
       created_by: data.created_by,
@@ -679,12 +678,11 @@ export const mutasiAPI = {
 
   async update(id, data) {
     const payload = {
+      kode_gudang: data.kode_gudang,
       tanggal: data.tanggal,
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
-      //nama_barang: data.nama_barang,
       qty: data.qty,
-      //satuan: data.satuan,
       keterangan: data.keterangan,
       referensi: data.referensi,
       updated_by: data.updated_by,
