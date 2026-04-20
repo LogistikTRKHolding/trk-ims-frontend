@@ -1173,7 +1173,7 @@ export default function MutasiGudang() {
                       <span className="text-sm">{formData.satuan || '-'}</span>
                     </div>
                   </div>
-
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Qty *</label>
@@ -1191,7 +1191,6 @@ export default function MutasiGudang() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
                     <textarea name="keterangan" value={formData.keterangan} onChange={handleInputChange} rows="2" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder="Catatan..."></textarea>

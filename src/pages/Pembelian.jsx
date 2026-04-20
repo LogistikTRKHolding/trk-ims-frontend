@@ -59,6 +59,9 @@ export default function Pembelian() {
     const vendorDropdownRef = useRef(null);
     const barangDropdownRef = useRef(null);
 
+    // State untuk preview info barang terpilih (part_number & satuan — tidak dikirim ke payload)
+    const [selectedBarangPreview, setSelectedBarangPreview] = useState({ part_number: '', satuan: '' });
+
     // ── State untuk Nested Modal: Tambah Barang Baru ──
     const [showAddBarangModal, setShowAddBarangModal] = useState(false);
     const [subKategoriListModal, setSubKategoriListModal] = useState([]);
@@ -279,7 +282,8 @@ export default function Pembelian() {
         const term = barangSearch.toLowerCase();
         return barangList.filter(b =>
             b.nama_barang.toLowerCase().includes(term) ||
-            b.kode_barang.toLowerCase().includes(term)
+            b.kode_barang.toLowerCase().includes(term) ||
+            (b.part_number && b.part_number.toLowerCase().includes(term))
         ).slice(0, 10);
     }, [barangList, barangSearch]);
 
@@ -302,6 +306,7 @@ export default function Pembelian() {
             harga_satuan: barang.harga_satuan || 0,
             total_harga: prev.qty_order * (barang.harga_satuan || 0),
         }));
+        setSelectedBarangPreview({ part_number: barang.part_number || '', satuan: barang.satuan || '' });
         setBarangSearch('');
         setShowBarangList(false);
     };
@@ -322,6 +327,7 @@ export default function Pembelian() {
             status: item.status,
             keterangan: item.keterangan || '',
         });
+        setSelectedBarangPreview({ part_number: item.part_number || '', satuan: item.satuan || '' });
         setVendorSearch('');
         setBarangSearch('');
         setEditingItem(item);
@@ -347,6 +353,7 @@ export default function Pembelian() {
         setEditingItem(null);
         setVendorSearch('');
         setBarangSearch('');
+        setSelectedBarangPreview({ part_number: '', satuan: '' });
     };
 
     const handleInputChange = (e) => {
@@ -1083,7 +1090,7 @@ export default function Pembelian() {
                 </div>
             </div>
 
-        {/* ══════════════════════════════════════════════════════
+            {/* ══════════════════════════════════════════════════════
                 Modal Form: Tambah / Edit Purchase Order
             ══════════════════════════════════════════════════════ */}
             {showModal && (
@@ -1135,14 +1142,12 @@ export default function Pembelian() {
 
                                 {/* ── Searchable Vendor ── */}
                                 <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">Cari Vendor *</label>            
-                                    </div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cari Vendor *</label>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                                             placeholder="Cari kode atau nama vendor..."
                                             value={vendorSearch}
                                             onChange={(e) => { setVendorSearch(e.target.value); setShowVendorList(true); }}
@@ -1159,8 +1164,16 @@ export default function Pembelian() {
                                                         onClick={() => selectVendor(v)}
                                                         className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
-                                                        <div className="text-sm font-bold text-gray-800">{v.kode_vendor}</div>
-                                                        <div className="text-xs text-gray-600">{v.nama_vendor}</div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-bold text-gray-800">{v.nama_vendor}</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-600">
+                                                            {v.kode_vendor && (
+                                                                <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
+                                                                    KODE: {v.kode_vendor}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))
                                             ) : (
@@ -1175,29 +1188,27 @@ export default function Pembelian() {
                                     )}
 
                                     {/* Preview Vendor terpilih */}
-                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
-                                        <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Vendor</span>
-                                            <span className="text-sm font-mono font-semibold">{formData.kode_vendor || '-'}</span>
-                                        </div>
+                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Vendor</span>
-                                            <span className="text-sm">{formData.nama_vendor || '-'}</span>
+                                            <span className="text-sm font-mono font-semibold">{formData.nama_vendor || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Vendor</span>
+                                            <span className="text-sm font-mono">{formData.kode_vendor || '-'}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* ── Searchable Barang ── */}
                                 <div className="md:col-span-2 relative" ref={barangDropdownRef}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">Cari Barang *</label>                                        
-                                    </div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cari Barang *</label>
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                         <input
                                             type="text"
-                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                                            placeholder="Cari kode atau nama barang..."
+                                            className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Cari kode, nama barang atau part number..."
                                             value={barangSearch}
                                             onChange={(e) => { setBarangSearch(e.target.value); setShowBarangList(true); }}
                                             onFocus={() => setShowBarangList(true)}
@@ -1213,8 +1224,21 @@ export default function Pembelian() {
                                                         onClick={() => selectBarang(b)}
                                                         className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
-                                                        <div className="text-sm font-bold text-gray-800">{b.kode_barang}</div>
-                                                        <div className="text-xs text-gray-600">{b.nama_barang} ({b.satuan})</div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-bold text-gray-800">{b.nama_barang} ({b.satuan})</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-600">
+                                                            {b.kode_barang && (
+                                                                <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
+                                                                    KODE: {b.kode_barang}
+                                                                </span>
+                                                            )}
+                                                            {b.part_number && (
+                                                                <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
+                                                                    PN: {b.part_number}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))
                                             ) : (
@@ -1229,14 +1253,22 @@ export default function Pembelian() {
                                     )}
 
                                     {/* Preview Barang terpilih */}
-                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border">
-                                        <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
-                                            <span className="text-sm font-mono font-semibold">{formData.kode_barang || '-'}</span>
-                                        </div>
+                                    <div className="mt-2 grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                                            <span className="text-sm">{formData.nama_barang || '-'}</span>
+                                            <span className="text-sm font-mono font-semibold">{formData.nama_barang || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
+                                            <span className="text-sm">{formData.kode_barang || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
+                                            <span className="text-sm font-mono text-blue-600">{selectedBarangPreview.part_number || '-'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
+                                            <span className="text-sm">{selectedBarangPreview.satuan || '-'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1346,7 +1378,7 @@ export default function Pembelian() {
                 </div>
             )}
 
-        {/* ══════════════════════════════════════════════════════
+            {/* ══════════════════════════════════════════════════════
                 Nested Modal: Tambah Barang Baru
             ══════════════════════════════════════════════════════ */}
             {showAddBarangModal && (
