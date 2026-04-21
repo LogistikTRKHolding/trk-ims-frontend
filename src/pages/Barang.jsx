@@ -710,7 +710,7 @@ export default function Barang() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm">{item.nama_barang}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_barang}</td>
                         <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>                        
                         <td className="px-6 py-4 font-mono text-sm font-medium">{item.part_number}</td>              
                         <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>

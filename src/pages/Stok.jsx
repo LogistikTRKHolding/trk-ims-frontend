@@ -123,10 +123,11 @@ export default function Stok() {
 
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
-      'Kode': item.kode_barang,
-      'Part Number': item.part_number,
       'Nama Barang': item.nama_barang,
+      'Kode Barang': item.kode_barang,
+      'Part Number': item.part_number,
       'Kategori': item.nama_kategori || '',
+      'Sub Kategori': item.nama_sub_kategori || '',
       'Armada': item.nama_armada || '',
       'Satuan': item.satuan,
       'Total Masuk': item.total_masuk,
@@ -163,47 +164,47 @@ export default function Stok() {
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <p className="text-sm text-gray-600 flex items-center">
                 <Package className="w-4 h-4 mr-1" />
-                Total Barang
+                Jumlah barang
               </p>
               <p className="text-2xl font-bold text-gray-900">{stats.filtered.totalItems}</p>
               <p className="text-[10px] text-gray-400 mt-1 italic">
-                dari {stats.global.totalItems} total data
+                dari {stats.global.totalItems} jumlah data
               </p>
             </div>
 
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <p className="text-sm text-green-600 flex items-center">
                 <TrendingUp className="w-4 h-4 mr-1" />
-                Total Masuk
+                Jumlah masuk
               </p>
               <p className="text-2xl font-bold text-green-700">
                 {stats.filtered.totalMasuk.toLocaleString('id-ID')}
               </p>
               <p className="text-[10px] text-gray-400 mt-1 italic">
-                Total global: {stats.global.totalMasuk.toLocaleString('id-ID')}
+                dari {stats.global.totalMasuk.toLocaleString('id-ID')} jumlah data
               </p>
             </div>
 
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
               <p className="text-sm text-red-600 flex items-center">
                 <TrendingDown className="w-4 h-4 mr-1" />
-                Total Keluar
+                Total keluar
               </p>
               <p className="text-2xl font-bold text-red-700">
                 {stats.filtered.totalKeluar.toLocaleString('id-ID')}
               </p>
               <p className="text-[10px] text-gray-400 mt-1 italic">
-                Total global: {stats.global.totalKeluar.toLocaleString('id-ID')}
+                dari {stats.global.totalKeluar.toLocaleString('id-ID')} jumlah data
               </p>
             </div>
 
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-sm text-green-600">Stok Akhir</p>
+              <p className="text-sm text-green-600">Stok akhir</p>
               <p className="text-2xl font-bold text-green-700">
                 {stats.filtered.totalStok.toLocaleString('id-ID')}
               </p>
               <p className="text-[10px] text-gray-400 mt-1 italic">
-                Total global: {stats.global.totalStok.toLocaleString('id-ID')}
+                dari {stats.global.totalStok.toLocaleString('id-ID')} jumlah data
               </p>
             </div>
           </div>
@@ -347,27 +348,26 @@ export default function Stok() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    onClick={() => requestSort('nama_barang')}
+                  >
+                    Nama Barang,<br/>Harga {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('kode_barang')}
                   >
-                    Kode {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                    onClick={() => requestSort('nama_barang')}
-                  >
-                    Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>                  
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('nama_kategori')}
                   >
-                    Kategori {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kategori,<br/>Sub Kategori {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Armada</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Satuan</th>
                   <th
                     className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('total_masuk')}
@@ -419,6 +419,12 @@ export default function Stok() {
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div>
+                          <span className="text-sm font-medium text-gray-900">{item.nama_barang}</span>
+                          <p className="text-xs text-gray-500">{formatCurrency(item.nilai_stok)}</p>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
@@ -430,35 +436,29 @@ export default function Stok() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-gray-600">{item.part_number || '-'}</span>
-                      </td>
+                      </td>                      
                       <td className="px-6 py-4">
                         <div>
-                          <span className="text-sm font-medium text-gray-900">{item.nama_barang}</span>
-                          <p className="text-xs text-gray-500">{formatCurrency(item.nilai_stok)}</p>
+                          <p className="text-xs text-gray-600">{item.nama_kategori}</p>
+                          <p className="text-xs text-gray-600">{item.nama_sub_kategori}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-600">{item.nama_kategori || '-'}</span>
-                      </td>
-                      <td className="px-6 py-4">
                         <span className="text-sm text-gray-600">{item.nama_armada || '-'}</span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="text-sm text-gray-600">{item.satuan}</span>
+                      </td>                      
+                      <td className="px-6 py-4 text-right">
+                        <span className="text-sm text-green-600">
+                          {item.total_masuk.toLocaleString('id-ID')} {item.satuan}
+                        </span>                        
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="text-sm text-green-600 font-medium">
-                          {item.total_masuk.toLocaleString('id-ID')}
+                        <span className="text-sm text-red-600">
+                          {item.total_keluar.toLocaleString('id-ID')} {item.satuan}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="text-sm text-red-600 font-medium">
-                          {item.total_keluar.toLocaleString('id-ID')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-sm font-bold text-gray-900">
-                          {item.stok_akhir.toLocaleString('id-ID')}
+                        <span className="text-sm font-medium text-gray-900">
+                          {item.stok_akhir.toLocaleString('id-ID')} {item.satuan}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

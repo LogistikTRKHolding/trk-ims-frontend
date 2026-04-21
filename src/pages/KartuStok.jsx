@@ -398,18 +398,16 @@ export default function KartuStok() {
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <Package className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                                                <span className="font-semibold text-gray-800 truncate text-sm">{item.nama_barang}</span>
+                                                            <div className="flex items-center gap-2 mb-1">                                                                
+                                                                <span className="text-sm font-medium text-gray-800 truncate">{item.nama_barang}</span>
                                                             </div>
                                                             <p className="text-xs text-gray-500 mb-1">{item.kode_barang}</p>
-                                                            <p className="text-xs text-gray-500 mb-1">{item.part_number}</p>
+                                                            <p className="text-xs text-blue-500 mb-1">{item.part_number}</p>
                                                         </div>
                                                         <div className="text-right flex-shrink-0">
-                                                            <div className={`text-base font-bold ${parseInt(item.stok_akhir) <= parseInt(item.min_stok || 0) ? 'text-red-600' : 'text-green-600'}`}>
-                                                                {item.stok_akhir || 0}
-                                                            </div>
-                                                            <div className="text-xs text-gray-500">{item.satuan}</div>
+                                                            <div className={`text-base font-medium ${parseInt(item.stok_akhir) <= parseInt(item.min_stok || 0) ? 'text-red-600' : 'text-green-600'}`}>
+                                                                {item.stok_akhir || 0} <span className="text-sm text-gray-500">{item.satuan}</span>
+                                                            </div>                                                            
                                                         </div>
                                                     </div>
                                                 </button>

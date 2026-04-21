@@ -373,37 +373,37 @@ export default function SubKategori() {
               <tr>
                 <th
                   onClick={() => requestSort('kode_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Kode Kategori{' '}
                   {sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Nama Kategori{' '}
                   {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('kode_sub_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Kode Sub-Kategori{' '}
                   {sortConfig.key === 'kode_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_sub_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Nama Sub-Kategori{' '}
                   {sortConfig.key === 'nama_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">
                   Status
                 </th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">
                     Tindakan
                   </th>
                 )}
@@ -431,17 +431,17 @@ export default function SubKategori() {
               ) : (
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-mono text-sm text-gray-700">{item.kode_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-mono text-gray-700">{item.kode_kategori}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_kategori}</td>
-                    <td className="px-6 py-4 font-mono text-sm text-gray-700">{item.kode_sub_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-mono text-gray-700">{item.kode_sub_kategori}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_sub_kategori}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                           Aktif
                         </span>
                       ) : (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
                           Non-Aktif
                         </span>
                       )}

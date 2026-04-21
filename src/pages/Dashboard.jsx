@@ -205,7 +205,7 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Total Nilai Persediaan</p>
+                    <p className="text-sm font-medium text-gray-600">Nilai persediaan</p>
                     <p className="text-2xl font-bold text-gray-900 mt-2">
                       {formatCurrency(metrics.totalNilai)}
                     </p>
@@ -220,7 +220,7 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Item Stok Kritis</p>
+                    <p className="text-sm font-medium text-gray-600">Stok kritis</p>
                     <p className="text-2xl font-bold text-red-600 mt-2">
                       {metrics.itemKritis}
                     </p>
@@ -236,11 +236,11 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Transaksi Keluar</p>
+                    <p className="text-sm font-medium text-gray-600">Transaksi keluar</p>
                     <p className="text-2xl font-bold text-gray-900 mt-2">
                       {metrics.transaksiKeluar.toLocaleString('id-ID')}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Items periode ini</p>
+                    <p className="text-xs text-gray-500 mt-1">Jumlah barang periode ini</p>
                   </div>
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                     <TrendingUp className="w-6 h-6 text-orange-600" />
@@ -252,7 +252,7 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Rata-rata Lead Time</p>
+                    <p className="text-sm font-medium text-gray-600">Rata-rata waktu tunggu</p>
                     <p className="text-2xl font-bold text-gray-900 mt-2">
                       {metrics.avgLeadTime} hari
                     </p>
@@ -268,11 +268,11 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Pesanan Aktif</p>
+                    <p className="text-sm font-medium text-gray-600">Pesanan aktif</p>
                     <p className="text-2xl font-bold text-gray-900 mt-2">
                       {metrics.pesananAktif}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Purchase orders</p>
+                    <p className="text-xs text-gray-500 mt-1">Pesanan</p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <Package className="w-6 h-6 text-green-600" />

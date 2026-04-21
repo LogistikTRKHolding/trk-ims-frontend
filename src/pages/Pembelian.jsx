@@ -922,14 +922,15 @@ export default function Pembelian() {
                                     <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         Tanggal PO {sortConfig.key === 'tanggal_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendor</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama/Kode Barang</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty Order</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Harga</th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Vendor</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Nama Barang,<br />Kode Barang,<br />Part Number</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">jumlah</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Harga Satuan</th>
+                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Total Harga</th>
+                                    <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase">Status</th>
                                     {(canEdit || canDelete) && (
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                                        <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
                                     )}
                                 </tr>
                             </thead>
@@ -962,7 +963,6 @@ export default function Pembelian() {
                                                 <td className="px-6 py-4 text-sm text-gray-600">{formatDate(item.tanggal_po)}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <Building2 className="w-4 h-4 text-gray-400" />
                                                         <span className="text-sm font-medium">{item.nama_vendor}</span>
                                                     </div>
                                                 </td>
@@ -970,10 +970,21 @@ export default function Pembelian() {
                                                     <div>
                                                         <p className="text-sm font-medium">{item.nama_barang}</p>
                                                         <p className="text-xs text-gray-500">{item.kode_barang}</p>
+                                                        <p className="text-xs text-blue-500">{item.part_number}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
-                                                <td className="px-6 py-4 text-right font-semibold text-sm">{item.qty_order}</td>
+                                                <td className="px-6 py-4">
+                                                    <div>
+                                                        <p className="text-xs text-gray-500">{item.nama_kategori}</p>
+                                                        <p className="text-xs text-gray-500">{item.nama_sub_kategori}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                    {item.qty_order} {item.satuan}
+                                                </td>                                                
+                                                <td className="px-6 py-4 text-right text-sm text-green-600">
+                                                    Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
+                                                </td>
                                                 <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
                                                     Rp {(item.total_harga || 0).toLocaleString('id-ID')}
                                                 </td>

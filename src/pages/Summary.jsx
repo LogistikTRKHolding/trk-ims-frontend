@@ -129,10 +129,11 @@ export default function Summary() {
 
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
-      'Kode': item.kode_barang,
-      'Part Number': item.part_number || '',
       'Nama Barang': item.nama_barang,
+      'Kode Barang': item.kode_barang,
+      'Part Number': item.part_number || '',
       'Kategori': item.nama_kategori || '',
+      'Sub Kategori': item.nama_sub_kategori || '',
       'Armada': item.nama_armada || '',
       'Satuan': item.satuan || '',
       'Stok Akhir': item.stok_akhir,
@@ -156,7 +157,7 @@ export default function Summary() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Total Items */}
           <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600">Total Items</p>
+            <p className="text-sm text-gray-600">Jumlah barang</p>
             <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
             <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTotal || 0} total</p>
           </div>
@@ -170,7 +171,7 @@ export default function Summary() {
 
           {/* Stok Kurang */}
           <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-            <p className="text-sm text-yellow-600">Stok Kurang</p>
+            <p className="text-sm text-yellow-600">Stok kurang</p>
             <p className="text-2xl font-bold text-yellow-700">{stats?.stokKurang || 0}</p>
             <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalStokKurang || 0}</p>
           </div>
@@ -184,7 +185,7 @@ export default function Summary() {
 
           {/* Stok Lebih */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-            <p className="text-sm text-green-600">Stok Lebih</p>
+            <p className="text-sm text-green-600">Stok lebih</p>
             <p className="text-2xl font-bold text-green-700">{stats?.stokLebih || 0}</p>
             <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalStokLebih || 0}</p>
           </div>
@@ -317,10 +318,10 @@ export default function Summary() {
 
                 const label =
                   filter.key === 'kode_kategori' ? `Kategori: ${kategoriList.find(k => k.kode_kategori === filter.value)?.nama_kategori || filter.value}` :
-                  filter.key === 'kode_sub_kategori' ? `Sub Kategori: ${subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value}` :
-                  filter.key === 'nama_armada' ? `Armada: ${filter.value}` :
-                  filter.key === 'status_stok' ? `Status: ${filter.value}` :
-                  filter.value;
+                    filter.key === 'kode_sub_kategori' ? `Sub Kategori: ${subKategoriList.find(s => s.kode_sub_kategori === filter.value)?.nama_sub_kategori || filter.value}` :
+                      filter.key === 'nama_armada' ? `Armada: ${filter.value}` :
+                        filter.key === 'status_stok' ? `Status: ${filter.value}` :
+                          filter.value;
 
                 return (
                   <span key={idx} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
@@ -342,20 +343,20 @@ export default function Summary() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th onClick={() => requestSort('kode_barang')} className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
-                    Kode {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Part Number</th>
                   <th onClick={() => requestSort('nama_barang')} className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Kategori</th>
+                  <th onClick={() => requestSort('kode_barang')} className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                    Kode Barang {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Part Number</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Kategori,<br/>Sub Kategori</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Armada</th>
                   <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Stok {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th onClick={() => requestSort('nilai_stok')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
-                    Nilai {sortConfig.key === 'nilai_stok' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Harga {sortConfig.key === 'nilai_stok' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
                 </tr>
@@ -379,6 +380,7 @@ export default function Summary() {
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_barang}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
@@ -389,16 +391,15 @@ export default function Summary() {
                         </button>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{item.part_number || '-'}</td>
-                      <td className="px-6 py-4 font-semibold text-gray-900">{item.nama_barang}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada || '-'}</td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-right font-bold text-gray-900">{item.stok_akhir.toLocaleString('id-ID')}</p>
-                          <p className="text-xs text-right text-gray-500">{item.satuan}</p>
+                          <p className="text-xs text-gray-600">{item.nama_kategori}</p>
+                          <p className="text-xs text-gray-600">{item.nama_sub_kategori}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{item.stok_akhir.toLocaleString('id-ID')} {item.satuan}</td>
+                      <td className="px-6 py-4 text-sm text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
                       <td className="px-6 py-4 text-center">
                         <span className={`inline-flex px-3 py-1 text-[11px] font-bold uppercase rounded-full shadow-sm ${getStatusColor(item.status_stok)}`}>
                           {item.status_stok}

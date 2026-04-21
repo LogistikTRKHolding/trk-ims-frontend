@@ -299,20 +299,20 @@ export default function Armada() {
                 {/* Table headers */}
                 <th
                   onClick={() => requestSort('code')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Kode {sortConfig.key === 'kode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Nama {sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deskripsi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Deskripsi</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
                 )}
               </tr>
             </thead>
@@ -336,8 +336,8 @@ export default function Armada() {
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* CUSTOMIZE: Table cells */}
-                    <td className="px-6 py-4 font-mono text-sm">{item.kode_armada}</td>
-                    <td className="px-6 py-4 font-medium">{item.nama_armada}</td>
+                    <td className="px-6 py-4 text-sm font-mono">{item.kode_armada}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{item.nama_armada}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.deskripsi}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (

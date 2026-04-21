@@ -309,12 +309,12 @@ export default function Vendor() {
                 >
                   Nama {sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kontak</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alamat</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telepon</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kontak</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Alamat</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Telepon</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Keterangan</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
                 )}
@@ -341,7 +341,7 @@ export default function Vendor() {
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* Table cells */}
                     <td className="px-6 py-4 font-mono text-sm">{item.kode_vendor}</td>
-                    <td className="px-6 py-4 font-medium">{item.nama_vendor}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{item.nama_vendor}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.kontak}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.alamat}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.email}</td>

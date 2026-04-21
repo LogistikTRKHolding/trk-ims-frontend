@@ -334,8 +334,8 @@ export default function Kategori() {
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* Table cells */}
-                    <td className="px-6 py-4 font-mono text-sm">{item.kode_kategori}</td>
-                    <td className="px-6 py-4 font-medium">{item.nama_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-mono">{item.kode_kategori}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{item.nama_kategori}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{item.deskripsi}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
