@@ -547,6 +547,56 @@ export const gudangAPI = {
 };
 
 // ============================================
+// RAK API
+// ============================================
+
+export const rakAPI = {
+  // READ Operations
+  async getAll() {
+    return baseTableAPI.getAll('rak');
+  },
+
+  async getById(id) {
+    return baseTableAPI.getById('rak', id);
+  },
+
+  async getActive() {
+    return fetchWithAuth(`${API_URL}/data/rak?is_active=true`);
+  },
+
+  async getByGudang(kodeGudang) {
+    return fetchWithAuth(`${API_URL}/data/rak?kode_gudang=${kodeGudang}`);
+  },
+
+  // WRITE Operations
+  async create(data) {
+    const payload = {
+      kode_gudang: data.kode_gudang,
+      kode_rak: data.kode_rak,
+      nama_rak: data.nama_rak,
+      is_active: true,
+      created_by: data.created_by,
+    };
+    return baseTableAPI.create('rak', payload);
+  },
+
+  async update(id, data) {
+    const payload = {
+      nama_rak: data.nama_rak,
+      updated_by: data.updated_by,
+    };
+    return baseTableAPI.update('rak', id, payload);
+  },
+
+  async delete(id, userId) {
+    return baseTableAPI.update('rak', id, {
+      is_active: false,
+      updated_by: userId,
+    });
+  },
+};
+
+// ============================================
 // PEMBELIAN API (with VIEWs)
 // ============================================
 
@@ -663,6 +713,7 @@ export const mutasiAPI = {
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
       qty: data.qty,
+      kode_rak: data.kode_rak || null,
       keterangan: data.keterangan,
       referensi: data.referensi,
       created_by: data.created_by,
@@ -683,6 +734,7 @@ export const mutasiAPI = {
       jenis_transaksi: data.jenis_transaksi,
       kode_barang: data.kode_barang,
       qty: data.qty,
+      kode_rak: data.kode_rak || null,
       keterangan: data.keterangan,
       referensi: data.referensi,
       updated_by: data.updated_by,

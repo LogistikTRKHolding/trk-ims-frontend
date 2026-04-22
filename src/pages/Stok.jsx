@@ -352,7 +352,7 @@ export default function Stok() {
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('nama_barang')}
                   >
-                    Nama Barang,<br/>Harga {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
@@ -421,8 +421,7 @@ export default function Stok() {
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <span className="text-sm font-medium text-gray-900">{item.nama_barang}</span>
-                          <p className="text-xs text-gray-500">{formatCurrency(item.nilai_stok)}</p>
+                          <span className="text-sm font-medium text-gray-900">{item.nama_barang}</span>                    
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

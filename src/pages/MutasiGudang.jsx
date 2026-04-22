@@ -18,7 +18,7 @@ import {
 import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import { useDataTable } from '../hooks/useDataTable';
-import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
+import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
 
 export default function MutasiGudang() {
   // Current user & permissions
@@ -42,6 +42,8 @@ export default function MutasiGudang() {
     nama_barang: '',
     qty: 0,
     satuan: '',
+    kode_rak: '',
+    nama_rak: '',
     keterangan: '',
     referensi: '',
   });
@@ -57,6 +59,8 @@ export default function MutasiGudang() {
 
   // State Dropdown — diisi dari API masing-masing
   const [gudangList, setGudangList] = useState([]);
+  const [rakList, setRakList] = useState([]);         // semua rak (raw)
+  const [rakListFiltered, setRakListFiltered] = useState([]); // rak yang cascading dari gudang
   const [kategoriList, setKategoriList] = useState([]);
   const [armadaList, setArmadaList] = useState([]);
   const [newBarangData, setNewBarangData] = useState({
@@ -90,14 +94,16 @@ export default function MutasiGudang() {
 
   const loadDropdownData = async () => {
     try {
-      const [gudangResult, kategoriResult, armadaResult] = await Promise.all([
+      const [gudangResult, kategoriResult, armadaResult, rakResult] = await Promise.all([
         gudangAPI.getAll(),
         kategoriAPI.getAll(),
-        armadaAPI.getAll()
+        armadaAPI.getAll(),
+        rakAPI.getAll(),
       ]);
       setGudangList(gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
       setKategoriList(kategoriResult);
       setArmadaList(armadaResult);
+      setRakList(rakResult);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
     }
@@ -216,10 +222,22 @@ export default function MutasiGudang() {
 
     if (name === 'kode_gudang') {
       const selectedGudang = gudangList.find(g => g.kode === value);
+      // Cascading: filter rak berdasarkan gudang yang dipilih
+      const filtered = value ? rakList.filter(r => r.kode_gudang === value) : [];
+      setRakListFiltered(filtered);
       setFormData(prev => ({
         ...prev,
         kode_gudang: value,
         nama_gudang: selectedGudang?.nama || '',
+        kode_rak: '',   // reset rak saat gudang berubah
+        nama_rak: '',
+      }));
+    } else if (name === 'kode_rak') {
+      const selectedRak = rakList.find(r => r.kode_rak === value);
+      setFormData(prev => ({
+        ...prev,
+        kode_rak: value,
+        nama_rak: selectedRak?.nama_rak || '',
       }));
     } else if (name === 'kode_barang') {
       const selectedBarang = barangList.find(b => b.kode_barang === value);
@@ -363,10 +381,13 @@ export default function MutasiGudang() {
       nama_barang: '',
       qty: 0,
       satuan: '',
+      kode_rak: '',
+      nama_rak: '',
       keterangan: '',
       referensi: '',
     });
     setSearchTermBarang('');
+    setRakListFiltered([]);
     setEditingItem(null);
   };
 
@@ -376,6 +397,12 @@ export default function MutasiGudang() {
   };
 
   const openEditModal = (item) => {
+    // Pre-filter rak sesuai gudang dari data yang diedit
+    const filtered = item.kode_gudang
+      ? rakList.filter(r => r.kode_gudang === item.kode_gudang)
+      : [];
+    setRakListFiltered(filtered);
+
     setFormData({
       no_transaksi: item.no_transaksi || '',
       kode_gudang: item.kode_gudang || '',
@@ -387,6 +414,8 @@ export default function MutasiGudang() {
       nama_barang: item.nama_barang || '',
       qty: item.qty || 0,
       satuan: item.satuan || '',
+      kode_rak: item.kode_rak || '',
+      nama_rak: item.nama_rak || '',
       keterangan: item.keterangan || '',
       referensi: item.referensi || '',
     });
@@ -451,6 +480,12 @@ export default function MutasiGudang() {
 
   const handleEdit = (item) => {
     setEditingItem(item);
+    // Pre-filter rak sesuai gudang dari data yang diedit
+    const filtered = item.kode_gudang
+      ? rakList.filter(r => r.kode_gudang === item.kode_gudang)
+      : [];
+    setRakListFiltered(filtered);
+
     setFormData({
       no_transaksi: item.no_transaksi || '',
       kode_gudang: item.kode_gudang,
@@ -461,6 +496,8 @@ export default function MutasiGudang() {
       nama_barang: item.nama_barang,
       qty: item.qty,
       satuan: item.satuan,
+      kode_rak: item.kode_rak || '',
+      nama_rak: item.nama_rak || '',
       keterangan: item.keterangan || '',
       referensi: item.referensi || '',
     });
@@ -481,6 +518,7 @@ export default function MutasiGudang() {
       'Kategori': item.nama_kategori || '-',
       'Armada': item.nama_armada || '-',
       'Referensi': item.referensi || '-',
+      'Lokasi Rak': item.nama_rak || '-',
       'Keterangan': item.keterangan || '-',
     }));
 
@@ -802,7 +840,7 @@ export default function MutasiGudang() {
                     Transaksi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nama Barang,<br/>Kode Barang
+                    Nama Barang,<br />Kode Barang
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Part Number
@@ -812,6 +850,9 @@ export default function MutasiGudang() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Referensi
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Lokasi Rak
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Keterangan
@@ -880,6 +921,9 @@ export default function MutasiGudang() {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {item.referensi || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.nama_rak || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {item.keterangan || '-'}
@@ -1126,12 +1170,12 @@ export default function MutasiGudang() {
                               className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-gray-800">{barang.nama_barang} ({barang.satuan})</span>
+                                <span className="text-xs font-medium text-gray-800">{barang.nama_barang} ({barang.satuan})</span>
                               </div>
-                              <div className="text-xs text-gray-600">
+                              <div className="text-sm text-gray-600">
                                 {barang.kode_barang && (
                                   <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
-                                    KODE: {barang.kode_barang}
+                                    KB: {barang.kode_barang}
                                   </span>
                                 )}
                                 {barang.part_number && (
@@ -1158,25 +1202,25 @@ export default function MutasiGudang() {
                   <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                      <span className="text-sm font-mono font-semibold">{formData.nama_barang || '-'}</span>
+                      <span className="text-xs font-medium">{formData.nama_barang || '-'}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
-                      <span className="text-sm">{formData.kode_barang || '-'}</span>
+                      <span className="text-xs">{formData.kode_barang || '-'}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
-                      <span className="text-sm font-mono text-blue-600">{formData.part_number || '-'}</span>
+                      <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
-                      <span className="text-sm">{formData.satuan || '-'}</span>
+                      <span className="text-xs">{formData.satuan || '-'}</span>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Qty *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah *</label>
                       <input type="number" name="qty" value={formData.qty} onChange={handleInputChange} required min="0.01" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
                     </div>
                     <div>
@@ -1189,6 +1233,31 @@ export default function MutasiGudang() {
                         placeholder="PO/DO Number"
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Lokasi Rak
+                      </label>
+                      <select
+                        name="kode_rak"
+                        value={formData.kode_rak}
+                        onChange={handleInputChange}
+                        disabled={!formData.kode_gudang || rakListFiltered.length === 0}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">-- Pilih Lokasi Rak --</option>
+                        {rakListFiltered.map((rak) => (
+                          <option key={rak.kode_rak} value={rak.kode_rak}>
+                            {rak.nama_rak}
+                          </option>
+                        ))}
+                      </select>
+                      {!formData.kode_gudang && (
+                        <p className="mt-1 text-xs text-gray-400">Pilih Gudang terlebih dahulu</p>
+                      )}
+                      {formData.kode_gudang && rakListFiltered.length === 0 && (
+                        <p className="mt-1 text-xs text-amber-500">Tidak ada rak untuk gudang ini</p>
+                      )}
                     </div>
                   </div>
                   <div>

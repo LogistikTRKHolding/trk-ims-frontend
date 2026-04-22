@@ -159,35 +159,35 @@ export default function Summary() {
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-600">Jumlah barang</p>
             <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTotal || 0} total</p>
+            <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTotal || 0} total data</p>
           </div>
 
           {/* Tersedia */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
             <p className="text-sm text-green-600">Tersedia</p>
             <p className="text-2xl font-bold text-green-700">{stats?.tersedia || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalTersedia || 0}</p>
+            <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTersedia || 0} total data</p>
           </div>
 
           {/* Stok Kurang */}
           <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
             <p className="text-sm text-yellow-600">Stok kurang</p>
             <p className="text-2xl font-bold text-yellow-700">{stats?.stokKurang || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalStokKurang || 0}</p>
+            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalStokKurang || 0} total data</p>
           </div>
 
           {/* Habis */}
           <div className="bg-red-50 p-6 rounded-lg border border-red-200">
             <p className="text-sm text-red-600">Habis</p>
             <p className="text-2xl font-bold text-red-700">{stats?.habis || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalHabis || 0}</p>
+            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalHabis || 0} total data</p>
           </div>
 
           {/* Stok Lebih */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
             <p className="text-sm text-green-600">Stok lebih</p>
             <p className="text-2xl font-bold text-green-700">{stats?.stokLebih || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Global: {stats?.globalStokLebih || 0}</p>
+            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalStokLebih || 0} total data</p>
           </div>
         </div>
 

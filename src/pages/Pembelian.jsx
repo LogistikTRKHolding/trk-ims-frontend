@@ -1176,7 +1176,7 @@ export default function Pembelian() {
                                                         className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-bold text-gray-800">{v.nama_vendor}</span>
+                                                            <span className="text-xs font-medium text-gray-800">{v.nama_vendor}</span>
                                                         </div>
                                                         <div className="text-xs text-gray-600">
                                                             {v.kode_vendor && (
@@ -1201,12 +1201,12 @@ export default function Pembelian() {
                                     {/* Preview Vendor terpilih */}
                                     <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Vendor</span>
-                                            <span className="text-sm font-mono font-semibold">{formData.nama_vendor || '-'}</span>
+                                            <span className="block text-[10px] uppercase text-gray-400">Nama Vendor</span>
+                                            <span className="text-xs font-medium">{formData.nama_vendor || '-'}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Vendor</span>
-                                            <span className="text-sm font-mono">{formData.kode_vendor || '-'}</span>
+                                            <span className="block text-[10px] uppercase text-gray-400">Kode Vendor</span>
+                                            <span className="text-xs">{formData.kode_vendor || '-'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1236,16 +1236,16 @@ export default function Pembelian() {
                                                         className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-bold text-gray-800">{b.nama_barang} ({b.satuan})</span>
+                                                            <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.satuan})</span>
                                                         </div>
                                                         <div className="text-xs text-gray-600">
                                                             {b.kode_barang && (
-                                                                <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
-                                                                    KODE: {b.kode_barang}
+                                                                <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
+                                                                    KB: {b.kode_barang}
                                                                 </span>
                                                             )}
                                                             {b.part_number && (
-                                                                <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
+                                                                <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                                                                     PN: {b.part_number}
                                                                 </span>
                                                             )}
