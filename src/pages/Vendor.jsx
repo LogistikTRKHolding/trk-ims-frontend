@@ -299,15 +299,15 @@ export default function Vendor() {
                 {/* Table headers */}
                 <th
                   onClick={() => requestSort('code')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
-                  Kode {sortConfig.key === 'kode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Kode Vendor{sortConfig.key === 'kode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
-                  Nama {sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Nama Vendor{sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kontak</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Alamat</th>
@@ -316,7 +316,7 @@ export default function Vendor() {
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Keterangan</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
                 )}
               </tr>
             </thead>
@@ -340,13 +340,13 @@ export default function Vendor() {
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* Table cells */}
-                    <td className="px-6 py-4 font-mono text-sm">{item.kode_vendor}</td>
-                    <td className="px-6 py-4 text-sm font-medium">{item.nama_vendor}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.kontak}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.alamat}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.email}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.telepon}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.keterangan}</td>
+                    <td className="px-6 py-4 text-xs">{item.kode_vendor}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.nama_vendor}</td>
+                    <td className="px-6 py-4 text-xs">{item.kontak}</td>
+                    <td className="px-6 py-4 text-xs">{item.alamat}</td>
+                    <td className="px-6 py-4 text-xs">{item.email}</td>
+                    <td className="px-6 py-4 text-xs">{item.telepon}</td>
+                    <td className="px-6 py-4 text-xs">{item.keterangan}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">

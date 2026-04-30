@@ -268,7 +268,7 @@ export default function Users() {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('full_name')}
                   >
                     Name {sortConfig.key === 'full_name' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
@@ -276,7 +276,7 @@ export default function Users() {
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Phone (WhatsApps)</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
                   <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -310,18 +310,18 @@ export default function Users() {
                         <div className="flex items-center">
 
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{item.full_name}</div>
+                            <div className="text-xs font-medium">{item.full_name}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-xs">
                           <Mail className="w-4 h-4 mr-2" />
                           {item.email}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${item.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${item.role === 'Admin' ? 'bg-red-100 text-red-800' :
                           item.role === 'Manager' ? 'bg-purple-100 text-purple-800' :
                             'bg-green-100 text-green-800'
                           }`}>
@@ -329,37 +329,37 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
                           {item.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {item.phone ? (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-xs">
                             <Phone className="w-4 h-4 mr-2" />
                             {item.phone}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-xs">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {item.department ? (
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-xs">
                             <Building className="w-4 h-4 mr-2" />
                             {item.department}
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-xs">-</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-600">
+                        <span className="text-xs">
                           {item.last_login ? new Date(item.last_login).toLocaleString('id-ID') : 'Never'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => handleEdit(item)}

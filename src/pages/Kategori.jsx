@@ -297,20 +297,20 @@ export default function Kategori() {
                 {/* Table headers */}
                 <th
                   onClick={() => requestSort('kode_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Kode Kategori{sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_kategori')}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Nama Kategori{sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deskripsi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Deskripsi</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
                 )}
               </tr>
             </thead>
@@ -334,9 +334,9 @@ export default function Kategori() {
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* Table cells */}
-                    <td className="px-6 py-4 text-sm font-mono">{item.kode_kategori}</td>
-                    <td className="px-6 py-4 text-sm font-medium">{item.nama_kategori}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.deskripsi}</td>
+                    <td className="px-6 py-4 text-xs">{item.kode_kategori}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.nama_kategori}</td>
+                    <td className="px-6 py-4 text-xs">{item.deskripsi}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">

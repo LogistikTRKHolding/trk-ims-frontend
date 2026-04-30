@@ -626,33 +626,32 @@ export default function Barang() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">
                     Gambar
                   </th>
                   <th
                     onClick={() => requestSort('nama_barang')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
                     Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th
                     onClick={() => requestSort('kode_barang')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
                     Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>                  
+                  </th>
                   <th
                     onClick={() => requestSort('part_number')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
                     Part Number {sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sub Kategori</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Armada</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min/Max</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Harga</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kategori,<br/>Sub Kategori</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Armada</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tipe</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Min/Max</th>
+                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Harga</th>
                   {(canEdit || canDelete) && (
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
                   )}
@@ -710,15 +709,19 @@ export default function Barang() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_barang}</td>
-                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.kode_barang}</td>                        
-                        <td className="px-6 py-4 font-mono text-sm font-medium">{item.part_number}</td>              
-                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_kategori}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_sub_kategori}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada}</td>
+                        <td className="px-6 py-4 text-xs font-medium">{item.nama_barang}</td>
+                        <td className="px-6 py-4 text-xs">{item.kode_barang}</td>
+                        <td className="px-6 py-4 text-xs">{item.part_number}</td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-xs">{item.nama_kategori}</p>
+                            <p className="text-xs">{item.nama_sub_kategori}</p>
+                          </div>
+                        </td>                        
+                        <td className="px-6 py-4 text-xs">{item.nama_armada}</td>
                         <td className="px-6 py-4">
                           {item.is_stocked ? (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                               Di-Stok
                             </span>
                           ) : (
@@ -727,8 +730,8 @@ export default function Barang() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 text-right">{item.min_stok || '-'}/{item.max_stok || '-'}</td>
-                        <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
+                        <td className="px-6 py-4 text-xs text-right">{item.min_stok || '-'}/{item.max_stok || '-'}</td>
+                        <td className="px-6 py-4 text-right font-medium text-xs text-green-600">
                           Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
                         </td>
                         {(canEdit || canDelete) && (
@@ -1071,21 +1074,21 @@ export default function Barang() {
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                       />
-                    </div>                    
+                    </div>
                   </div>
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nama Barang <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="nama_barang"
-                        value={formData.nama_barang}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                      />
-                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nama Barang <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="nama_barang"
+                      value={formData.nama_barang}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
 
                   {/* Kategori, Sub Kategori & Armada */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1154,7 +1157,7 @@ export default function Barang() {
                       </select>
                     </div>
                   </div>
-                  
+
                   {/* Pricing & Inventory */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -1185,38 +1188,38 @@ export default function Barang() {
                       />
                     </div>
                     {/* Stock Limits (only for stocked items) */}
-                  {formData.is_stocked && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Min Stok
-                        </label>
-                        <input
-                          type="number"
-                          name="min_stok"
-                          value={formData.min_stok}
-                          onChange={handleInputChange}
-                          min="0"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
+                    {formData.is_stocked && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Min Stok
+                          </label>
+                          <input
+                            type="number"
+                            name="min_stok"
+                            value={formData.min_stok}
+                            onChange={handleInputChange}
+                            min="0"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Max Stok
-                        </label>
-                        <input
-                          type="number"
-                          name="max_stok"
-                          value={formData.max_stok}
-                          onChange={handleInputChange}
-                          min="0"
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                        />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Max Stok
+                          </label>
+                          <input
+                            type="number"
+                            name="max_stok"
+                            value={formData.max_stok}
+                            onChange={handleInputChange}
+                            min="0"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  </div>                  
+                    )}
+                  </div>
 
                   {/* Notes */}
                   <div>

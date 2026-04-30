@@ -123,16 +123,23 @@ export default function KartuStok() {
         // Calculate running balance
         let saldo = 0;
         const withBalance = result
-            .sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal))
+            .sort((a, b) => {
+                const dateDiff = new Date(a.tanggal) - new Date(b.tanggal);
+                if (dateDiff !== 0) return dateDiff;
+                // Tanggal sama: 'Masuk' diproses lebih dulu dari 'Keluar'
+                if (a.jenis_transaksi === 'Masuk' && b.jenis_transaksi === 'Keluar') return -1;
+                if (a.jenis_transaksi === 'Keluar' && b.jenis_transaksi === 'Masuk') return 1;
+                return 0;
+            })
             .map(item => {
                 if (item.jenis_transaksi === 'Masuk') {
                     saldo += item.qty;
                 } else if (item.jenis_transaksi === 'Keluar') {
                     saldo -= item.qty;
                 }
-                return { ...item, saldo };
+                const jenisOrder = item.jenis_transaksi === 'Masuk' ? 'a' : 'b'; // 'b' > 'a' → Masuk duluan saat DESC
+                return { ...item, saldo, tanggal_sort: `${item.tanggal}_${jenisOrder}` };
             });
-
         return withBalance;
     }, [selectedItem]);
 
@@ -170,7 +177,7 @@ export default function KartuStok() {
         fetchData: fetchMutasiData,
         filterKeys: ['jenis_transaksi', 'kode_gudang'],
         dateFilterKey: 'tanggal',
-        defaultSort: { key: 'tanggal', direction: 'desc' },
+        defaultSort: { key: 'tanggal_sort', direction: 'desc' },
         defaultRowsPerPage: 50,
 
         calculateStats: (filtered) => ({
@@ -398,16 +405,16 @@ export default function KartuStok() {
                                                 >
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1">                                                                
-                                                                <span className="text-sm font-medium text-gray-800 truncate">{item.nama_barang}</span>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-xs font-medium text-gray-800 truncate">{item.nama_barang}</span>
                                                             </div>
                                                             <p className="text-xs text-gray-500 mb-1">{item.kode_barang}</p>
                                                             <p className="text-xs text-blue-500 mb-1">{item.part_number}</p>
                                                         </div>
                                                         <div className="text-right flex-shrink-0">
-                                                            <div className={`text-base font-medium ${parseInt(item.stok_akhir) <= parseInt(item.min_stok || 0) ? 'text-red-600' : 'text-green-600'}`}>
-                                                                {item.stok_akhir || 0} <span className="text-sm text-gray-500">{item.satuan}</span>
-                                                            </div>                                                            
+                                                            <div className={`text-base font-medium ${parseInt(item.stok_akhir) <= parseInt(item.min_stok || 0) ? 'text-red-600 text-xs' : 'text-green-600 text-xs'}`}>
+                                                                {item.stok_akhir || 0} <span className="text-xs text-gray-500">{item.satuan}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </button>
@@ -477,9 +484,9 @@ export default function KartuStok() {
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                                             <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">{selectedItem.nama_barang}</h2>
                                             <div className="space-y-1 text-sm text-gray-600">
-                                                <p>Kode: <button
+                                                <p>Kode Barang: <button
                                                     onClick={() => window.open(`/barang?kode=${encodeURIComponent(selectedItem.kode_barang)}`, '_blank')}
-                                                    className="font-mono text-sm text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                                                    className="font-medium text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                                                     title={`Lihat barang ${selectedItem.nama_barang} di halaman Barang`}
                                                 > {selectedItem.kode_barang}
                                                 </button></p>
@@ -607,12 +614,12 @@ export default function KartuStok() {
                                     <table className="w-full text-sm">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-4 py-3 text-left font-medium text-gray-500">Gudang</th>
-                                                <th className="px-4 py-3 text-left font-medium text-gray-500">Tanggal</th>
-                                                <th className="px-4 py-3 text-left font-medium text-gray-500">Transaksi</th>
-                                                <th className="px-4 py-3 text-right font-medium text-gray-500">Qty</th>
-                                                <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Keterangan</th>
-                                                <th className="px-4 py-3 text-right font-medium text-gray-500">Saldo</th>
+                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Gudang</th>
+                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tanggal</th>
+                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Transaksi</th>
+                                                <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Jumlah</th>                                                
+                                                <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Saldo</th>
+                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Keterangan</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 bg-white">
@@ -625,13 +632,13 @@ export default function KartuStok() {
                                                     </td>
                                                 </tr>
                                             ) : filteredHistory.length === 0 ? (
-                                                <tr><td colSpan="5" className="p-8 text-center text-gray-500">Tidak ada data transaksi</td></tr>
+                                                <tr><td colSpan="6" className="p-8 text-center text-gray-500">Tidak ada data transaksi</td></tr>
                                             ) : (
                                                 paginatedHistory.map((record, index) => (
                                                     <tr key={index} className="hover:bg-gray-50">
-                                                        <td className="px-4 py-3 whitespace-nowrap">{record.nama_gudang}</td>
-                                                        <td className="px-4 py-3 whitespace-nowrap">{formatDate(record.tanggal)}</td>
-                                                        <td className="px-4 py-3">
+                                                        <td className="px-4 py-3 text-xs">{record.nama_gudang}</td>
+                                                        <td className="px-4 py-3 text-xs">{formatDate(record.tanggal)}</td>
+                                                        <td className="px-4 py-3 text-xs">
                                                             {record.jenis_transaksi === 'Masuk' ? (
                                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                                                                     <TrendingUp className="w-3 h-3" /> Masuk
@@ -642,11 +649,11 @@ export default function KartuStok() {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className={`px-4 py-3 text-right font-bold ${record.jenis_transaksi === 'Masuk' ? 'text-green-600' : 'text-red-600'}`}>
+                                                        <td className={`px-4 py-3 text-right font-bold ${record.jenis_transaksi === 'Masuk' ? 'text-green-600 text-xs' : 'text-red-600 text-xs'}`}>
                                                             {record.jenis_transaksi === 'Masuk' ? '+' : '-'}{record.qty}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-gray-500 truncate max-w-[150px] hidden lg:table-cell">{record.keterangan || '-'}</td>
-                                                        <td className="px-4 py-3 text-right font-bold text-gray-800">{record.saldo}</td>
+                                                        </td>                                                        
+                                                        <td className="px-4 py-3 text-xs text-right font-medium">{record.saldo}</td>
+                                                        <td className="px-4 py-3 text-xs truncate max-w-[150px] hidden lg:table-cell">{record.keterangan || '-'}</td>
                                                     </tr>
                                                 ))
                                             )}

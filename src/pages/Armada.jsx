@@ -301,13 +301,13 @@ export default function Armada() {
                   onClick={() => requestSort('code')}
                   className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
-                  Kode {sortConfig.key === 'kode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Kode Armada{sortConfig.key === 'kode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama')}
                   className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
-                  Nama {sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                  Nama Armada{sortConfig.key === 'nama' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Deskripsi</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
@@ -336,9 +336,9 @@ export default function Armada() {
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     {/* CUSTOMIZE: Table cells */}
-                    <td className="px-6 py-4 text-sm font-mono">{item.kode_armada}</td>
-                    <td className="px-6 py-4 text-sm font-medium">{item.nama_armada}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.deskripsi}</td>
+                    <td className="px-6 py-4 text-xs">{item.kode_armada}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.nama_armada}</td>
+                    <td className="px-6 py-4 text-xs">{item.deskripsi}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">

@@ -1,6 +1,6 @@
 // src/pages/Summary.jsx
 import { useState, useEffect } from 'react';
-import { Download, Filter, Search, X } from 'lucide-react';
+import { Download, Filter, Search, X, Package, Package2, PackageCheck, PackageMinus, PackagePlus, PackageOpen } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -157,37 +157,45 @@ export default function Summary() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Total Items */}
           <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600">Jumlah barang</p>
-            <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTotal || 0} total data</p>
+            <p className="text-sm text-gray-600 flex items-center">
+              <Package className="w-4 h-4 mr-1" />
+              Barang
+            </p>
+            <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>            
           </div>
 
           {/* Tersedia */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-            <p className="text-sm text-green-600">Tersedia</p>
+            <p className="text-sm text-green-600 flex items-center">
+              <PackageCheck className="w-4 h-4 mr-1" />
+              Tersedia
+            </p>
             <p className="text-2xl font-bold text-green-700">{stats?.tersedia || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">dari {stats?.globalTersedia || 0} total data</p>
           </div>
 
           {/* Stok Kurang */}
           <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
-            <p className="text-sm text-yellow-600">Stok kurang</p>
+            <p className="text-sm text-yellow-600 flex items-center">
+              <PackageMinus className="w-4 h-4 mr-1" />
+              Stok kurang
+            </p>
             <p className="text-2xl font-bold text-yellow-700">{stats?.stokKurang || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalStokKurang || 0} total data</p>
           </div>
 
           {/* Habis */}
           <div className="bg-red-50 p-6 rounded-lg border border-red-200">
-            <p className="text-sm text-red-600">Habis</p>
+            <p className="text-sm text-red-600 flex items-center">
+              <PackageOpen className="w-4 h-4 mr-1" />
+              Habis</p>
             <p className="text-2xl font-bold text-red-700">{stats?.habis || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalHabis || 0} total data</p>
           </div>
 
           {/* Stok Lebih */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-            <p className="text-sm text-green-600">Stok lebih</p>
+            <p className="text-sm text-green-600 flex items-center">
+              <PackagePlus className="w-4 h-4 mr-1" />
+              Stok lebih</p>
             <p className="text-2xl font-bold text-green-700">{stats?.stokLebih || 0}</p>
-            <p className="text-[10px] text-gray-400 mt-1 italic">Dari {stats?.globalStokLebih || 0} total data</p>
           </div>
         </div>
 
@@ -343,22 +351,22 @@ export default function Summary() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th onClick={() => requestSort('nama_barang')} className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th onClick={() => requestSort('nama_barang')} className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th onClick={() => requestSort('kode_barang')} className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th onClick={() => requestSort('kode_barang')} className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Kode Barang {sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Part Number</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Kategori,<br/>Sub Kategori</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase">Armada</th>
-                  <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Part Number</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Kategori,<br />Sub Kategori</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-gray-600 uppercase">Armada</th>
+                  <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Stok {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th onClick={() => requestSort('nilai_stok')} className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th onClick={() => requestSort('nilai_stok')} className="px-6 py-4 text-right text-sm font-semibold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Harga {sortConfig.key === 'nilai_stok' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 uppercase">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -380,27 +388,27 @@ export default function Summary() {
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_barang}</td>
+                      <td className="px-6 py-4 text-xs font-medium text-gray-900">{item.nama_barang}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
-                          className="font-mono text-sm text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                          className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                           title={`Lihat barang ${item.kode_barang} di halaman Barang`}
                         >
                           {item.kode_barang}
                         </button>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.part_number || '-'}</td>
+                      <td className="px-6 py-4 text-xs">{item.part_number || '-'}</td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-xs text-gray-600">{item.nama_kategori}</p>
-                          <p className="text-xs text-gray-600">{item.nama_sub_kategori}</p>
+                          <p className="text-xs">{item.nama_kategori}</p>
+                          <p className="text-xs">{item.nama_sub_kategori}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.nama_armada || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.stok_akhir.toLocaleString('id-ID')} {item.satuan}</td>
-                      <td className="px-6 py-4 text-sm text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-6 py-4 text-xs">{item.nama_armada || '-'}</td>
+                      <td className="px-6 py-4 text-xs">{item.stok_akhir.toLocaleString('id-ID')} {item.satuan}</td>
+                      <td className="px-6 py-4 text-xs text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
+                      <td className="px-6 py-4 text-xs text-center">
                         <span className={`inline-flex px-3 py-1 text-[11px] font-bold uppercase rounded-full shadow-sm ${getStatusColor(item.status_stok)}`}>
                           {item.status_stok}
                         </span>

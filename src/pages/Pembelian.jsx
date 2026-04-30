@@ -916,10 +916,10 @@ export default function Pembelian() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
+                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         No. PO {sortConfig.key === 'no_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
-                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
+                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         Tanggal PO {sortConfig.key === 'tanggal_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
                                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Vendor</th>
@@ -959,33 +959,33 @@ export default function Pembelian() {
                                     ) : (
                                         paginatedData.map((item) => (
                                             <tr key={item.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 font-mono text-sm font-medium">{item.no_po}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-600">{formatDate(item.tanggal_po)}</td>
+                                                <td className="px-6 py-4 font-mono text-xs font-medium">{item.no_po}</td>
+                                                <td className="px-6 py-4 text-xs">{formatDate(item.tanggal_po)}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-medium">{item.nama_vendor}</span>
+                                                        <span className="text-xs font-medium">{item.nama_vendor}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div>
-                                                        <p className="text-sm font-medium">{item.nama_barang}</p>
-                                                        <p className="text-xs text-gray-500">{item.kode_barang}</p>
+                                                        <p className="text-xs font-medium">{item.nama_barang}</p>
+                                                        <p className="text-xs">{item.kode_barang}</p>
                                                         <p className="text-xs text-blue-500">{item.part_number}</p>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div>
-                                                        <p className="text-xs text-gray-500">{item.nama_kategori}</p>
-                                                        <p className="text-xs text-gray-500">{item.nama_sub_kategori}</p>
+                                                        <p className="text-xs">{item.nama_kategori}</p>
+                                                        <p className="text-xs">{item.nama_sub_kategori}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-900">
+                                                <td className="px-6 py-4 text-xs">
                                                     {item.qty_order} {item.satuan}
                                                 </td>                                                
-                                                <td className="px-6 py-4 text-right text-sm text-green-600">
+                                                <td className="px-6 py-4 text-right text-xs text-green-600">
                                                     Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-semibold text-sm text-green-600">
+                                                <td className="px-6 py-4 text-right font-semibold text-xs text-green-600">
                                                     Rp {(item.total_harga || 0).toLocaleString('id-ID')}
                                                 </td>
                                                 <td className="px-6 py-4 text-center">

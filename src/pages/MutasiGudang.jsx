@@ -827,38 +827,38 @@ export default function MutasiGudang() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Gudang
                   </th>
                   <th
                     onClick={() => requestSort('tanggal')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   >
                     Tanggal {sortConfig.key === 'tanggal' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Transaksi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Nama Barang,<br />Kode Barang
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Part Number
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Jumlah
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Referensi
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Lokasi Rak
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                     Keterangan
                   </th>
                   {(canEdit || canDelete) && (
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">
                       Aksi
                     </th>
                   )}
@@ -886,10 +886,10 @@ export default function MutasiGudang() {
                   ) : (
                     paginatedData.map((item) => (
                       <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs">
                           {item.nama_gudang}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs">
                           {formatDate(item.tanggal)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -909,27 +909,27 @@ export default function MutasiGudang() {
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-sm font-semibold">{item.nama_barang}</p>
-                            <p className="text-xs text-gray-500">{item.kode_barang}</p>
+                            <p className="text-xs font-semibold">{item.nama_barang}</p>
+                            <p className="text-xs">{item.kode_barang}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs">
                           {item.part_number || '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
+                        <td className="px-6 py-4 text-xs">
                           {item.qty} {item.satuan}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-xs">
                           {item.referensi || '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-xs">
                           {item.nama_rak || '-'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
+                        <td className="px-6 py-4 text-xs">
                           {item.keterangan || '-'}
                         </td>
                         {(canEdit || canDelete) && (
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
                             <div className="flex items-center justify-end gap-2">
                               {canEdit && (
                                 <button

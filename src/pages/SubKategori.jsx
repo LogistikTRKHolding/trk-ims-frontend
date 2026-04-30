@@ -431,10 +431,10 @@ export default function SubKategori() {
               ) : (
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-mono text-gray-700">{item.kode_kategori}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_kategori}</td>
-                    <td className="px-6 py-4 text-sm font-mono text-gray-700">{item.kode_sub_kategori}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{item.nama_sub_kategori}</td>
+                    <td className="px-6 py-4 text-xs">{item.kode_kategori}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.nama_kategori}</td>
+                    <td className="px-6 py-4 text-xs">{item.kode_sub_kategori}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.nama_sub_kategori}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
