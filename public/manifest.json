@@ -1,0 +1,14 @@
+{
+  "name": "TRK Inventory Management System",
+  "short_name": "TRK IMS",
+  "description": "Sistem Manajemen Inventori Gudang TRK Holding",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
