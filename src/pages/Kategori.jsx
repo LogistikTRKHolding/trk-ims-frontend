@@ -297,20 +297,20 @@ export default function Kategori() {
                 {/* Table headers */}
                 <th
                   onClick={() => requestSort('kode_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Kode Kategori{sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                 >
                   Nama Kategori{sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Deskripsi</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Deskripsi</th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
                 )}
               </tr>
             </thead>

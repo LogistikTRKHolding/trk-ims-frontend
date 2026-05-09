@@ -1,11 +1,24 @@
 // src/pages/Stok.jsx
 
 import { useState, useEffect, useCallback } from 'react';
-import { Download, Filter, Search, TrendingUp, TrendingDown, X, Package, PackageCheck} from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
+import { cloudinaryService } from '../services/cloudinary';
 import * as XLSX from 'xlsx';
+import {
+  Download,
+  Filter,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  X,
+  Image as ImageIcon,
+  ZoomIn,
+  ExternalLink,
+  Package,
+  PackageCheck
+} from 'lucide-react';
 
 export default function Stok() {
   // Fetch data function with useCallback to prevent infinite loop
@@ -87,7 +100,7 @@ export default function Stok() {
   } = useDataTable({
     fetchData: fetchStokData,
     filterKeys: ['kode_kategori', 'kode_sub_kategori', 'nama_armada'],
-    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'satuan'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
 
@@ -154,6 +167,58 @@ export default function Stok() {
     );
   }
 
+  // ============================================
+  // Image Preview Handlers
+  // ============================================
+
+  // Image Preview Modal States
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
+  const [previewImageName, setPreviewImageName] = useState('');
+
+  const handleThumbnailClick = (item) => {
+    if (!item.gambar_url) return;
+
+    setPreviewImageUrl(item.gambar_url);
+    setPreviewImageName(item.nama_barang);
+    setShowImagePreview(true);
+  };
+
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    setPreviewImageUrl(null);
+    setPreviewImageName('');
+  };
+
+  const handleOpenInNewTab = () => {
+    if (previewImageUrl) {
+      window.open(previewImageUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!previewImageUrl) return;
+
+    try {
+      const response = await fetch(previewImageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${previewImageName.replace(/\s+/g, '_')}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download image');
+    }
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <MainLayout title="Stok">
       <div className="space-y-6">
@@ -339,28 +404,30 @@ export default function Stok() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                    Gambar
+                  </th>
                   <th
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('nama_barang')}
                   >
                     Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                    onClick={() => requestSort('kode_barang')}
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    onClick={() => requestSort('part_number')}
                   >
-                    Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kode Barang,<br />Part Number{sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Part Number</th>
                   <th
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('nama_kategori')}
                   >
                     Kategori,<br />Sub Kategori {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Armada</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Armada</th>
                   <th
-                    className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('total_masuk')}
                   >
                     <div className="flex items-center justify-end">
@@ -369,7 +436,7 @@ export default function Stok() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('total_keluar')}
                   >
                     <div className="flex items-center justify-end">
@@ -378,12 +445,12 @@ export default function Stok() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('stok_akhir')}
                   >
                     Stok Akhir {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Lokasi</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lokasi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -410,7 +477,42 @@ export default function Stok() {
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-xs font-medium">{item.nama_barang}</td>
+                      <td className="px-6 py-4">
+                        {item.gambar_url ? (
+                          <div className="relative group">
+                            <button
+                              onClick={() => handleThumbnailClick(item)}
+                              className="relative overflow-hidden rounded border border-gray-200 hover:border-green-500 transition-all"
+                              title="Klik untuk melihat gambar"
+                            >
+                              <img
+                                src={cloudinaryService.getThumbnailUrl(item.gambar_url)}
+                                alt={item.nama_barang}
+                                className="w-12 h-12 object-cover transition-transform group-hover:scale-110"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23f3f4f6" width="48" height="48"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%239ca3af" font-size="20"%3E?%3C/text%3E%3C/svg%3E';
+                                }}
+                              />
+                              {/* Hover overlay */}
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+                                <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                            <ImageIcon className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-xs font-medium">{item.nama_barang}</p>
+                          <p className="text-xs text-green-800">{item.alias}</p>
+                        </div>
+                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
@@ -419,9 +521,7 @@ export default function Stok() {
                         >
                           {item.kode_barang}
                         </button>
-                      </td>
-                      <td className="px-6 py-4 text-xs">
-                        {item.part_number || '-'}
+                        <p className="text-xs text-blue-800">{item.part_number}</p>
                       </td>
                       <td className="px-6 py-4">
                         <div>
@@ -558,6 +658,62 @@ export default function Stok() {
             </div>
           </div>
         </div>
+        {/* Image Preview Modal */}
+        {showImagePreview && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={handleCloseImagePreview}
+          >
+            <div
+              className="relative max-w-4xl w-full bg-white rounded-lg shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <ImageIcon className="w-5 h-5 text-gray-600" />
+                  <h3 className="font-semibold text-gray-900">{previewImageName}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleOpenInNewTab}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg"
+                    title="Open in New Tab"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={handleCloseImagePreview}
+                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg"
+                    title="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Image Container */}
+              <div className="flex items-center justify-center bg-gray-900 p-6" style={{ maxHeight: '70vh' }}>
+                <img
+                  src={cloudinaryService.getMediumUrl(previewImageUrl)}
+                  alt={previewImageName}
+                  className="max-w-full max-h-full object-contain rounded"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = previewImageUrl;
+                  }}
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-3 bg-gray-50 border-t">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>Klik di luar atau tekan ESC untuk menutup</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );

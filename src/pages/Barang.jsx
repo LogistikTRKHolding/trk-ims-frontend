@@ -35,6 +35,7 @@ export default function Barang() {
     kode_barang: '',
     part_number: '',
     nama_barang: '',
+    alias: '',
     satuan: '',
     harga_satuan: 0,
     min_stok: 0,
@@ -112,7 +113,7 @@ export default function Barang() {
   } = useDataTable({
     fetchData: fetchBarangData,
     filterKeys: ['kode_kategori', 'kode_sub_kategori', 'kode_armada', 'is_stocked'],
-    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'nama_kategori', 'nama_armada', 'satuan', 'supplier_utama'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'satuan', 'supplier_utama'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
   });
@@ -273,6 +274,7 @@ export default function Barang() {
         kode_barang: formData.kode_barang,
         part_number: formData.part_number,
         nama_barang: formData.nama_barang,
+        alias: formData.alias || null,
         satuan: formData.satuan,
         harga_satuan: parseFloat(formData.harga_satuan) || 0,
         min_stok: parseInt(formData.min_stok) || 0,
@@ -358,6 +360,7 @@ export default function Barang() {
       kode_barang: item.kode_barang || '',
       part_number: item.part_number || '',
       nama_barang: item.nama_barang || '',
+      alias: item.alias || '',
       satuan: item.satuan || '',
       harga_satuan: item.harga_satuan || 0,
       min_stok: item.min_stok || 0,
@@ -386,6 +389,7 @@ export default function Barang() {
       kode_barang: '',
       part_number: '',
       nama_barang: '',
+      alias: '',
       satuan: '',
       harga_satuan: 0,
       min_stok: 0,
@@ -432,6 +436,7 @@ export default function Barang() {
     const exportData = filteredData.map(item => ({
       'Kode Barang': item.kode_barang,
       'Nama Barang': item.nama_barang,
+      'Alias': item.alis || '-',
       'Part Number': item.part_number,
       'Kategori': item.nama_kategori,
       'Sub Kategori': item.nama_sub_kategori,
@@ -573,7 +578,6 @@ export default function Barang() {
                 )}
               </div>
             </div>
-
           </div>
 
           {/* Active Filters Display */}
@@ -626,34 +630,28 @@ export default function Barang() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                     Gambar
                   </th>
                   <th
                     onClick={() => requestSort('nama_barang')}
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
-                    Nama Barang {sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th
-                    onClick={() => requestSort('kode_barang')}
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                  >
-                    Kode Barang{sortConfig.key === 'kode_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Nama Barang{sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th
                     onClick={() => requestSort('part_number')}
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                   >
-                    Part Number {sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Kode Barang,<br />Part Number{sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kategori,<br/>Sub Kategori</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Armada</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tipe</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Min/Max</th>
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Harga</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Armada</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tipe</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Min/Max</th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Harga</th>
                   {(canEdit || canDelete) && (
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tindakan</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
                   )}
                 </tr>
               </thead>
@@ -709,15 +707,24 @@ export default function Barang() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-xs font-medium">{item.nama_barang}</td>
-                        <td className="px-6 py-4 text-xs">{item.kode_barang}</td>
-                        <td className="px-6 py-4 text-xs">{item.part_number}</td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-xs font-medium">{item.nama_barang}</p>
+                            <p className="text-xs text-green-800">{item.alias}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-xs">{item.kode_barang}</p>
+                            <p className="text-xs text-blue-800">{item.part_number}</p>
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <div>
                             <p className="text-xs">{item.nama_kategori}</p>
                             <p className="text-xs">{item.nama_sub_kategori}</p>
                           </div>
-                        </td>                        
+                        </td>
                         <td className="px-6 py-4 text-xs">{item.nama_armada}</td>
                         <td className="px-6 py-4">
                           {item.is_stocked ? (
@@ -1076,18 +1083,32 @@ export default function Barang() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nama Barang <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="nama_barang"
-                      value={formData.nama_barang}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Barang <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="nama_barang"
+                        value={formData.nama_barang}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Alias
+                      </label>
+                      <input
+                        type="text"
+                        name="alias"
+                        value={formData.alias}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
                   </div>
 
                   {/* Kategori, Sub Kategori & Armada */}

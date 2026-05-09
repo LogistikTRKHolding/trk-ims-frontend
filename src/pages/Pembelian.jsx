@@ -15,12 +15,9 @@ import {
     Trash2,
     Calendar,
     Package,
-    Building2,
-    TrendingUp,
     Clock,
     CheckCircle2,
     XCircle,
-    Loader2,
 } from 'lucide-react';
 
 export default function Pembelian() {
@@ -42,6 +39,7 @@ export default function Pembelian() {
         nama_vendor: '',
         kode_barang: '',
         nama_barang: '',
+        alias: '',
         qty_order: 0,
         harga_satuan: 0,
         total_harga: 0,
@@ -72,6 +70,7 @@ export default function Pembelian() {
         kode_barang: '',
         part_number: '',
         nama_barang: '',
+        alias: '',
         satuan: '',
         kode_kategori: '',
         kode_sub_kategori: '',
@@ -159,7 +158,7 @@ export default function Pembelian() {
     } = useDataTable({
         fetchData: fetchPembelianData,
         filterKeys: ['kode_kategori', 'kode_sub_kategori', 'kode_armada', 'status'],
-        searchKeys: ['no_po', 'kode_barang', 'nama_barang', 'nama_vendor', 'keterangan'],
+        searchKeys: ['no_po', 'kode_barang', 'nama_barang', 'alias', 'nama_vendor', 'keterangan'],
         dateFilterKey: 'tanggal_po',
         defaultSort: { key: 'tanggal_po', direction: 'desc' },
         defaultRowsPerPage: 10,
@@ -343,6 +342,7 @@ export default function Pembelian() {
             nama_vendor: '',
             kode_barang: '',
             nama_barang: '',
+            alias: '',
             qty_order: 0,
             harga_satuan: 0,
             total_harga: 0,
@@ -438,6 +438,7 @@ export default function Pembelian() {
             kode_barang: '',
             part_number: '',
             nama_barang: '',
+            alias: '',
             satuan: '',
             kode_kategori: '',
             kode_sub_kategori: '',
@@ -625,6 +626,7 @@ export default function Pembelian() {
             'Tanggal PO': item.tanggal_po?.split('T')[0] || '',
             'Vendor': item.nama_vendor,
             'Barang': item.nama_barang,
+            'Alias': item.alias || '',
             'Kategori': item.nama_kategori || '',
             'Armada': item.nama_armada || '',
             'Qty Order': item.qty_order,
@@ -916,21 +918,22 @@ export default function Pembelian() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
+                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         No. PO {sortConfig.key === 'no_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
-                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
+                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
                                         Tanggal PO {sortConfig.key === 'tanggal_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Vendor</th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Nama Barang,<br />Kode Barang,<br />Part Number</th>
-                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
-                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">jumlah</th>
-                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Harga Satuan</th>
-                                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Total Harga</th>
-                                    <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vendor</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">jumlah</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Harga Satuan</th>
+                                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total Harga</th>
+                                    <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
                                     {(canEdit || canDelete) && (
-                                        <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Tindakan</th>
+                                        <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
                                     )}
                                 </tr>
                             </thead>
@@ -969,8 +972,13 @@ export default function Pembelian() {
                                                 <td className="px-6 py-4">
                                                     <div>
                                                         <p className="text-xs font-medium">{item.nama_barang}</p>
+                                                        <p className="text-xs text-green-800">{item.alias}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div>
                                                         <p className="text-xs">{item.kode_barang}</p>
-                                                        <p className="text-xs text-blue-500">{item.part_number}</p>
+                                                        <p className="text-xs text-blue-800">{item.part_number}</p>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -981,7 +989,7 @@ export default function Pembelian() {
                                                 </td>
                                                 <td className="px-6 py-4 text-xs">
                                                     {item.qty_order} {item.satuan}
-                                                </td>                                                
+                                                </td>
                                                 <td className="px-6 py-4 text-right text-xs text-green-600">
                                                     Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
                                                 </td>
@@ -1425,7 +1433,7 @@ export default function Pembelian() {
                                             value={newBarangData.kode_barang}
                                             readOnly
                                             className="w-full px-3 py-2 border rounded-lg outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
-                                            placeholder="Digenerate otomatis"
+                                            placeholder="(dibuat otomatis)"
                                         />
                                     </div>
                                     <div>
@@ -1441,17 +1449,29 @@ export default function Pembelian() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
-                                    <input
-                                        type="text"
-                                        name="nama_barang"
-                                        value={newBarangData.nama_barang}
-                                        onChange={handleNewBarangChange}
-                                        required
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                                        placeholder="Contoh: OLI MESIN"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Barang *</label>
+                                        <input
+                                            type="text"
+                                            name="nama_barang"
+                                            value={newBarangData.nama_barang}
+                                            onChange={handleNewBarangChange}
+                                            required
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                                            placeholder="Contoh: OLI MESIN"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Alias</label>
+                                        <input
+                                            type="text"
+                                            name="alias"
+                                            value={newBarangData.alias}
+                                            onChange={handleNewBarangChange}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">

@@ -614,12 +614,12 @@ export default function KartuStok() {
                                     <table className="w-full text-sm">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Gudang</th>
-                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Tanggal</th>
-                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Transaksi</th>
-                                                <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Jumlah</th>                                                
-                                                <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">Saldo</th>
-                                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">Keterangan</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Gudang</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tanggal</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Transaksi</th>
+                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Jumlah</th>                                                
+                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Saldo</th>
+                                                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Keterangan</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 bg-white">

@@ -40,6 +40,7 @@ export default function MutasiGudang() {
     kode_barang: '',
     part_number: '',
     nama_barang: '',
+    alias: '',
     qty: 0,
     satuan: '',
     kode_rak: '',
@@ -67,6 +68,7 @@ export default function MutasiGudang() {
     kode_barang: '',
     part_number: '',
     nama_barang: '',
+    alias: '',
     satuan: '',
     kode_kategori: '',
     kode_sub_kategori: '',
@@ -210,7 +212,7 @@ export default function MutasiGudang() {
   } = useDataTable({
     fetchData: fetchMutasiData,
     filterKeys: ['kode_gudang', 'jenis_transaksi', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
-    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'keterangan', 'referensi'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'keterangan', 'referensi'],
     dateFilterKey: 'tanggal',
     defaultSort: { key: 'tanggal', direction: 'desc' },
     defaultRowsPerPage: 10
@@ -275,6 +277,7 @@ export default function MutasiGudang() {
       kode_barang: barang.kode_barang,
       part_number: barang.part_number || '',
       nama_barang: barang.nama_barang,
+      alias: barang.alias || '',
       satuan: barang.satuan,
     }));
     setSearchTermBarang('');
@@ -343,6 +346,7 @@ export default function MutasiGudang() {
         kode_barang: '',
         part_number: '',
         nama_barang: '',
+        alias: '',
         satuan: '',
         kode_kategori: '',
         kode_sub_kategori: '',
@@ -379,6 +383,7 @@ export default function MutasiGudang() {
       kode_barang: '',
       part_number: '',
       nama_barang: '',
+      alias: '',
       qty: 0,
       satuan: '',
       kode_rak: '',
@@ -412,6 +417,7 @@ export default function MutasiGudang() {
       kode_barang: item.kode_barang || '',
       part_number: item.part_number || '',
       nama_barang: item.nama_barang || '',
+      alias: item.alias || '',
       qty: item.qty || 0,
       satuan: item.satuan || '',
       kode_rak: item.kode_rak || '',
@@ -494,6 +500,7 @@ export default function MutasiGudang() {
       jenis_transaksi: item.jenis_transaksi,
       kode_barang: item.kode_barang,
       nama_barang: item.nama_barang,
+      alias: item.alias,
       qty: item.qty,
       satuan: item.satuan,
       kode_rak: item.kode_rak || '',
@@ -513,6 +520,7 @@ export default function MutasiGudang() {
       'Transaksi': item.jenis_transaksi,
       'Kode Barang': item.kode_barang,
       'Nama Barang': item.nama_barang,
+      'Alias': item.alias || '-',
       'Qty': item.qty,
       'Satuan': item.satuan,
       'Kategori': item.nama_kategori || '-',
@@ -827,38 +835,38 @@ export default function MutasiGudang() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Gudang
                   </th>
                   <th
                     onClick={() => requestSort('tanggal')}
-                    className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                   >
                     Tanggal {sortConfig.key === 'tanggal' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Transaksi
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Nama Barang,<br />Kode Barang
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Nama Barang
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                    Part Number
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Kode Barang,<br />Part Number
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Jumlah
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Referensi
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Lokasi Rak
                   </th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Keterangan
                   </th>
                   {(canEdit || canDelete) && (
-                    <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Aksi
                     </th>
                   )}
@@ -909,12 +917,15 @@ export default function MutasiGudang() {
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-xs font-semibold">{item.nama_barang}</p>
-                            <p className="text-xs">{item.kode_barang}</p>
+                            <p className="text-xs font-medium">{item.nama_barang}</p>
+                            <p className="text-xs text-green-800">{item.alias}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs">
-                          {item.part_number || '-'}
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-xs">{item.kode_barang}</p>
+                            <p className="text-xs text-blue-800">{item.part_number}</p>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-xs">
                           {item.qty} {item.satuan}
@@ -1202,7 +1213,8 @@ export default function MutasiGudang() {
                   <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                      <span className="text-xs font-medium">{formData.nama_barang || '-'}</span>
+                      <span className="text-xs font-medium">{formData.nama_barang}</span>
+                      <span className="text-xs text-green-800">{formData.alias}</span>
                     </div>
                     <div>
                       <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
@@ -1310,6 +1322,7 @@ export default function MutasiGudang() {
                         kode_barang: '',
                         part_number: '',
                         nama_barang: '',
+                        alias: '',
                         satuan: '',
                         kode_kategori: '',
                         kode_sub_kategori: '',
@@ -1358,21 +1371,34 @@ export default function MutasiGudang() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nama Barang [-Spesifikasi (jika ada)]*
-                    </label>
-                    <input
-                      type="text"
-                      name="nama_barang"
-                      value={newBarangData.nama_barang}
-                      onChange={handleNewBarangChange}
-                      required
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
-                      placeholder="Contoh: OLI MESIN - SAE40"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Barang [-Spesifikasi (jika ada)]*
+                      </label>
+                      <input
+                        type="text"
+                        name="nama_barang"
+                        value={newBarangData.nama_barang}
+                        onChange={handleNewBarangChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none uppercase"
+                        placeholder="Contoh: OLI MESIN - SAE40"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Alias
+                      </label>
+                      <input
+                        type="text"
+                        name="alias"
+                        value={newBarangData.alias}
+                        onChange={handleNewBarangChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"                        
+                      />
+                    </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">

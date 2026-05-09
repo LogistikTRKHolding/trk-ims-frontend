@@ -373,37 +373,37 @@ export default function SubKategori() {
               <tr>
                 <th
                   onClick={() => requestSort('kode_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Kode Kategori{' '}
                   {sortConfig.key === 'kode_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Nama Kategori{' '}
                   {sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('kode_sub_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Kode Sub-Kategori{' '}
                   {sortConfig.key === 'kode_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th
                   onClick={() => requestSort('nama_sub_kategori')}
-                  className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
+                  className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100 select-none"
                 >
                   Nama Sub-Kategori{' '}
                   {sortConfig.key === 'nama_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                   Status
                 </th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-sm font-medium text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">
                     Tindakan
                   </th>
                 )}
