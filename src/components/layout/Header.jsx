@@ -44,6 +44,7 @@ export default function Header({ onMenuClick, title = 'Dashboard', description =
             <button
               onClick={onMenuClick}
               className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="menu"
             >
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
@@ -73,20 +74,14 @@ export default function Header({ onMenuClick, title = 'Dashboard', description =
             </div>
           </div>
 
-          {/* Right: Notifications + User Profile */}
+          {/* Right: User Profile */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notifications */}
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Bell className="w-5 h-5 text-gray-600" />
-              {/* Notification Badge */}
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-
-            {/* User Profile Dropdown */}
+             {/* User Profile Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 sm:gap-3 p-2 sm:px-3 sm:py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="userProfile"
               >
                 <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-white" />

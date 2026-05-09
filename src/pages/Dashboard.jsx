@@ -162,7 +162,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-end">
           <div className="flex space-x-3">
-            <select
+          <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -174,7 +174,7 @@ export default function Dashboard() {
               ))}
             </select>
 
-            <select
+            <select aria-label="Select year" name="year"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
