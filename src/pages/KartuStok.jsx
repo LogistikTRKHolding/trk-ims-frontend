@@ -202,6 +202,7 @@ export default function KartuStok() {
     // Filter items berdasarkan pencarian, kategori, dan sub kategori
     const filteredItems = items.filter(item => {
         const searchMatch = item.nama_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.alias?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.kode_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -406,7 +407,9 @@ export default function KartuStok() {
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs font-medium text-gray-800 truncate">{item.nama_barang}</span>
+                                                                <span className="text-xs font-medium text-gray-800 truncate">
+                                                                    {item.nama_barang}{item.alias && ` (${item.alias})`}
+                                                                </span>
                                                             </div>
                                                             <p className="text-xs text-gray-500 mb-1">{item.kode_barang}</p>
                                                             <p className="text-xs text-blue-500 mb-1">{item.part_number}</p>
@@ -482,7 +485,9 @@ export default function KartuStok() {
 
                                         {/* Product Info */}
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">{selectedItem.nama_barang}</h2>
+                                            <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2">
+                                                {selectedItem.nama_barang}{selectedItem.alias && ` (${selectedItem.alias})`}
+                                            </h2>
                                             <div className="space-y-1 text-sm text-gray-600">
                                                 <p>Kode Barang: <button
                                                     onClick={() => window.open(`/barang?kode=${encodeURIComponent(selectedItem.kode_barang)}`, '_blank')}
@@ -617,7 +622,7 @@ export default function KartuStok() {
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Gudang</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tanggal</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Transaksi</th>
-                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Jumlah</th>                                                
+                                                <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Jumlah</th>
                                                 <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Saldo</th>
                                                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Keterangan</th>
                                             </tr>
@@ -651,7 +656,7 @@ export default function KartuStok() {
                                                         </td>
                                                         <td className={`px-4 py-3 text-right font-bold ${record.jenis_transaksi === 'Masuk' ? 'text-green-600 text-xs' : 'text-red-600 text-xs'}`}>
                                                             {record.jenis_transaksi === 'Masuk' ? '+' : '-'}{record.qty}
-                                                        </td>                                                        
+                                                        </td>
                                                         <td className="px-4 py-3 text-xs text-right font-medium">{record.saldo}</td>
                                                         <td className="px-4 py-3 text-xs truncate max-w-[150px] hidden lg:table-cell">{record.keterangan || '-'}</td>
                                                     </tr>

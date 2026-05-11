@@ -975,11 +975,15 @@ export default function Pembelian() {
                                                         <p className="text-xs text-green-800">{item.alias}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <div>
-                                                        <p className="text-xs">{item.kode_barang}</p>
-                                                        <p className="text-xs text-blue-800">{item.part_number}</p>
-                                                    </div>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <button
+                                                        onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                                                        className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                                                        title={`Lihat di halaman Barang`}
+                                                    >
+                                                        {item.kode_barang}
+                                                    </button>
+                                                    <p className="text-xs text-blue-800">{item.part_number}</p>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div>

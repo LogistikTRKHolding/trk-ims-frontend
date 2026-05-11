@@ -136,6 +136,7 @@ export default function MutasiGudang() {
     return barangList.filter(b =>
       b.kode_barang.toLowerCase().includes(term) ||
       b.nama_barang.toLowerCase().includes(term) ||
+      (b.alias && b.alias.toLowerCase().includes(term)) ||
       (b.part_number && b.part_number.toLowerCase().includes(term))
     ).slice(0, 10); // Batasi 10 hasil untuk kenyamanan visual
   }, [searchTermBarang, barangList]);
@@ -921,11 +922,15 @@ export default function MutasiGudang() {
                             <p className="text-xs text-green-800">{item.alias}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="text-xs">{item.kode_barang}</p>
-                            <p className="text-xs text-blue-800">{item.part_number}</p>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button
+                            onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                            className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                            title={`Lihat di halaman Barang`}
+                          >
+                            {item.kode_barang}
+                          </button>
+                          <p className="text-xs text-blue-800">{item.part_number}</p>
                         </td>
                         <td className="px-6 py-4 text-xs">
                           {item.qty} {item.satuan}
@@ -1181,16 +1186,18 @@ export default function MutasiGudang() {
                               className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-xs font-medium text-gray-800">{barang.nama_barang} ({barang.satuan})</span>
+                                <span className="text-sm font-medium text-gray-800">
+                                  {barang.nama_barang}{barang.alias && ` (${barang.alias})`}
+                                </span>
                               </div>
                               <div className="text-sm text-gray-600">
                                 {barang.kode_barang && (
-                                  <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
+                                  <span className="text-sm text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
                                     KB: {barang.kode_barang}
                                   </span>
                                 )}
                                 {barang.part_number && (
-                                  <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
+                                  <span className="text-sm text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
                                     PN: {barang.part_number}
                                   </span>
                                 )}
@@ -1212,20 +1219,20 @@ export default function MutasiGudang() {
                   {/* Preview Auto-fill */}
                   <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                     <div>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                      <span className="text-xs font-medium">{formData.nama_barang}</span>
+                      <span className="block text-xs uppercase text-gray-400 font-bold">Nama Barang</span>
+                      <span className="text-xs font-medium">{formData.nama_barang}</span><br />
                       <span className="text-xs text-green-800">{formData.alias}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
+                      <span className="block text-xs uppercase text-gray-400 font-bold">Kode Barang</span>
                       <span className="text-xs">{formData.kode_barang || '-'}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
+                      <span className="block text-xs uppercase text-gray-400 font-bold">Part Number</span>
                       <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
                     </div>
                     <div>
-                      <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
+                      <span className="block text-xs uppercase text-gray-400 font-bold">Satuan</span>
                       <span className="text-xs">{formData.satuan || '-'}</span>
                     </div>
                   </div>
@@ -1395,7 +1402,7 @@ export default function MutasiGudang() {
                         name="alias"
                         value={newBarangData.alias}
                         onChange={handleNewBarangChange}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"                        
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       />
                     </div>
                   </div>

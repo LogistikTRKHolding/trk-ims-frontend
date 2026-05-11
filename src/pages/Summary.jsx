@@ -493,7 +493,7 @@ export default function Summary() {
                         <button
                           onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
                           className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
-                          title={`Lihat barang ${item.kode_barang} di halaman Barang`}
+                          title={`Lihat di halaman Barang`}
                         >
                           {item.kode_barang}
                         </button>
