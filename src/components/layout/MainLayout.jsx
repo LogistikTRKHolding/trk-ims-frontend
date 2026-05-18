@@ -6,7 +6,8 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 
 export default function MainLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  //const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
   // Get current user from localStorage

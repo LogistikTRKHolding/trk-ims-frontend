@@ -5,11 +5,13 @@ import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
 import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
+import ImportModal from '../components/common/ImportModal';
 import {
     Search,
     Filter,
     X,
     Download,
+    Upload,
     Plus,
     Edit,
     Trash2,
@@ -18,6 +20,7 @@ import {
     Clock,
     CheckCircle2,
     XCircle,
+    RefreshCw,
 } from 'lucide-react';
 
 export default function Pembelian() {
@@ -31,6 +34,12 @@ export default function Pembelian() {
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    // Import progress & result
+    const [importProgress, setImportProgress] = useState({ loading: false, total: 0, processed: 0 });
+    const [importResult, setImportResult] = useState(null);
+    // importResult: null | { successCount, apiErrorCount, parseErrors: string[], apiErrors: string[] }
     const [editingItem, setEditingItem] = useState(null);
     const [formData, setFormData] = useState({
         no_po: '',
@@ -619,6 +628,224 @@ export default function Pembelian() {
         }
     };
 
+    // Refresh — muat ulang data tabel
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+            await refresh();
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    // ── Import ───────────────────────────────────────────────────────────────
+    // Kolom wajib yang harus ada di baris header (baris 1) file Excel.
+    const IMPORT_REQUIRED_COLS = ['No PO', 'Tanggal PO', 'Kode Vendor', 'Kode Barang', 'Jumlah Order', 'Harga Satuan'];
+    const IMPORT_MAX_ROWS      = 10000;
+    const IMPORT_BATCH_SIZE    = 50;   // baris per batch Promise.allSettled
+
+    /**
+     * Konversi nilai sel tanggal dari Excel ke string ISO yyyy-mm-dd.
+     * Mendukung tiga kemungkinan format keluaran XLSX.js (raw: false):
+     *   1. "dd/mm/yyyy"  — string teks yang diketik user sesuai panduan template
+     *   2. "yyyy-mm-dd"  — ISO, ketika cell diformat sebagai ISO di Excel
+     *   3. Angka serial Excel (5 digit) — jika cell punya format date di Excel
+     */
+    const parseImportDate = (raw) => {
+        if (raw === null || raw === undefined || raw === '') return null;
+        const str = String(raw).trim();
+
+        // Format dd/mm/yyyy (panduan template)
+        const dmyMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (dmyMatch) {
+            const [, dd, mm, yyyy] = dmyMatch;
+            return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+        }
+
+        // Format yyyy-mm-dd (ISO)
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+        // Excel serial number (angka bulat 5 digit, mis. 45397)
+        if (/^\d{5}$/.test(str)) {
+            try {
+                const parsed = XLSX.SSF.parse_date_code(parseInt(str, 10));
+                if (parsed && parsed.y) {
+                    return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+                }
+            } catch (_) { /* lewati */ }
+        }
+
+        return null; // tidak bisa diparsing
+    };
+
+    // Callback dari ImportModal — dipanggil setelah user pilih file & tekan "Proses Impor"
+    const handleImportFile = async (file) => {
+        // Tutup modal segera agar user bisa melihat progress bar
+        setShowImportModal(false);
+        setImportResult(null);
+
+        try {
+            // ── 1. Baca file ──────────────────────────────────────────────────────
+            const buffer = await file.arrayBuffer();
+            const wb = XLSX.read(buffer, { type: 'array', cellDates: false });
+
+            const sheetName = wb.SheetNames[0];
+            if (!sheetName) throw new Error('File Excel tidak memiliki sheet yang dapat dibaca.');
+            const ws = wb.Sheets[sheetName];
+
+            // raw: false → semua sel dikembalikan sebagai string terformat
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+
+            if (rows.length < 2) {
+                setImportResult({ successCount: 0, apiErrorCount: 0, parseErrors: ['File tidak memiliki data (hanya header atau kosong).'], apiErrors: [] });
+                return;
+            }
+
+            // ── 2. Validasi header ────────────────────────────────────────────────
+            const headers = rows[0].map((h) => String(h).trim());
+            const missingCols = IMPORT_REQUIRED_COLS.filter((c) => !headers.includes(c));
+            if (missingCols.length > 0) {
+                setImportResult({
+                    successCount: 0,
+                    apiErrorCount: 0,
+                    parseErrors: [`Kolom wajib tidak ditemukan di file: ${missingCols.join(', ')}`],
+                    apiErrors: [],
+                });
+                return;
+            }
+
+            // Buat index posisi kolom berdasarkan nama header
+            const colIdx = {};
+            headers.forEach((h, i) => { colIdx[h] = i; });
+
+            // ── 3. Parse & validasi baris data ────────────────────────────────────
+            const dataRows = rows.slice(1, 1 + IMPORT_MAX_ROWS);
+            const parseErrors = [];
+            const payloads = [];
+
+            dataRows.forEach((row, i) => {
+                const excelRowNum = i + 2; // baris ke-2 di Excel = indeks 0 di dataRows
+
+                const no_po          = String(row[colIdx['No PO']]        ?? '').trim();
+                const tanggalPoRaw   = row[colIdx['Tanggal PO']];
+                const kode_vendor    = String(row[colIdx['Kode Vendor']]   ?? '').trim();
+                const kode_barang    = String(row[colIdx['Kode Barang']]   ?? '').trim();
+                const jumlahRaw      = row[colIdx['Jumlah Order']];
+                const hargaRaw       = row[colIdx['Harga Satuan']];
+
+                // Skip baris benar-benar kosong (semua sel kosong)
+                if (!no_po && !kode_barang && !tanggalPoRaw) return;
+
+                // Validasi kolom wajib
+                if (!no_po) {
+                    parseErrors.push(`Baris ${excelRowNum}: No PO kosong.`);
+                    return;
+                }
+                if (!kode_vendor) {
+                    parseErrors.push(`Baris ${excelRowNum}: Kode Vendor kosong.`);
+                    return;
+                }
+                if (!kode_barang) {
+                    parseErrors.push(`Baris ${excelRowNum}: Kode Barang kosong.`);
+                    return;
+                }
+
+                const tanggal_po = parseImportDate(tanggalPoRaw);
+                if (!tanggal_po) {
+                    parseErrors.push(`Baris ${excelRowNum}: Format Tanggal PO tidak valid ("${tanggalPoRaw}") — gunakan dd/mm/yyyy.`);
+                    return;
+                }
+
+                const qty_order = parseFloat(String(jumlahRaw).replace(',', '.'));
+                if (isNaN(qty_order) || qty_order <= 0) {
+                    parseErrors.push(`Baris ${excelRowNum}: Jumlah Order tidak valid ("${jumlahRaw}") — harus angka positif.`);
+                    return;
+                }
+
+                const harga_satuan = parseFloat(String(hargaRaw).replace(',', '.'));
+                if (isNaN(harga_satuan) || harga_satuan < 0) {
+                    parseErrors.push(`Baris ${excelRowNum}: Harga Satuan tidak valid ("${hargaRaw}") — harus angka >= 0.`);
+                    return;
+                }
+
+                payloads.push({
+                    no_po,
+                    tanggal_po,
+                    kode_vendor,
+                    kode_barang,
+                    qty_order,
+                    harga_satuan,
+                    total_harga: qty_order * harga_satuan,
+                    status: 'Pending',            // default saat import
+                    tanggal_terima: null,
+                    created_by: currentUser?.userId ?? null,
+                    updated_by: currentUser?.userId ?? null,
+                });
+            });
+
+            // ── 4. Konfirmasi sebelum kirim ───────────────────────────────────────
+            if (payloads.length === 0) {
+                setImportResult({ successCount: 0, apiErrorCount: 0, parseErrors, apiErrors: [] });
+                return;
+            }
+
+            const confirmLines = [
+                `File: ${file.name}`,
+                `Baris valid siap diimpor : ${payloads.length}`,
+                parseErrors.length > 0 ? `Baris dilewati (error parse) : ${parseErrors.length}` : null,
+                '',
+                'Lanjutkan proses impor?',
+            ].filter((l) => l !== null).join('\n');
+
+            if (!window.confirm(confirmLines)) return;
+
+            // ── 5. Kirim ke API dalam batch ───────────────────────────────────────
+            setImportProgress({ loading: true, total: payloads.length, processed: 0 });
+
+            let successCount = 0;
+            const apiErrors = [];
+
+            for (let i = 0; i < payloads.length; i += IMPORT_BATCH_SIZE) {
+                const batch = payloads.slice(i, i + IMPORT_BATCH_SIZE);
+
+                const results = await Promise.allSettled(
+                    batch.map((p) => pembelianAPI.create(p))
+                );
+
+                results.forEach((res, j) => {
+                    const excelRowNum = i + j + 2;
+                    if (res.status === 'fulfilled') {
+                        successCount++;
+                    } else {
+                        const msg = res.reason?.response?.data?.message
+                            || res.reason?.response?.data?.error
+                            || res.reason?.message
+                            || 'Unknown error';
+                        apiErrors.push(`Baris ${excelRowNum} (${batch[j].no_po} / ${batch[j].kode_barang}): ${msg}`);
+                    }
+                });
+
+                setImportProgress({ loading: true, total: payloads.length, processed: Math.min(i + IMPORT_BATCH_SIZE, payloads.length) });
+            }
+
+            // ── 6. Selesai — refresh tabel & tampilkan hasil ──────────────────────
+            setImportProgress({ loading: false, total: payloads.length, processed: payloads.length });
+            await refresh();
+
+            setImportResult({ successCount, apiErrorCount: apiErrors.length, parseErrors, apiErrors });
+
+        } catch (err) {
+            console.error('[Pembelian] Import error:', err);
+            setImportProgress({ loading: false, total: 0, processed: 0 });
+            setImportResult({
+                successCount: 0,
+                apiErrorCount: 0,
+                parseErrors: [`Terjadi kesalahan saat memproses file: ${err.message || 'Unknown error'}`],
+                apiErrors: [],
+            });
+        }
+    };
+
     // Export to Excel
     const handleExport = () => {
         const exportData = filteredData.map(item => ({
@@ -812,14 +1039,31 @@ export default function Pembelian() {
                             {/* Right: Action Buttons */}
                             <div className="flex gap-2 w-full lg:w-auto">
                                 <button
+                                    onClick={handleRefresh}
+                                    disabled={isRefreshing}
+                                    title="Segarkan data"
+                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                    <span>Refresh</span>
+                                </button>
+                                <button
                                     onClick={handleExport}
                                     className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                                 >
-                                    <Download className="w-4 h-4" />
+                                    <Upload className="w-4 h-4" />
                                     <span>Export</span>
                                 </button>
-
                                 {canCreate && (
+                                    <button
+                                        onClick={() => setShowImportModal(true)}
+                                        className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        <span>Import</span>
+                                    </button>
+                                )}
+                                {canCreate && (                                    
                                     <button
                                         onClick={openCreateModal}
                                         className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -897,6 +1141,91 @@ export default function Pembelian() {
                         )}
                     </div>
                 </div>
+
+                {/* ── Import Progress Bar ── tampil saat proses import berjalan */}
+                {importProgress.loading && (
+                    <div className="bg-white rounded-lg shadow px-5 py-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Sedang mengimpor data...</span>
+                            <span className="text-sm text-gray-500">
+                                {importProgress.processed} / {importProgress.total} baris
+                            </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div
+                                className="bg-green-500 h-2.5 rounded-full transition-all duration-300"
+                                style={{ width: `${importProgress.total > 0 ? Math.round((importProgress.processed / importProgress.total) * 100) : 0}%` }}
+                            />
+                        </div>
+                        <p className="mt-1.5 text-xs text-gray-400">
+                            Jangan menutup halaman ini sampai proses selesai.
+                        </p>
+                    </div>
+                )}
+
+                {/* ── Import Result Panel ── tampil setelah proses import selesai */}
+                {importResult && !importProgress.loading && (
+                    <div className={`rounded-lg shadow px-5 py-4 border ${
+                        importResult.successCount > 0 && importResult.apiErrorCount === 0 && importResult.parseErrors.length === 0
+                            ? 'bg-green-50 border-green-200'
+                            : importResult.successCount > 0
+                                ? 'bg-yellow-50 border-yellow-200'
+                                : 'bg-red-50 border-red-200'
+                    }`}>
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-0.5">
+                                <p className="text-sm font-semibold text-gray-800">Hasil Import</p>
+                                <div className="flex flex-wrap gap-3 text-sm mt-1">
+                                    <span className="text-green-700 font-medium">
+                                        ✅ Berhasil: {importResult.successCount} baris
+                                    </span>
+                                    {importResult.parseErrors.length > 0 && (
+                                        <span className="text-amber-700 font-medium">
+                                            ⚠️ Dilewati (parse): {importResult.parseErrors.length} baris
+                                        </span>
+                                    )}
+                                    {importResult.apiErrorCount > 0 && (
+                                        <span className="text-red-700 font-medium">
+                                            ❌ Gagal (API): {importResult.apiErrorCount} baris
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setImportResult(null)}
+                                className="p-1 rounded hover:bg-black/10 shrink-0 mt-0.5"
+                                title="Tutup"
+                            >
+                                <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* Detail error (maks 50 baris pertama) */}
+                        {(importResult.parseErrors.length > 0 || importResult.apiErrors.length > 0) && (
+                            <details className="mt-3">
+                                <summary className="text-xs font-medium text-gray-600 cursor-pointer select-none hover:text-gray-800">
+                                    Lihat detail error ({importResult.parseErrors.length + importResult.apiErrors.length} baris)
+                                </summary>
+                                <ul className="mt-2 space-y-1 max-h-48 overflow-y-auto text-xs text-gray-600">
+                                    {[...importResult.parseErrors, ...importResult.apiErrors]
+                                        .slice(0, 50)
+                                        .map((err, i) => (
+                                            <li key={i} className="flex gap-1.5">
+                                                <span className="shrink-0 text-gray-400">•</span>
+                                                {err}
+                                            </li>
+                                        ))}
+                                    {(importResult.parseErrors.length + importResult.apiErrors.length) > 50 && (
+                                        <li className="text-gray-400 italic">
+                                            ...dan {(importResult.parseErrors.length + importResult.apiErrors.length) - 50} error lainnya.
+                                        </li>
+                                    )}
+                                </ul>
+                            </details>
+                        )}
+                    </div>
+                )}
 
                 {/* Quick Date Filters (if date mode active) */}
                 {dateFilterMode !== 'all' && (
@@ -1712,6 +2041,25 @@ export default function Pembelian() {
                     </div>
                 </div>
             )}
+
+            {/* ── Import Modal ── */}
+            <ImportModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                onFileSelect={handleImportFile}
+                title="Import Rekap Pembelian"
+                templateFileName="rekap_pembelian"
+                templateDriveUrl="https://drive.google.com/uc?export=download&id=1tUpfX7DGvsjMt1n5LJ-tO5xtOYX3-rmN"
+                columns={[
+                    'No PO',
+                    'Tanggal PO',
+                    'Kode Vendor',
+                    'Kode Barang',
+                    'Jumlah Order',
+                    'Harga Satuan',
+                ]}
+                maxRows={10000}
+            />
         </MainLayout>
     );
 }
