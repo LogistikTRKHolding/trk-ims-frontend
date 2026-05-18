@@ -7,6 +7,7 @@ import { cloudinaryService } from '../services/cloudinary';
 import * as XLSX from 'xlsx';
 import {
   Download,
+  Upload,
   Filter,
   Search,
   X,
@@ -365,7 +366,7 @@ export default function Summary() {
                   onClick={handleExport}
                   className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                 >
-                  <Download className="w-4 h-4" />
+                  <Upload className="w-4 h-4" />
                   <span>Export</span>
                 </button>
               </div>

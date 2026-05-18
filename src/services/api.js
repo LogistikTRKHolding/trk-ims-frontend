@@ -830,14 +830,35 @@ export const usersAPI = {
    * @param {string} currentPassword - password saat ini (wajib untuk non-admin)
    * @param {string} newPassword - password baru
    */
-  async changePassword(userId, currentPassword, newPassword) {
+  /* async changePassword(userId, currentPassword, newPassword) {
     return fetchWithAuth(`${API_URL}/users/${userId}/change-password`, {
       method: 'POST',
       body: JSON.stringify({
-        current_password: currentPassword,
+        current_password: currentPassword || null,
         new_password: newPassword,
       }),
     });
+  }, */
+  changePassword: async (userId, currentPassword, newPassword) => {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_URL}/users/${userId}/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        current_password: currentPassword || null, // null jika admin reset
+        new_password: newPassword,
+      }),
+    });
+  
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || 'Gagal mengubah password');
+    }
+  
+    return response.json();
   },
 };
 

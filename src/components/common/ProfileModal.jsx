@@ -110,28 +110,32 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-
-    if (!passwordData.current_password) {
-      alert('Kata sandi saat ini harus diisi!');
+  
+    // Validasi password lama hanya jika ganti sendiri
+    if (isOwnProfile && !passwordData.current_password) {
+      alert('Password saat ini harus diisi!');
       return;
     }
     if (passwordData.new_password.length < 8) {
-      alert('Kata sandi baru minimal 8 karakter!');
+      alert('Password baru minimal 8 karakter!');
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      alert('Konfirmasi kata sandi tidak sesuai!');
+      alert('Konfirmasi password tidak sesuai!');
       return;
     }
-    if (passwordData.current_password === passwordData.new_password) {
-      alert('Kata sandi baru tidak boleh sama dengan kata sandi saat ini!');
+    if (isOwnProfile && passwordData.current_password === passwordData.new_password) {
+      alert('Password baru tidak boleh sama dengan yang saat ini!');
       return;
     }
-
+  
     try {
       setPasswordLoading(true);
       await usersAPI.changePassword(userId, passwordData.current_password, passwordData.new_password);
-      alert('Kata sando berhasil diubah! Silakan login kembali.');
+      alert(isAdminResettingOther
+        ? 'Password user berhasil direset!'
+        : 'Password berhasil diubah! Silakan login kembali.'
+      );
       setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
       setPasswordStrength(null);
       onClose(true);
@@ -190,6 +194,9 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
 
   if (!isOpen) return null;
 
+  const isOwnProfile = userId === currentUser?.userId;
+  const isAdminResettingOther = currentUser?.role === 'Admin' && !isOwnProfile;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -234,7 +241,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
               }`}
           >
             <Lock className="w-4 h-4" />
-            Ganti Kata sandi
+            Ganti Password
           </button>
         </div>
 
@@ -375,8 +382,8 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                       <option value="Admin">Admin</option>
                       <option value="Manager">Manager</option>
                       <option value="Staff">Staff</option>
-                      <option value="Staff-gudang">Staff Gudang</option>
-                      <option value="Staff-pembelian">Staff Pembelian</option>
+                      <option value="Staff_gudang">Staff Gudang</option>
+                      <option value="Staff_pembelian">Staff Pembelian</option>
                     </select>
                   </div>
 
@@ -433,6 +440,8 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
               </div>
             )}
 
+
+
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
               <button
@@ -454,8 +463,49 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
         ) : (
           /* Password Change Tab */
           <form onSubmit={handlePasswordChange} className="p-6 space-y-6">
+            {/* Hanya tampil jika ganti password sendiri */}
+            {isOwnProfile && (
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Lock className="w-4 h-4" />
+                  Kata Sandi Saat Ini *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? 'text' : 'password'}
+                    value={passwordData.current_password}
+                    onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Masukkan kata sandi saat ini"
+                  />
+                  <button type="button"
+                    onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  >
+                    {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Info banner jika admin reset password user lain */}
+            {isAdminResettingOther && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-medium text-amber-800">Reset Password sebagai Admin</h4>
+                    <p className="text-xs text-amber-700 mt-1">
+                      Anda mereset password user lain. Tidak perlu memasukkan password saat ini.
+                      Beritahukan password baru kepada user yang bersangkutan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Info Banner */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            {/* <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <Lock className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
                 <div>
@@ -466,13 +516,13 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Current Password */}
-            <div>
+           {/*  <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Lock className="w-4 h-4" />
-                Kata sandi Saat Ini *
+                Password Saat Ini *
               </label>
               <div className="relative">
                 <input
@@ -491,13 +541,13 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                   {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* New Password */}
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Lock className="w-4 h-4" />
-                Kata sandi Baru *
+                Password Baru *
               </label>
               <div className="relative">
                 <input
@@ -557,7 +607,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Lock className="w-4 h-4" />
-                Konfirmasi Kata sandi Baru *
+                Konfirmasi Password Baru *
               </label>
               <div className="relative">
                 <input
@@ -588,7 +638,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
               )}
               {passwordData.confirm_password && passwordData.new_password === passwordData.confirm_password && (
                 <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Kata sandi cocok
+                  <CheckCircle className="w-3 h-3" /> Password cocok
                 </p>
               )}
             </div>
@@ -615,7 +665,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    Ubah Kata sandi
+                    Ubah Password
                   </>
                 )}
               </button>

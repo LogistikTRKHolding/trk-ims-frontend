@@ -1,7 +1,7 @@
 // src/pages/Vendor.jsx
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Edit, Trash2, Download, Search, X, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, Upload, Search, X, Save } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { authAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -274,7 +274,7 @@ export default function Vendor() {
                 onClick={handleExport}
                 className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
               >
-                <Download className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 <span>Export</span>
               </button>
 

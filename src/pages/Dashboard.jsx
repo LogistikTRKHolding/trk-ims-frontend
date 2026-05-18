@@ -410,7 +410,7 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <a
               href="/mutasi_gudang"

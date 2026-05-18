@@ -1,11 +1,12 @@
 // src/pages/MutasiGudang.jsx
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Search,
   Filter,
   X,
   Download,
+  Upload,
   Plus,
   Edit,
   Trash2,
@@ -218,6 +219,76 @@ export default function MutasiGudang() {
     defaultSort: { key: 'tanggal', direction: 'desc' },
     defaultRowsPerPage: 10
   });
+
+  // ── Group By kode_barang ──────────────────────────────────────────────────
+  // Sort: tanggal desc → jenis_transaksi (Masuk=0, Keluar=1)
+  // Group: by kode_barang (group order = first tanggal of each barang)
+  const groupedData = useMemo(() => {
+    const jenisOrder = { Masuk: 0, Keluar: 1 };
+    const sorted = [...filteredData].sort((b, a) => {
+      const dateCompare = new Date(a.tanggal) - new Date(b.tanggal);
+      if (dateCompare !== 0) return dateCompare;
+      return (jenisOrder[a.jenis_transaksi] ?? 2) - (jenisOrder[b.jenis_transaksi] ?? 2);
+    });
+
+    const groupMap = new Map();
+    for (const row of sorted) {
+      if (!groupMap.has(row.kode_barang)) {
+        groupMap.set(row.kode_barang, {
+          kode_barang: row.kode_barang,
+          nama_barang: row.nama_barang,
+          alias: row.alias || '',
+          rows: [],
+        });
+      }
+      groupMap.get(row.kode_barang).rows.push(row);
+    }
+    return Array.from(groupMap.values());
+  }, [filteredData]);
+
+  // Pagination berbasis jumlah group (bukan rows) agar group tidak terpotong
+  const groupedTotalPages = Math.max(1, Math.ceil(groupedData.length / rowsPerPage));
+  const groupedTotalGroups = groupedData.length;
+  const groupedTotalRows = filteredData.length;
+  const paginatedGroups = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return groupedData.slice(start, start + rowsPerPage);
+  }, [groupedData, currentPage, rowsPerPage]);
+
+  // Stok aktual dihitung dari allData (semua transaksi, tidak terpengaruh filter)
+  // sehingga nilai stok selalu akurat meski tabel sedang difilter
+  const stokByBarang = useMemo(() => {
+    const map = new Map();
+    for (const row of allData) {
+      if (!map.has(row.kode_barang)) {
+        map.set(row.kode_barang, { masuk: 0, keluar: 0, satuan: row.satuan || '' });
+      }
+      const entry = map.get(row.kode_barang);
+      if (row.jenis_transaksi === 'Masuk') entry.masuk += (row.qty || 0);
+      else if (row.jenis_transaksi === 'Keluar') entry.keluar += (row.qty || 0);
+    }
+    return map;
+  }, [allData]);
+
+  // Saldo di luar filter = net Masuk−Keluar dari transaksi yang TIDAK masuk filteredData.
+  // Ditampilkan sebagai synthetic "Masuk" row pertama dalam setiap group saat filter aktif,
+  // sehingga: saldo_luar + masuk_filter − keluar_filter = stok_aktual
+  const stokLuarFilterByBarang = useMemo(() => {
+    if (!hasActiveFilters) return new Map();
+    const filteredIds = new Set(filteredData.map(r => r.id));
+    const map = new Map();
+    for (const row of allData) {
+      if (filteredIds.has(row.id)) continue;             // skip baris yang tampil di tabel
+      if (!map.has(row.kode_barang)) {
+        map.set(row.kode_barang, { qty: 0, satuan: row.satuan || '' });
+      }
+      const entry = map.get(row.kode_barang);
+      if (row.jenis_transaksi === 'Masuk') entry.qty += (row.qty || 0);
+      else if (row.jenis_transaksi === 'Keluar') entry.qty -= (row.qty || 0);
+    }
+    return map;
+  }, [allData, filteredData, hasActiveFilters]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Form handlers
   const handleInputChange = (e) => {
@@ -512,26 +583,112 @@ export default function MutasiGudang() {
     setShowModal(true);
   };
 
-  // Export to Excel
+  // Export to Excel — sorted & grouped sama seperti data table
   const handleExport = () => {
-    const exportData = filteredData.map(item => ({
-      'Gudang': item.nama_gudang,
-      'Tanggal': formatDate(item.tanggal),
-      'No Transaksi': item.no_transaksi,
-      'Transaksi': item.jenis_transaksi,
-      'Kode Barang': item.kode_barang,
-      'Nama Barang': item.nama_barang,
-      'Alias': item.alias || '-',
-      'Qty': item.qty,
-      'Satuan': item.satuan,
-      'Kategori': item.nama_kategori || '-',
-      'Armada': item.nama_armada || '-',
-      'Referensi': item.referensi || '-',
-      'Lokasi Rak': item.nama_rak || '-',
-      'Keterangan': item.keterangan || '-',
-    }));
+    const COLS = [
+      'Gudang', 'Tanggal', 'No Transaksi', 'Transaksi',
+      'Kode Barang', 'Nama Barang', 'Alias',
+      'Qty', 'Satuan',
+      'Kategori', 'Armada',
+      'Referensi', 'Lokasi Rak', 'Keterangan',
+      // kolom summary (hanya terisi di group header)
+      'Total Masuk', 'Total Keluar', 'Stok',
+    ];
 
-    const ws = XLSX.utils.json_to_sheet(exportData);
+    // Build rows: untuk setiap group → 1 header row + N data rows + 1 empty separator
+    const rows = [COLS]; // baris pertama = header kolom
+
+    for (const group of groupedData) {
+      const satuan = group.rows[0]?.satuan || '';
+      const totalMasuk = group.rows.filter(r => r.jenis_transaksi === 'Masuk').reduce((s, r) => s + (r.qty || 0), 0);
+      const totalKeluar = group.rows.filter(r => r.jenis_transaksi === 'Keluar').reduce((s, r) => s + (r.qty || 0), 0);
+
+      // Stok aktual dari allData (tidak terpengaruh filter)
+      const stokInfo = stokByBarang.get(group.kode_barang) || { masuk: 0, keluar: 0 };
+      const stokAktual = stokInfo.masuk - stokInfo.keluar;
+
+      // ── Group header row ──
+      rows.push([
+        '', '', '', '',                        // Gudang, Tanggal, No Transaksi, Transaksi
+        group.kode_barang,                     // Kode Barang
+        group.nama_barang,                     // Nama Barang
+        group.alias || '-',                    // Alias
+        '', satuan,                            // Qty, Satuan
+        '', '',                                // Kategori, Armada
+        '', '', '',                            // Referensi, Lokasi Rak, Keterangan
+        `${totalMasuk} ${satuan}`,             // Total Masuk
+        `${totalKeluar} ${satuan}`,            // Total Keluar
+        `${stokAktual} ${satuan}`,             // Stok Aktual
+      ]);
+
+      // ── Saldo sebelum filter (hanya ketika filter aktif) ──
+      if (hasActiveFilters) {
+        const saldo = stokLuarFilterByBarang.get(group.kode_barang) ?? { qty: 0 };
+        rows.push([
+          '-',                                   // Gudang
+          '-',                                   // Tanggal
+          '-',                                   // No Transaksi
+          'Masuk',                               // Transaksi
+          group.kode_barang,                     // Kode Barang
+          group.nama_barang,                     // Nama Barang
+          '-',                                   // Alias
+          saldo.qty,                             // Qty
+          satuan,                                // Satuan
+          '-', '-',                              // Kategori, Armada
+          '-',                                   // Referensi
+          '-',                                   // Lokasi Rak
+          'Saldo sebelum periode filter',        // Keterangan
+          '', '', '',                            // kolom summary kosong
+        ]);
+      }
+
+      // ── Data rows ──
+      for (const item of group.rows) {
+        rows.push([
+          item.nama_gudang,
+          formatDate(item.tanggal),
+          item.no_transaksi || '-',
+          item.jenis_transaksi,
+          item.kode_barang,
+          item.nama_barang,
+          item.alias || '-',
+          item.qty,
+          item.satuan,
+          item.nama_kategori || '-',
+          item.nama_armada || '-',
+          item.referensi || '-',
+          item.nama_rak || '-',
+          item.keterangan || '-',
+          '', '', '',                          // kolom summary kosong di data rows
+        ]);
+      }
+
+      // ── Baris pemisah antar group ──
+      rows.push(new Array(COLS.length).fill(''));
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Lebar kolom otomatis (estimasi)
+    ws['!cols'] = [
+      { wch: 14 }, // Gudang
+      { wch: 12 }, // Tanggal
+      { wch: 18 }, // Kode Barang
+      { wch: 28 }, // Nama Barang
+      { wch: 20 }, // Alias
+      { wch: 10 }, // Transaksi
+      { wch: 8 }, // Qty
+      { wch: 8 }, // Satuan
+      { wch: 14 }, // Kategori
+      { wch: 14 }, // Armada
+      { wch: 16 }, // Referensi
+      { wch: 12 }, // Lokasi Rak
+      { wch: 24 }, // Keterangan
+      { wch: 14 }, // Total Masuk
+      { wch: 14 }, // Total Keluar
+      { wch: 12 }, // Stok
+    ];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mutasi Gudang');
 
@@ -703,8 +860,16 @@ export default function MutasiGudang() {
                   onClick={handleExport}
                   className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                 >
-                  <Download className="w-4 h-4" />
+                  <Upload className="w-4 h-4" />
                   <span>Export</span>
+                </button>
+
+                <button
+                  // onClick={handleInport}
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Import</span>
                 </button>
 
                 {canCreate && (
@@ -839,20 +1004,17 @@ export default function MutasiGudang() {
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Gudang
                   </th>
-                  <th
-                    onClick={() => requestSort('tanggal')}
-                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  >
-                    Tanggal {sortConfig.key === 'tanggal' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Transaksi
+                    Tanggal
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Nama Barang
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Kode Barang,<br />Part Number
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Transaksi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Jumlah
@@ -884,7 +1046,7 @@ export default function MutasiGudang() {
                     </td>
                   </tr>
                 ) : (
-                  paginatedData.length === 0 ? (
+                  paginatedGroups.length === 0 ? (
                     <tr>
                       <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
                         {hasActiveFilters
@@ -893,83 +1055,174 @@ export default function MutasiGudang() {
                       </td>
                     </tr>
                   ) : (
-                    paginatedData.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-xs">
-                          {item.nama_gudang}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs">
-                          {formatDate(item.tanggal)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.jenis_transaksi === 'Masuk'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                              }`}
-                          >
-                            {item.jenis_transaksi === 'Masuk' ? (
-                              <TrendingUp className="w-3 h-3" />
-                            ) : (
-                              <TrendingDown className="w-3 h-3" />
-                            )}
-                            {item.jenis_transaksi}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div>
-                            <p className="text-xs font-medium">{item.nama_barang}</p>
-                            <p className="text-xs text-green-800">{item.alias}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
-                            className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
-                            title={`Lihat di halaman Barang`}
-                          >
-                            {item.kode_barang}
-                          </button>
-                          <p className="text-xs text-blue-800">{item.part_number}</p>
-                        </td>
-                        <td className="px-6 py-4 text-xs">
-                          {item.qty} {item.satuan}
-                        </td>
-                        <td className="px-6 py-4 text-xs">
-                          {item.referensi || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-xs">
-                          {item.nama_rak || '-'}
-                        </td>
-                        <td className="px-6 py-4 text-xs">
-                          {item.keterangan || '-'}
-                        </td>
-                        {(canEdit || canDelete) && (
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
-                            <div className="flex items-center justify-end gap-2">
-                              {canEdit && (
+                    paginatedGroups.map((group) => {
+                      // Masuk/Keluar dalam periode filter (filteredData)
+                      const totalMasuk = group.rows
+                        .filter(r => r.jenis_transaksi === 'Masuk')
+                        .reduce((sum, r) => sum + (r.qty || 0), 0);
+                      const totalKeluar = group.rows
+                        .filter(r => r.jenis_transaksi === 'Keluar')
+                        .reduce((sum, r) => sum + (r.qty || 0), 0);
+                      const satuan = group.rows[0]?.satuan || '';
+
+                      // Stok aktual dari allData (tidak terpengaruh filter)
+                      const stokInfo = stokByBarang.get(group.kode_barang) || { masuk: 0, keluar: 0 };
+                      const stokAktual = stokInfo.masuk - stokInfo.keluar;
+
+                      return (
+                        <React.Fragment key={group.kode_barang}>
+                          {/* ── Group Header Row ── */}
+                          <tr className="bg-green-50 border-t-2 border-green-300">
+                            <td
+                              colSpan={(canEdit || canDelete) ? 10 : 9}
+                              className="px-4 py-2"
+                            >
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                {/* Nama Barang */}
+                                <span className="text-xs font-bold text-green-900">
+                                  {group.nama_barang}{group.alias && ` (${group.alias})`}
+                                </span>                                
+                                {/* Stats */}
+                                <span className="ml-auto flex items-center gap-3 text-xs font-semibold">
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-800"
+                                    title={hasActiveFilters ? 'Total masuk dalam periode / filter aktif' : 'Total masuk'}
+                                  >
+                                    <TrendingUp className="w-3 h-3" />
+                                    Masuk: {totalMasuk} {satuan}
+                                    {hasActiveFilters && <span className="opacity-60 font-normal">(filter)</span>}
+                                  </span>
+                                  <span
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-800"
+                                    title={hasActiveFilters ? 'Total keluar dalam periode / filter aktif' : 'Total keluar'}
+                                  >
+                                    <TrendingDown className="w-3 h-3" />
+                                    Keluar: {totalKeluar} {satuan}
+                                    {hasActiveFilters && <span className="opacity-60 font-normal">(filter)</span>}
+                                  </span>
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold ${stokAktual > 0
+                                        ? 'bg-blue-100 text-blue-800'
+                                        : stokAktual < 0
+                                          ? 'bg-orange-100 text-orange-800'
+                                          : 'bg-gray-100 text-gray-600'
+                                      }`}
+                                    title="Stok aktual dari seluruh data (tidak terpengaruh filter)"
+                                  >
+                                    <Package className="w-3 h-3" />
+                                    Stok: {stokAktual} {satuan}
+                                  </span>
+                                </span>
+                              </div>
+                            </td>
+                          </tr>                         
+
+                          {/* ── Data Rows ── */}
+                          {group.rows.map((item) => (
+                            <tr key={item.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-xs">
+                                {item.nama_gudang}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-xs">
+                                {formatDate(item.tanggal)}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="text-xs font-medium">{item.nama_barang}</p>
+                                  <p className="text-xs text-green-800">{item.alias}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
                                 <button
-                                  onClick={() => openEditModal(item)}
-                                  className="text-blue-600 hover:text-blue-800"
-                                  title="Edit"
+                                  onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                                  className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
+                                  title={`Lihat di halaman Barang`}
                                 >
-                                  <Edit className="w-4 h-4" />
+                                  {item.kode_barang}
                                 </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  onClick={() => handleDelete(item.id)}
-                                  className="text-red-600 hover:text-red-800"
-                                  title="Delete"
+                                <p className="text-xs text-blue-800">{item.part_number}</p>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.jenis_transaksi === 'Masuk'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                    }`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                  {item.jenis_transaksi === 'Masuk' ? (
+                                    <TrendingUp className="w-3 h-3" />
+                                  ) : (
+                                    <TrendingDown className="w-3 h-3" />
+                                  )}
+                                  {item.jenis_transaksi}
+                                </span>
+                              </td>
+                              <td className={`px-4 py-3 text-right font-bold ${item.jenis_transaksi === 'Masuk' ? 'text-green-600 text-xs' : 'text-red-600 text-xs'}`}>
+                                {item.jenis_transaksi === 'Masuk' ? '+' : '-'}{item.qty} {item.satuan}
+                              </td>
+                              <td className="px-6 py-4 text-xs">
+                                {item.referensi || '-'}
+                              </td>
+                              <td className="px-6 py-4 text-xs">
+                                {item.nama_rak || '-'}
+                              </td>
+                              <td className="px-6 py-4 text-xs">
+                                {item.keterangan || '-'}
+                              </td>
+                              {(canEdit || canDelete) && (
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {canEdit && (
+                                      <button
+                                        onClick={() => openEditModal(item)}
+                                        className="text-blue-600 hover:text-blue-800"
+                                        title="Edit"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    {canDelete && (
+                                      <button
+                                        onClick={() => handleDelete(item.id)}
+                                        className="text-red-600 hover:text-red-800"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
                               )}
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    )))
+                            </tr>
+                          ))}
+                          
+                          {/* ── Saldo Sebelum Filter (hanya ketika filter aktif) ── */}
+                          {hasActiveFilters && (() => {
+                            const saldo = stokLuarFilterByBarang.get(group.kode_barang) ?? { qty: 0, satuan };
+                            return (
+                              <tr key={`saldo-${group.kode_barang}`} style={{ fontStyle: "italic"}}>
+                                <td className="px-6 py-2 whitespace-nowrap text-xs text-gray-400">—</td>
+                                <td className="px-6 py-2 whitespace-nowrap text-xs text-gray-400">—</td>                                
+                                <td className="px-6 py-2 text-sm font-medium text-gray-500" colSpan={2}>
+                                  Saldo sebelum periode filter
+                                </td>
+                                <td className="px-6 py-2 whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <TrendingUp className="w-3 h-3" />
+                                    Masuk
+                                  </span>
+                                </td>
+                                <td className="px-6 py-2 text-xs font-semibold text-right text-emerald-700">
+                                  {'+'}{saldo.qty} {satuan}
+                                </td>
+                                <td className="px-6 py-2 text-xs text-gray-400" colSpan={(canEdit || canDelete) ? 4 : 3}>—</td>
+                              </tr>
+                            );
+                          })()}
+                        </React.Fragment>
+                      );
+                    })
+                  )
                 )}
               </tbody>
             </table>
@@ -986,8 +1239,8 @@ export default function MutasiGudang() {
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, groupedTotalPages))}
+                disabled={currentPage === groupedTotalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 Next
@@ -1035,11 +1288,17 @@ export default function MutasiGudang() {
                 </div>
 
                 <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
+                  Showing{' '}
                   <span className="font-medium">
-                    {Math.min(currentPage * rowsPerPage, totalRows)}
-                  </span> of{' '}
-                  <span className="font-medium">{totalRows}</span> results
+                    {(currentPage - 1) * rowsPerPage + 1}
+                  </span>–
+                  <span className="font-medium">
+                    {Math.min(currentPage * rowsPerPage, groupedTotalGroups)}
+                  </span>{' '}
+                  of{' '}
+                  <span className="font-medium">{groupedTotalGroups}</span> barang
+                  {' '}
+                  <span className="text-gray-400">({groupedTotalRows} transaksi)</span>
                 </p>
               </div>
 
@@ -1061,19 +1320,19 @@ export default function MutasiGudang() {
                   </button>
 
                   <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">
-                    Page {currentPage} of {totalPages || 1}
+                    Page {currentPage} of {groupedTotalPages}
                   </span>
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, groupedTotalPages))}
+                    disabled={currentPage === groupedTotalPages || groupedTotalPages === 0}
                     className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Next
                   </button>
                   <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => setCurrentPage(groupedTotalPages)}
+                    disabled={currentPage === groupedTotalPages || groupedTotalPages === 0}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Last
