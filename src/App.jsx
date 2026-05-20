@@ -1,54 +1,58 @@
-// src/App.jsx
-// Main app with routing and authentication
+// src/App.jsx  —  versi DIAGNOSTIK (sementara untuk debugging)
+// Setelah masalah ditemukan, hapus semua baris console.log
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import Login from './components/auth/Login';
+import Login          from './components/auth/Login';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import MainLayout from './components/layout/MainLayout';
-import { authAPI } from './services/api';
+import MainLayout     from './components/layout/MainLayout';
+import { authAPI }    from './services/api';
 
-// Import pages
-import Dashboard from './pages/Dashboard';
-import Summary from './pages/Summary';
-import Stok from './pages/Stok';
-import KartuStok from './pages/KartuStok';
-import Barang from './pages/Barang';
-import Kategori from './pages/Kategori';
-import SubKategori from './pages/SubKategori';
-import Armada from './pages/Armada';
-import Vendor from './pages/Vendor';
-import MutasiGudang from './pages/MutasiGudang';
-import Pembelian from './pages/Pembelian';
-import Users from './pages/Users';
+// Helper: bungkus promise dengan timeout agar tidak hang selamanya
+function withTimeout(promise, ms = 5000) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`timeout setelah ${ms}ms`)), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
 
 function App() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]                 = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+  useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {
+    console.log('[App] checkAuth dimulai');
     try {
-      if (authAPI.isAuthenticated()) {
-        await authAPI.verify();
+      const isAuth = authAPI.isAuthenticated();
+      console.log('[App] isAuthenticated (lokal):', isAuth);
+
+      if (isAuth) {
+        console.log('[App] memanggil authAPI.verify()...');
+        await withTimeout(authAPI.verify(), 5000);   // ← timeout 5 detik
+        console.log('[App] verify() berhasil');
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      authAPI.logout();
+      console.error('[App] checkAuth error:', error.message);
+      // Jika timeout atau error verify, tetap lanjutkan (logout jika perlu)
+      if (!error.message.includes('timeout')) {
+        authAPI.logout();
+      }
     } finally {
+      console.log('[App] setLoading(false) dipanggil');
       setLoading(false);
     }
   };
+
+  console.log('[App] render — loading:', loading, '| isAuthenticated:', isAuthenticated);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -58,143 +62,24 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Route */}
         <Route
           path="/login"
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-          }
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
         />
 
-        {/* Protected Routes - Wrapped in MainLayout */}
+        {/* Satu route catch-all — MainLayout persistent (keep-alive tabs) */}
         <Route
-          path="/dashboard"
+          path="/*"
           element={
-            <ProtectedRoute>
-              <Dashboard />
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <MainLayout />
             </ProtectedRoute>
           }
         />
 
-        <Route
-          path="/summary"
-          element={
-            <ProtectedRoute>
-              <Summary />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/stok"
-          element={
-            <ProtectedRoute>
-              <Stok />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/kartu-stok"
-          element={
-            <ProtectedRoute>
-              <KartuStok />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/barang"
-          element={
-            <ProtectedRoute>
-              <Barang />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/kategori"
-          element={
-            <ProtectedRoute>
-              <Kategori />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/sub_kategori"
-          element={
-            <ProtectedRoute>
-              <SubKategori />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/armada"
-          element={
-            <ProtectedRoute>
-              <Armada />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/vendor"
-          element={
-            <ProtectedRoute>
-              <Vendor />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/mutasi_gudang"
-          element={
-            <ProtectedRoute>
-              <MutasiGudang />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/pembelian"
-          element={
-            <ProtectedRoute>
-              <Pembelian />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute requiredRole="Admin">
-              <Users />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Default redirect */}
         <Route
           path="/"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
-        />
-
-        {/* 404 */}
-        <Route
-          path="*"
-          element={
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-              <div className="text-center">
-                <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
-                <p className="text-xl text-gray-600 mb-8">Page not found</p>
-                <a href="/dashboard" className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                  Go to Dashboard
-                </a>
-              </div>
-            </div>
-          }
+          element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
         />
       </Routes>
     </BrowserRouter>

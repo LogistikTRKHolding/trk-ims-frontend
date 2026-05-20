@@ -312,7 +312,7 @@ export default function Armada() {
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Deskripsi</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
                 )}
               </tr>
             </thead>

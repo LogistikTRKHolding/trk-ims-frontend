@@ -1,6 +1,7 @@
 // src/pages/KartuStok.jsx
 
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
@@ -28,6 +29,7 @@ const useDesktopMediaQuery = () => {
 };
 
 export default function KartuStok() {
+    const navigate = useNavigate()
     const [items, setItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -490,7 +492,7 @@ export default function KartuStok() {
                                             </h2>
                                             <div className="space-y-1 text-sm text-gray-600">
                                                 <p>Kode Barang: <button
-                                                    onClick={() => window.open(`/barang?kode=${encodeURIComponent(selectedItem.kode_barang)}`, '_blank')}
+                                                    onClick={() => navigate(`/barang?kode=${encodeURIComponent(selectedItem.kode_barang)}`, '_blank')}
                                                     className="font-medium text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                                                     title={`Lihat barang ${selectedItem.nama_barang} di halaman Barang`}
                                                 > {selectedItem.kode_barang}

@@ -1,5 +1,7 @@
 // src/pages/Summary.jsx
+
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -22,6 +24,8 @@ import {
 } from 'lucide-react';
 
 export default function Summary() {
+  const navigate = useNavigate();
+
   // ============================================
   // CUSTOM HOOK - Replace all state & logic!
   // ============================================
@@ -492,7 +496,7 @@ export default function Summary() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                          onClick={() => navigate(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
                           className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                           title={`Lihat di halaman Barang`}
                         >

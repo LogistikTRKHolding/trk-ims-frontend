@@ -1,6 +1,7 @@
 // src/pages/Stok.jsx
 
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -22,6 +23,8 @@ import {
 } from 'lucide-react';
 
 export default function Stok() {
+  const navigate = useNavigate();
+  
   // Fetch data function with useCallback to prevent infinite loop
   const fetchStokData = useCallback(async () => {
     const result = await stokAPI.getAll();
@@ -516,7 +519,7 @@ export default function Stok() {
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                          onClick={() => navigate(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
                           className="font-mono text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                           title={`Lihat barang ${item.kode_barang} di halaman Barang`}
                         >

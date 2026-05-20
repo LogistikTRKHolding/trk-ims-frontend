@@ -1,3 +1,5 @@
+// src/pages/Barang.jsx
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -651,7 +653,7 @@ export default function Barang() {
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Min/Max</th>
                   <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Harga</th>
                   {(canEdit || canDelete) && (
-                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
                   )}
                 </tr>
               </thead>

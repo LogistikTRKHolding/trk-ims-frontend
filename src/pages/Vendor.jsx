@@ -125,8 +125,8 @@ export default function Vendor() {
     e.preventDefault();
 
     // Validation
-    if (!formData.code || !formData.name) {
-      alert('Code and Name are required!');
+    if (!formData.kode_vendor || !formData.nama_vendor) {
+      alert('Kode Vendor dan Nama Vendor wjib diisi!');
       return;
     }
 
@@ -316,7 +316,7 @@ export default function Vendor() {
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Keterangan</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
                 )}
               </tr>
             </thead>

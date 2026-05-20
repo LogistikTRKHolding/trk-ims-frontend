@@ -1,6 +1,7 @@
 // src/pages/Pembelian.jsx
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
 import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 
 export default function Pembelian() {
+    const navigate = useNavigate()
     const currentUser = authAPI.getCurrentUser();
 
     // States untuk master data
@@ -1255,14 +1257,15 @@ export default function Pembelian() {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vendor</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
-                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>                                    
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Armada</th>
                                     <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">jumlah</th>
                                     <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Harga Satuan</th>
                                     <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total Harga</th>
                                     <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Status</th>
                                     {(canEdit || canDelete) && (
-                                        <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Tindakan</th>
+                                        <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">Aksi</th>
                                     )}
                                 </tr>
                             </thead>
@@ -1306,32 +1309,29 @@ export default function Pembelian() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <button
-                                                        onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                                                        onClick={() => navigate(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
                                                         className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                                                         title={`Lihat di halaman Barang`}
                                                     >
                                                         {item.kode_barang}
                                                     </button>
                                                     <p className="text-xs text-blue-800">{item.part_number}</p>
-                                                </td>
+                                                </td>                                                
                                                 <td className="px-6 py-4">
                                                     <div>
                                                         <p className="text-xs">{item.nama_kategori}</p>
                                                         <p className="text-xs">{item.nama_sub_kategori}</p>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-xs">
-                                                    {item.qty_order} {item.satuan}
-                                                </td>
+                                                <td className="px-6 py-4 text-xs">{item.nama_armada || '─'}</td>
+                                                <td className="px-6 py-4 text-xs">{item.qty_order} {item.satuan}</td>
                                                 <td className="px-6 py-4 text-right text-xs text-green-600">
                                                     Rp {(item.harga_satuan || 0).toLocaleString('id-ID')}
                                                 </td>
                                                 <td className="px-6 py-4 text-right font-semibold text-xs text-green-600">
                                                     Rp {(item.total_harga || 0).toLocaleString('id-ID')}
                                                 </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {getStatusBadge(item.status)}
-                                                </td>
+                                                <td className="px-6 py-4 text-center">{getStatusBadge(item.status)}</td>
                                                 {(canEdit || canDelete) && (
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">

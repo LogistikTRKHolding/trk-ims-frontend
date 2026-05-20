@@ -1,6 +1,7 @@
 // src/pages/MutasiGudang.jsx
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -24,6 +25,8 @@ import { useDataTable } from '../hooks/useDataTable';
 import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
 
 export default function MutasiGudang() {
+  const navigate = useNavigate()
+
   // Current user & permissions
   const currentUser = authAPI.getCurrentUser();
   const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
@@ -1339,6 +1342,9 @@ export default function MutasiGudang() {
                     Kode Barang,<br />Part Number
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Armada
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Transaksi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -1399,7 +1405,7 @@ export default function MutasiGudang() {
                           {/* ── Group Header Row ── */}
                           <tr className="bg-green-50 border-t-2 border-green-300">
                             <td
-                              colSpan={(canEdit || canDelete) ? 10 : 9}
+                              colSpan={(canEdit || canDelete) ? 11 : 10}
                               className="px-4 py-2"
                             >
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -1445,12 +1451,8 @@ export default function MutasiGudang() {
                           {/* ── Data Rows ── */}
                           {group.rows.map((item) => (
                             <tr key={item.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                {item.nama_gudang}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                {formatDate(item.tanggal)}
-                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-xs">{item.nama_gudang}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-xs">{formatDate(item.tanggal)}</td>
                               <td className="px-6 py-4">
                                 <div>
                                   <p className="text-xs font-medium">{item.nama_barang}</p>
@@ -1459,7 +1461,7 @@ export default function MutasiGudang() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <button
-                                  onClick={() => window.open(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
+                                  onClick={() => navigate(`/barang?kode=${encodeURIComponent(item.kode_barang)}`, '_blank')}
                                   className="text-xs text-green-700 hover:text-green-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
                                   title={`Lihat di halaman Barang`}
                                 >
@@ -1467,6 +1469,7 @@ export default function MutasiGudang() {
                                 </button>
                                 <p className="text-xs text-blue-800">{item.part_number}</p>
                               </td>
+                              <td className="px-6 py-4 text-xs">{item.nama_armada || '─'}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span
                                   className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${item.jenis_transaksi === 'Masuk'
@@ -1485,15 +1488,9 @@ export default function MutasiGudang() {
                               <td className={`px-4 py-3 text-right font-bold ${item.jenis_transaksi === 'Masuk' ? 'text-green-600 text-xs' : 'text-red-600 text-xs'}`}>
                                 {item.jenis_transaksi === 'Masuk' ? '+' : '-'}{item.qty} {item.satuan}
                               </td>
-                              <td className="px-6 py-4 text-xs">
-                                {item.referensi || '─'}
-                              </td>
-                              <td className="px-6 py-4 text-xs">
-                                {item.nama_rak || '─'}
-                              </td>
-                              <td className="px-6 py-4 text-xs">
-                                {item.keterangan || '─'}
-                              </td>
+                              <td className="px-6 py-4 text-xs">{item.referensi || '─'}</td>
+                              <td className="px-6 py-4 text-xs">{item.nama_rak || '─'}</td>
+                              <td className="px-6 py-4 text-xs">{item.keterangan || '─'}</td>
                               {(canEdit || canDelete) && (
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
                                   <div className="flex items-center justify-end gap-2">
