@@ -2,7 +2,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.trk-holding.ims",
+      "package_name": "com.trkholding.ims",
       "sha256_cert_fingerprints": [
         "24:C4:2F:99:C0:95:6A:A3:8E:A2:29:8C:3E:8B:50:88:B8:92:83:87:3E:90:2E:35:B2:5D:60:ED:99:23:40:4E"
       ]
