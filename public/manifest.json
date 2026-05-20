@@ -28,12 +28,6 @@
 			"purpose": "any" 
 		}, 
 		{ 
-			"src": "/icons/icon-128x128.png", 
-			"sizes": "128x128", 
-			"type": "image/png", 
-			"purpose": "any" 
-		},
-		{ 
 			"src": "/icons/icon-144x144.png", 
 			"sizes": "144x144", 
 			"type": "image/png", 
@@ -46,8 +40,8 @@
 			"purpose": "any" 
 		}, 
 		{ 
-			"src": "/icons/icon-512x512.png", 
-			"sizes": "512x512", 
+			"src": "/icons/icon-236x236.png", 
+			"sizes": "236x236", 
 			"type": "image/png", 
 			"purpose": "any" 
 		}, 
