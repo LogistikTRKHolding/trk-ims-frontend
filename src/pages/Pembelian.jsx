@@ -47,10 +47,7 @@ export default function Pembelian() {
         no_po: '',
         tanggal_po: new Date().toISOString().split('T')[0],
         kode_vendor: '',
-        nama_vendor: '',
         kode_barang: '',
-        nama_barang: '',
-        alias: '',
         qty_order: 0,
         harga_satuan: 0,
         total_harga: 0,
@@ -327,12 +324,9 @@ export default function Pembelian() {
             no_po: item.no_po,
             tanggal_po: item.tanggal_po?.split('T')[0] || '',
             kode_vendor: item.kode_vendor,
-            nama_vendor: item.nama_vendor,
             kode_barang: item.kode_barang,
-            nama_barang: item.nama_barang,
             qty_order: item.qty_order,
             harga_satuan: item.harga_satuan,
-            total_harga: item.total_harga,
             tanggal_terima: item.tanggal_terima?.split('T')[0] || '',
             status: item.status,
             keterangan: item.keterangan || '',
@@ -350,10 +344,7 @@ export default function Pembelian() {
             no_po: '',
             tanggal_po: new Date().toISOString().split('T')[0],
             kode_vendor: '',
-            nama_vendor: '',
             kode_barang: '',
-            nama_barang: '',
-            alias: '',
             qty_order: 0,
             harga_satuan: 0,
             total_harga: 0,
@@ -1543,11 +1534,11 @@ export default function Pembelian() {
                                     <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400">Nama Vendor</span>
-                                            <span className="text-xs font-medium">{formData.nama_vendor || '-'}</span>
+                                            <span className="text-xs font-medium">{formData.nama_vendor}</span>
                                         </div>
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400">Kode Vendor</span>
-                                            <span className="text-xs">{formData.kode_vendor || '-'}</span>
+                                            <span className="text-xs">{formData.kode_vendor}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1608,19 +1599,19 @@ export default function Pembelian() {
                                     <div className="mt-2 grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                                            <span className="text-sm font-mono font-semibold">{formData.nama_barang || '-'}</span>
+                                            <span className="text-sm font-mono font-semibold">{formData.nama_barang}</span>
                                         </div>
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
-                                            <span className="text-sm">{formData.kode_barang || '-'}</span>
+                                            <span className="text-sm">{formData.kode_barang}</span>
                                         </div>
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
-                                            <span className="text-sm font-mono text-blue-600">{selectedBarangPreview.part_number || '-'}</span>
+                                            <span className="text-sm font-mono text-blue-600">{selectedBarangPreview.part_number}</span>
                                         </div>
                                         <div>
                                             <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
-                                            <span className="text-sm">{selectedBarangPreview.satuan || '-'}</span>
+                                            <span className="text-sm">{selectedBarangPreview.satuan}</span>
                                         </div>
                                     </div>
                                 </div>

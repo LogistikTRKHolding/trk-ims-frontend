@@ -2,6 +2,7 @@
 // Complete dashboard with doughnut chart and top 10 list
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { TrendingUp, Package, AlertTriangle, ShoppingCart, Clock, DollarSign } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { dashboardAPI } from '../services/api';
@@ -162,7 +163,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-end">
           <div className="flex space-x-3">
-          <select aria-label="Select month" name="month"
+            <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -412,37 +413,37 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a
-              href="/mutasi_gudang"
+            <Link
+              to="/mutasi_gudang"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
               <span className="text-sm font-medium text-gray-900">Mutasi Gudang</span>
-            </a>
+            </Link>
 
-            <a
-              href="/pembelian"
+            <Link
+              to="/pembelian"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <ShoppingCart className="w-8 h-8 text-green-600 mb-2" />
               <span className="text-sm font-medium text-gray-900">Pembelian</span>
-            </a>
+            </Link>
 
-            <a
-              href="/stok"
+            <Link
+              to="/stok"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <Package className="w-8 h-8 text-purple-600 mb-2" />
               <span className="text-sm font-medium text-gray-900">Cek Stok</span>
-            </a>
+            </Link>
 
-            <a
-              href="/summary"
+            <Link
+              to="/summary?status_stok=Habis"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
               <span className="text-sm font-medium text-gray-900">Stok Kritis</span>
-            </a>
+            </Link>            
           </div>
         </div>
       </div>

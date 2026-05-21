@@ -1,7 +1,7 @@
 // src/pages/Summary.jsx
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -24,7 +24,18 @@ import {
 } from 'lucide-react';
 
 export default function Summary() {
-  const navigate = useNavigate();
+  // ============================================
+  // Read URL param ?status_stok= from Dashboard page navigation
+  // ============================================
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status_stok = params.get('status_stok');
+    if (status_stok) {
+      setSearchQuery(decodeURIComponent(status_stok));
+    }
+  }, [location.search]);
 
   // ============================================
   // CUSTOM HOOK - Replace all state & logic!
@@ -66,8 +77,8 @@ export default function Summary() {
   } = useDataTable({
     // Config
     fetchData: stokAPI.getAll,
-    filterKeys: ['status_stok', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
-    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'satuan'],
+    filterKeys: ['status_stok', 'kode_kategori', 'kode_sub_kategori', 'nama_armada',],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'status_stok'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
     // Calculate statistics

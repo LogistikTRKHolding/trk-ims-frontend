@@ -1,5 +1,5 @@
-// src/App.jsx  —  versi DIAGNOSTIK (sementara untuk debugging)
-// Setelah masalah ditemukan, hapus semua baris console.log
+// src/App.jsx
+// Main app with routing and authentication
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -23,30 +23,20 @@ function App() {
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {
-    console.log('[App] checkAuth dimulai');
     try {
-      const isAuth = authAPI.isAuthenticated();
-      console.log('[App] isAuthenticated (lokal):', isAuth);
-
-      if (isAuth) {
-        console.log('[App] memanggil authAPI.verify()...');
-        await withTimeout(authAPI.verify(), 5000);   // ← timeout 5 detik
-        console.log('[App] verify() berhasil');
+      if (authAPI.isAuthenticated()) {
+        await withTimeout(authAPI.verify(), 5000);
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error('[App] checkAuth error:', error.message);
-      // Jika timeout atau error verify, tetap lanjutkan (logout jika perlu)
+      console.error('Auth check failed:', error.message);
       if (!error.message.includes('timeout')) {
         authAPI.logout();
       }
     } finally {
-      console.log('[App] setLoading(false) dipanggil');
       setLoading(false);
     }
   };
-
-  console.log('[App] render — loading:', loading, '| isAuthenticated:', isAuthenticated);
 
   if (loading) {
     return (
@@ -71,7 +61,7 @@ function App() {
         <Route
           path="/*"
           element={
-            <ProtectedRoute isAuthenticated={isAuthenticated}>
+            <ProtectedRoute>
               <MainLayout />
             </ProtectedRoute>
           }
