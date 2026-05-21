@@ -4,9 +4,9 @@
 	"description": "Sistem Manajemen Inventaris TRK Holding", 
 	"start_url": "/", 
 	"display": "standalone", 
-	"orientation": "portrait", 
-	"background_color": "#1a1a2e", 
-	"theme_color": "#16213e", 
+	"orientation": "portrait-primary", 
+	"background_color": "#ffffff",
+	"theme_color": "#16a34a",
 	"scope": "/", 
 	"icons": [ 
     {
