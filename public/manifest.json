@@ -40,14 +40,14 @@
 			"purpose": "any" 
 		}, 
 		{ 
-			"src": "/icons/icon-236x236.png", 
-			"sizes": "236x236", 
+			"src": "/icons/icon-512x512.png", 
+			"sizes": "512x512", 
 			"type": "image/png", 
 			"purpose": "any" 
 		}, 
 		{ 
-			"src": "/icons/maskable-icon-236x236.png", 
-			"sizes": "236x236", 
+			"src": "/icons/maskable-icon-512x512.png", 
+			"sizes": "512x512", 
 			"type": "image/png", 
 			"purpose": "maskable" 
 		} 
