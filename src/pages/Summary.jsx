@@ -1,7 +1,7 @@
 // src/pages/Summary.jsx
 
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { stokAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
@@ -24,18 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function Summary() {
-  // ============================================
-  // Read URL param ?status_stok= from Dashboard page navigation
-  // ============================================
-  const location = useLocation();
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const status_stok = params.get('status_stok');
-    if (status_stok) {
-      setSearchQuery(decodeURIComponent(status_stok));
-    }
-  }, [location.search]);
+  const navigate = useNavigate();
 
   // ============================================
   // CUSTOM HOOK - Replace all state & logic!
@@ -81,6 +70,14 @@ export default function Summary() {
     searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'status_stok'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
+    customFilterKeys: ['status_stok'], // ← TAMBAH: status_stok dihandle oleh customFilterFn
+    customFilterFn: (item, filters) => { // ← TAMBAH BLOK INI
+      const s = filters.status_stok;
+      if (!s || s === 'all') return true;
+      if (s === 'Kritis') return ['Stok Kurang', 'Habis'].includes(item.status_stok);
+      return item.status_stok === s;
+    },
+
     // Calculate statistics
     calculateStats: (filtered, all) => ({
       // Filtered stats
@@ -89,6 +86,7 @@ export default function Summary() {
       stokKurang: filtered.filter(i => i.status_stok === 'Stok Kurang').length,
       habis: filtered.filter(i => i.status_stok === 'Habis').length,
       stokLebih: filtered.filter(i => i.status_stok === 'Stok Lebih').length,
+      kritis: filtered.filter(i => ['Stok Kurang', 'Habis'].includes(i.status_stok)).length, // ← TAMBAH
       totalNilai: filtered.reduce((sum, i) => sum + (parseFloat(i.nilai_stok) || 0), 0),
 
       // Global stats
@@ -97,9 +95,22 @@ export default function Summary() {
       globalStokKurang: all.filter(i => i.status_stok === 'Stok Kurang').length,
       globalHabis: all.filter(i => i.status_stok === 'Habis').length,
       globalStokLebih: all.filter(i => i.status_stok === 'Stok Lebih').length,
+      globalKritis: all.filter(i => ['Stok Kurang', 'Habis'].includes(i.status_stok)).length, // ← TAMBAH
       globalTotalNilai: all.reduce((sum, i) => sum + (parseFloat(i.nilai_stok) || 0), 0),
     }),
   });
+
+  // ============================================
+  // Read URL param ?status_stok= from other page navigation
+  // ============================================
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const statusFromUrl = searchParams.get('status_stok');
+    if (statusFromUrl) {
+      setFilter('status_stok', statusFromUrl);
+    }
+  }, [searchParams]);
 
   // Dropdown states — dari API masing-masing
   const [kategoriList, setKategoriList] = useState([]);
@@ -270,6 +281,20 @@ export default function Summary() {
             <p className="text-2xl font-bold text-red-700">{stats?.habis || 0}</p>
           </div>
 
+          {/* Kritis = Stok Kurang + Habis */}
+          {/* <div
+            className="bg-orange-50 p-6 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+            onClick={() => setFilter('status_stok', 'Kritis')}
+            title="Klik untuk filter Kritis"
+          >
+            <p className="text-sm text-orange-600 flex items-center">
+              <PackageMinus className="w-4 h-4 mr-1" />
+              Kritis
+            </p>
+            <p className="text-2xl font-bold text-orange-700">{stats?.kritis || 0}</p>
+            <p className="text-xs text-orange-400 mt-1">Kurang + Habis</p>
+          </div> */}
+
           {/* Stok Lebih */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
             <p className="text-sm text-green-600 flex items-center">
@@ -355,6 +380,7 @@ export default function Summary() {
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
                 >
                   <option value="all">Semua Status</option>
+                  <option value="Kritis">⚠ Kritis (Kurang + Habis)</option>  {/* ← TAMBAH */}
                   <option value="Tersedia">Tersedia</option>
                   <option value="Stok Kurang">Stok Kurang</option>
                   <option value="Habis">Habis</option>
@@ -379,7 +405,7 @@ export default function Summary() {
               <div className="flex gap-2 w-full lg:w-auto shrink-0">
                 <button
                   onClick={handleExport}
-                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Export</span>

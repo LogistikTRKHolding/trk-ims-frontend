@@ -357,7 +357,7 @@ export default function Stok() {
               <div className="flex gap-2 w-full lg:w-auto shrink-0">
                 <button
                   onClick={handleExport}
-                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Export</span>

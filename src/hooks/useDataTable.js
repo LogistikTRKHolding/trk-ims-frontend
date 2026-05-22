@@ -18,6 +18,8 @@ export const useDataTable = ({
   defaultSort = null,
   defaultRowsPerPage = 10,
   calculateStats = null,
+  customFilterFn = null,      // ← TAMBAH
+  customFilterKeys = [],      // ← TAMBAH: keys yg dihandle customFilterFn, skip dari loop biasa
 }) => {
   // Data states
   const [allData, setAllData] = useState([]);
@@ -172,24 +174,27 @@ export const useDataTable = ({
       );
     }
 
-    // Apply regular filters
+    // Apply regular filters (skip keys yang dihandle oleh customFilterFn)
     filterKeys.forEach((key) => {
+      if (customFilterKeys.includes(key)) return; // ← TAMBAH: serahkan ke customFilterFn
       if (filters[key] && filters[key] !== 'all') {
         result = result.filter((item) => {
           const itemValue = item[key];
           const filterValue = filters[key];
-          
-          // Handle boolean values
           if (typeof itemValue === 'boolean') {
             return String(itemValue) === filterValue;
           }
-          
           return String(itemValue).toLowerCase() === String(filterValue).toLowerCase();
         });
       }
     });
 
-    // NEW: Apply date filter
+    // Apply custom filter fn (untuk kasus multi-value seperti "Kritis") ← TAMBAH BLOK INI
+    if (customFilterFn) {
+      result = result.filter((item) => customFilterFn(item, filters));
+    }
+
+    // Apply date filter
     if (dateFilterKey && dateFilterMode !== 'all') {
       result = result.filter((item) => {
         const itemDate = item[dateFilterKey];
@@ -239,6 +244,7 @@ export const useDataTable = ({
     dateRangeStart,
     dateRangeEnd,
     compareDates,
+    customFilterKeys, // ← TAMBAH
   ]);
 
   // Sorted data

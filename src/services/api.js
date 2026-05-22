@@ -210,26 +210,19 @@ export const barangAPI = {
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok || 0,
       max_stok: data.max_stok || 0,
-      // lokasi_gudang: data.lokasi_gudang,
-      // supplier_utama: data.supplier_utama,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
 
       // Foreign keys - simpan KODE saja
       kode_kategori: data.kode_kategori,
       kode_sub_kategori: data.kode_sub_kategori || null,
-      // FIX: Form MutasiGudang mengirim nama_armada (bukan kode_armada).
-      // Prioritaskan kode_armada jika ada, fallback ke nama_armada agar
-      // backend bisa resolve sendiri, atau kirim keduanya.
       kode_armada: data.kode_armada || undefined,
-      //nama_armada: data.nama_armada || undefined,
-
+      
       // New field
       is_stocked: data.is_stocked ?? true,
 
       // Metadata
       is_active: true,
-      // FIX: created_by bisa datang dari data, atau fallback ke currentUser
       created_by: data.created_by || authAPI.getCurrentUser()?.userId,
     };
 
@@ -251,8 +244,6 @@ export const barangAPI = {
       harga_satuan: data.harga_satuan,
       min_stok: data.min_stok,
       max_stok: data.max_stok,
-      // lokasi_gudang: data.lokasi_gudang,
-      // supplier_utama: data.supplier_utama,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
       
@@ -311,6 +302,7 @@ export const kategoriAPI = {
     const payload = {
       kode_kategori: data.kode_kategori,
       nama_kategori: data.nama_kategori,
+      abbr: data.abbr,
       deskripsi: data.deskripsi,
       is_active: true,
       created_by: data.created_by,
@@ -321,6 +313,7 @@ export const kategoriAPI = {
   async update(id, data) {
     const payload = {
       nama_kategori: data.nama_kategori,
+      abbr: data.abbr,
       deskripsi: data.deskripsi,
       updated_by: data.updated_by,
     };
@@ -363,6 +356,7 @@ export const subKategoriAPI = {
       kode_kategori: data.kode_kategori,
       kode_sub_kategori: data.kode_sub_kategori,
       nama_sub_kategori: data.nama_sub_kategori,
+      abbr: data.abbr,
       is_active: true,
       created_by: data.created_by || authAPI.getCurrentUser()?.id,
     };
@@ -378,6 +372,7 @@ export const subKategoriAPI = {
   async update(id, data) {
     const payload = {
       nama_sub_kategori: data.nama_sub_kategori,
+      abbr: data.abbr,
       is_active: data.is_active,
       updated_by: data.updated_by || authAPI.getCurrentUser()?.id,
     };

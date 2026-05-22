@@ -68,6 +68,7 @@ export default function Kategori() {
     // CUSTOMIZE: Initial form state
     kode_kategori: '',
     nama_kategori: '',
+    abbr: '',
     deskripsi: '',
     is_active: true,
   });
@@ -95,6 +96,7 @@ export default function Kategori() {
       kode_kategori: '',
       nama_kategori: '',
       deskripsi: '',
+      abbr: '',
       is_active: true,
     });
   };
@@ -111,6 +113,7 @@ export default function Kategori() {
       kode_kategori: item.kode_kategori || '',
       nama_kategori: item.nama_kategori || '',
       deskripsi: item.deskripsi || '',
+      abbr: item.abbr || '',
       is_active: item.is_active || true,
     });
     setShowModal(true);
@@ -136,7 +139,7 @@ export default function Kategori() {
       // Determine endpoint and method
       const url = editingItem
         ? `${import.meta.env.VITE_API_URL}/data/kategori/${editingItem.id}`
-        : '${import.meta.env.VITE_API_URL}/data/kategori';
+        : `${import.meta.env.VITE_API_URL}/data/kategori`;
 
       const method = editingItem ? 'PUT' : 'POST';
 
@@ -145,6 +148,7 @@ export default function Kategori() {
         // UPDATE: Only send changed fields
         nama_kategori: formData.nama_kategori,
         deskripsi: formData.deskripsi,
+        abbr: formData.abbr,
         is_active: formData.is_active,
       } : {
         // CREATE: Send all fields
@@ -214,6 +218,7 @@ export default function Kategori() {
       'Kode Kategori': item.kode_kategori,
       'Nama Kategori': item.nama_kategori,
       'Deskripsi': item.deskripsi,
+      'Akronim': item.abbr,
       'Aktif': item.is_active,
     }));
 
@@ -270,7 +275,7 @@ export default function Kategori() {
             <div className="flex gap-2 w-full lg:w-auto">
               <button
                 onClick={handleExport}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
               >
                 <Upload className="w-4 h-4" />
                 <span>Export</span>
@@ -307,6 +312,7 @@ export default function Kategori() {
                 >
                   Nama Kategori{sortConfig.key === 'nama_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Akronim</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Deskripsi</th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                 {(canEdit || canDelete) && (
@@ -336,6 +342,7 @@ export default function Kategori() {
                     {/* Table cells */}
                     <td className="px-6 py-4 text-xs">{item.kode_kategori}</td>
                     <td className="px-6 py-4 text-xs font-medium">{item.nama_kategori}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.abbr}</td>
                     <td className="px-6 py-4 text-xs">{item.deskripsi}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
@@ -491,7 +498,6 @@ export default function Kategori() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
@@ -523,20 +529,35 @@ export default function Kategori() {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
-
-              {/* Nama Kategori */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Kategori *
-                </label>
-                <input
-                  type="text"
-                  name="nama_kategori"
-                  value={formData.nama_kategori}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                {/* Nama Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nama Kategori *
+                  </label>
+                  <input
+                    type="text"
+                    name="nama_kategori"
+                    value={formData.nama_kategori}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                {/* Akronim */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Akronim *
+                  </label>
+                  <input
+                    type="text"
+                    name="abbr"
+                    value={formData.abbr}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
               </div>
 
               {/* Deskripsi */}
@@ -559,8 +580,8 @@ export default function Kategori() {
                   Status
                 </label>
                 <select
-                  name="status"
-                  value={formData.status}
+                  name="is_active"
+                  value={formData.is_active}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                 >

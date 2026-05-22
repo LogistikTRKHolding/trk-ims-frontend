@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 
 export default function SubKategori() {
   // ============================================
-  // STEP 1: Define fetchData with useCallback
+  // Define fetchData with useCallback
   // ============================================
   const fetchSubKategoriData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
@@ -21,7 +21,7 @@ export default function SubKategori() {
   }, []);
 
   // ============================================
-  // STEP 2: Configure useDataTable Hook
+  // Configure useDataTable Hook
   // ============================================
   const {
     data: paginatedData,
@@ -60,7 +60,7 @@ export default function SubKategori() {
   });
 
   // ============================================
-  // STEP 3: CRUD State & Kategori Dropdown
+  // CRUD State & Kategori Dropdown
   // ============================================
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -70,6 +70,7 @@ export default function SubKategori() {
     kode_kategori: '',
     kode_sub_kategori: '',
     nama_sub_kategori: '',
+    abbr: '',
     is_active: true,
   });
 
@@ -119,7 +120,7 @@ export default function SubKategori() {
   }, []);
 
   // ============================================
-  // STEP 4: Form Handlers
+  // Form Handlers
   // ============================================
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -135,6 +136,7 @@ export default function SubKategori() {
       kode_kategori: '',
       kode_sub_kategori: '',
       nama_sub_kategori: '',
+      abbr: '',
       is_active: true,
     });
   };
@@ -150,13 +152,14 @@ export default function SubKategori() {
       kode_kategori: item.kode_kategori || '',
       kode_sub_kategori: item.kode_sub_kategori || '',
       nama_sub_kategori: item.nama_sub_kategori || '',
+      abbr: item.abbr || '',
       is_active: item.is_active ?? true,
     });
     setShowModal(true);
   };
 
   // ============================================
-  // STEP 5: CRUD Operations
+  // CRUD Operations
   // ============================================
 
   // CREATE & UPDATE
@@ -183,15 +186,17 @@ export default function SubKategori() {
 
       const payload = editingItem
         ? {
-            nama_sub_kategori: formData.nama_sub_kategori,
-            is_active: formData.is_active === 'true' || formData.is_active === true,
-          }
+          nama_sub_kategori: formData.nama_sub_kategori,
+          abbr: formData.abbr,
+          is_active: formData.is_active === 'true' || formData.is_active === true,
+        }
         : {
-            kode_kategori: formData.kode_kategori,
-            kode_sub_kategori: formData.kode_sub_kategori,
-            nama_sub_kategori: formData.nama_sub_kategori,
-            is_active: true,
-          };
+          kode_kategori: formData.kode_kategori,
+          kode_sub_kategori: formData.kode_sub_kategori,
+          nama_sub_kategori: formData.nama_sub_kategori,
+          abbr: formData.abbr,
+          is_active: true,
+        };
 
       const response = await fetch(url, {
         method,
@@ -245,7 +250,7 @@ export default function SubKategori() {
   };
 
   // ============================================
-  // STEP 6: Export Function
+  // Export Function
   // ============================================
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
@@ -340,7 +345,7 @@ export default function SubKategori() {
             <div className="flex gap-2 w-full lg:w-auto">
               <button
                 onClick={handleExport}
-                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
               >
                 <Upload className="w-4 h-4" />
                 <span>Export</span>
@@ -400,6 +405,9 @@ export default function SubKategori() {
                   {sortConfig.key === 'nama_sub_kategori' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
+                  Akronim
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                   Status
                 </th>
                 {(canEdit || canDelete) && (
@@ -433,6 +441,7 @@ export default function SubKategori() {
                     <td className="px-6 py-4 text-xs font-medium">{item.nama_kategori}</td>
                     <td className="px-6 py-4 text-xs">{item.kode_sub_kategori}</td>
                     <td className="px-6 py-4 text-xs font-medium">{item.nama_sub_kategori}</td>
+                    <td className="px-6 py-4 text-xs font-medium">{item.abbr}</td>
                     <td className="px-6 py-4">
                       {item.is_active ? (
                         <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
@@ -587,12 +596,11 @@ export default function SubKategori() {
       </div>
 
       {/* ============================================
-          MODAL FORM (Create / Edit)
+          MODAL FORM (Create/Edit)
           ============================================ */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
-
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
@@ -658,20 +666,36 @@ export default function SubKategori() {
                 )}
               </div>
 
-              {/* Nama Sub-Kategori */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nama Sub-Kategori <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="nama_sub_kategori"
-                  value={formData.nama_sub_kategori}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Contoh: Oli Mesin"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                {/* Nama Sub-Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nama Sub-Kategori <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="nama_sub_kategori"
+                    value={formData.nama_sub_kategori}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Contoh: Oli Mesin"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+                {/* Akronim Sub-Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Akronim <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="abbr"
+                    value={formData.abbr}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
               </div>
 
               {/* Status — hanya tampil saat Edit */}

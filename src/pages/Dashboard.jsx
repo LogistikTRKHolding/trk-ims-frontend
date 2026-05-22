@@ -438,7 +438,7 @@ export default function Dashboard() {
             </Link>
 
             <Link
-              to="/summary?status_stok=Habis"
+              to="/summary?status_stok=Kritis"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
