@@ -369,7 +369,7 @@ export const useDataTable = ({
     }
   }, [customRowsInput]);
 
-  // NEW: Date filter helpers
+  // Date filter helpers
   const setQuickDateFilter = useCallback((type) => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];

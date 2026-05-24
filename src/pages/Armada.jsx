@@ -9,7 +9,7 @@ import * as XLSX from 'xlsx';
 
 export default function Armada() {
   // ============================================
-  // STEP 1: Define fetchData with useCallback
+  // Define fetchData with useCallback
   // ============================================
   const fetchArmadaData = useCallback(async () => {
     const token = localStorage.getItem('authToken');
@@ -21,7 +21,7 @@ export default function Armada() {
   }, []);
 
   // ============================================
-  // STEP 2: Configure useDataTable Hook
+  // Configure useDataTable Hook
   // ============================================
   const {
     data: paginatedData,
@@ -60,7 +60,7 @@ export default function Armada() {
   });
 
   // ============================================
-  // STEP 3: CRUD State Management
+  // CRUD State Management
   // ============================================
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -78,7 +78,7 @@ export default function Armada() {
   const canDelete = currentUser?.role === 'Admin';
 
   // ============================================
-  // STEP 4: Form Handlers
+  // Form Handlers
   // ============================================
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -117,7 +117,7 @@ export default function Armada() {
   };
 
   // ============================================
-  // STEP 5: CRUD Operations
+  // CRUD Operations
   // ============================================
 
   // CREATE & UPDATE
@@ -125,8 +125,8 @@ export default function Armada() {
     e.preventDefault();
 
     // CUSTOMIZE: Validation
-    if (!formData.code || !formData.name) {
-      alert('Code and Name are required!');
+    if (!formData.kode_armada || !formData.nama_armada) {
+      alert('Kode dan Nama Armada wajib diisi!');
       return;
     }
 
@@ -140,7 +140,7 @@ export default function Armada() {
 
       const method = editingItem ? 'PUT' : 'POST';
 
-      // CUSTOMIZE: Prepare payload
+      // Prepare payload
       const payload = editingItem ? {
         // UPDATE: Only send changed fields
         nama_armada: formData.nama_armada,
@@ -206,11 +206,11 @@ export default function Armada() {
   };
 
   // ============================================
-  // STEP 6: Export Function
+  // Export Function
   // ============================================
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
-      // CUSTOMIZE: Export columns
+      // Export columns
       'Kode': item.kode_armada,
       'Nama Armada': item.nama_armada,
       'Deskripsi': item.deskripsi,
@@ -239,7 +239,7 @@ export default function Armada() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search..." // CUSTOMIZE
+                placeholder="Cari kode atau nama armada..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
@@ -335,7 +335,7 @@ export default function Armada() {
               ) : (
                 paginatedData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    {/* CUSTOMIZE: Table cells */}
+                    {/* Table cells */}
                     <td className="px-6 py-4 text-xs">{item.kode_armada}</td>
                     <td className="px-6 py-4 text-xs font-medium">{item.nama_armada}</td>
                     <td className="px-6 py-4 text-xs">{item.deskripsi}</td>
@@ -497,7 +497,7 @@ export default function Armada() {
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">
-                {editingItem ? 'Edit Armada' : 'Tambah Armada'} {/* CUSTOMIZE */}
+                {editingItem ? 'Edit Armada' : 'Tambah Armada'} 
               </h3>
               <button
                 onClick={() => { setShowModal(false); resetForm(); }}
@@ -509,8 +509,6 @@ export default function Armada() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-
-              {/* CUSTOMIZE: Add your form fields */}
 
               {/* Kode Armada */}
               <div>
@@ -577,7 +575,7 @@ export default function Armada() {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button" onClick={() => { setShowModal(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                 >Batal</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg">
                   {editingItem ? 'Update' : 'Simpan'}

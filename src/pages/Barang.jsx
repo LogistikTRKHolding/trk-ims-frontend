@@ -243,7 +243,7 @@ export default function Barang() {
 
     // Validation
     if (!formData.nama_barang) {
-      alert('Nama Barang wajib diisi!');
+      alert('Nama barang wajib diisi!');
       return;
     }
 
@@ -1161,7 +1161,6 @@ export default function Barang() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {/* Armada <span className="text-red-500">*</span> */}
                         Armada
                       </label>
                       <select
@@ -1267,7 +1266,7 @@ export default function Barang() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    className="flex-1 px-4 py-2  bg-green-600 text-white rounded-lg"
                   >
                     Batal
                   </button>

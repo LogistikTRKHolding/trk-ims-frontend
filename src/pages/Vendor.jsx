@@ -60,7 +60,7 @@ export default function Vendor() {
   });
 
   // ============================================
-  // STEP 3: CRUD State Management
+  // CRUD State Management
   // ============================================
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -68,7 +68,11 @@ export default function Vendor() {
     // Initial form state
     kode_vendor: '',
     nama_vendor: '',
-    deskripsi: '',
+    kontak: '',
+    email: '',
+    telepon: '',
+    alamat: '',
+    keterangan: '',
     is_active: true,
   });
 
@@ -78,7 +82,7 @@ export default function Vendor() {
   const canDelete = currentUser?.role === 'Admin';
 
   // ============================================
-  // STEP 4: Form Handlers
+  // Form Handlers
   // ============================================
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -94,7 +98,11 @@ export default function Vendor() {
       // Reset to initial values
       kode_vendor: '',
       nama_vendor: '',
-      deskripsi: '',
+      kontak: '',
+      email: '',
+      telepon: '',
+      alamat: '',
+      keterangan: '',
       is_active: true,
     });
   };
@@ -110,14 +118,18 @@ export default function Vendor() {
       // Map item to form state
       kode_vendor: item.kode_vendor || '',
       nama_vendor: item.nama_vendor || '',
-      deskripsi: item.deskripsi || '',
-      is_active: item.is_active || true,
+      kontak: item.kontak || '',
+      email: item.email || '',
+      telepon: item.telepon || '',
+      alamat: item.alamat || '',
+      keterangan: item.keterangan || '',
+      is_active: item.is_active ?? true,
     });
     setShowModal(true);
   };
 
   // ============================================
-  // STEP 5: CRUD Operations
+  // CRUD Operations
   // ============================================
 
   // CREATE & UPDATE
@@ -136,18 +148,20 @@ export default function Vendor() {
       // Determine endpoint and method
       const url = editingItem
         ? `${import.meta.env.VITE_API_URL}/data/vendor/${editingItem.id}`
-        : '${import.meta.env.VITE_API_URL}/data/vendor';
+        : `${import.meta.env.VITE_API_URL}/data/vendor`;
 
       const method = editingItem ? 'PUT' : 'POST';
 
       // Prepare payload
       const payload = editingItem ? {
-        // Only send changed fields
         nama_vendor: formData.nama_vendor,
-        deskripsi: formData.deskripsi,
+        kontak: formData.kontak,
+        email: formData.email,
+        telepon: formData.telepon,
+        alamat: formData.alamat,
+        keterangan: formData.keterangan,
         is_active: formData.is_active,
       } : {
-        // CREATE: Send all fields
         ...formData,
         is_active: true,
       };
@@ -239,7 +253,7 @@ export default function Vendor() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Search..." // CUSTOMIZE
+                placeholder="Cari..." // CUSTOMIZE
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
@@ -607,7 +621,7 @@ export default function Vendor() {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button" onClick={() => { setShowModal(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                 >Batal</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg">
                   {editingItem ? 'Update' : 'Simpan'}

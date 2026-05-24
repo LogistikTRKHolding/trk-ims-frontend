@@ -594,7 +594,7 @@ export default function Kategori() {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button" onClick={() => { setShowModal(false); resetForm(); }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
                 >Batal</button>
                 <button type="submit" className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg">
                   {editingItem ? 'Update' : 'Simpan'}
