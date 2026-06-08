@@ -674,13 +674,13 @@ export const permintaanBarangAPI = {
   // Status transitions
   submit: (id, requestedBy) =>
     baseTableAPI.update("permintaan_barang", id, {
-      status: "Submitted",
+      status: "Diajukan",
       requested_by: requestedBy,
     }),
 
   approve: (id, approvedBy, catatan) =>
     baseTableAPI.update("permintaan_barang", id, {
-      status: "Approved",
+      status: "Disetujui",
       approved_by: approvedBy,
       tanggal_approve: new Date().toISOString(),
       catatan_approve: catatan || "",
@@ -688,17 +688,17 @@ export const permintaanBarangAPI = {
 
   reject: (id, approvedBy, catatan) =>
     baseTableAPI.update("permintaan_barang", id, {
-      status: "Rejected",
+      status: "Ditolak",
       approved_by: approvedBy,
       tanggal_approve: new Date().toISOString(),
       catatan_approve: catatan || "",
     }),
 
-  convertToPO: (id, noPO) =>
+  /* convertToPO: (id, noPO) =>
     baseTableAPI.update("permintaan_barang", id, {
       status: "Converted",
       no_po: noPO,
-    }),
+    }), */
 
   serahkan: (id, by) =>
     baseTableAPI.update("permintaan_barang", id, {

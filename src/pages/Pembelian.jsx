@@ -7,28 +7,13 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
-import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI, permintaanBarangAPI } from '../services/api';
+import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, 
+    subKategoriAPI, armadaAPI, permintaanBarangAPI } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
-import {
-    Search,
-    Filter,
-    X,
-    Download,
-    Upload,
-    Plus,
-    Edit,
-    Trash2,
-    Calendar,
-    Package,
-    Clock,
-    CheckCircle2,
-    XCircle,
-    RefreshCw,
-    ShoppingCart,
-    FileX,
-    FileCheck,
-} from 'lucide-react';
+import { Search, Filter, X, Download, Upload, Plus, Edit, Trash2, Calendar, Package, 
+    Clock, CheckCircle2, XCircle, RefreshCw, ShoppingCart, FileX, FileCheck,
+    ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Pembelian() {
     const navigate = useNavigate()
@@ -65,7 +50,6 @@ export default function Pembelian() {
         nama_barang: '',
         qty_order: 1,
         harga_satuan: 0,
-        total_harga: 0,
         total_harga: 0,
         tanggal_terima: '',
         status: 'Pending',
@@ -1447,23 +1431,25 @@ export default function Pembelian() {
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                             >
-                                Previous
+                                <ChevronLeft className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-50"
                             >
-                                Next
+                                <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
 
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
+
+                                {/* Rows Per Page Selector */}
                                 <div className="flex items-center gap-2 text-sm text-gray-700">
-                                    <span>Show</span>
+                                    <span>Tampilkan</span>
                                     <select
                                         value={rowsPerPage}
                                         onChange={(e) => {
@@ -1481,37 +1467,68 @@ export default function Pembelian() {
                                         </option>
                                     </select>
 
+                                    {/* Custom Rows Input */}
                                     <div className="flex items-center border border-gray-300 rounded ml-1">
                                         <input
                                             type="number"
-                                            placeholder="Custom"
+                                            placeholder="Sesuaikan"
                                             value={customRowsInput}
                                             onChange={(e) => setCustomRowsInput(e.target.value)}
                                             className="w-16 px-2 py-1 text-sm outline-none rounded-l"
                                         />
                                         <button
                                             onClick={handleCustomRowsApply}
-                                            className="bg-gray-100 px-2 py-1 text-xs border-l hover:bg-gray-200 rounded-r"
+                                            className="bg-gray-100 px-2 py-1 text-sm font-medium border-l hover:bg-gray-200 rounded-r"
                                         >
-                                            Apply
+                                            Terapkan
                                         </button>
                                     </div>
                                 </div>
 
                                 <p className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
-                                    <span className="font-medium">{Math.min(currentPage * rowsPerPage, totalRows)}</span> of{' '}
-                                    <span className="font-medium">{totalRows}</span> results
+                                    Menampilkan <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> -{' '}
+                                    <span className="font-medium">
+                                        {Math.min(currentPage * rowsPerPage, totalRows)}
+                                    </span> dari{' '}
+                                    <span className="font-medium">{totalRows}</span> hasil
                                 </p>
                             </div>
 
                             <div>
                                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">First</button>
-                                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Prev</button>
-                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">Page {currentPage} of {totalPages || 1}</span>
-                                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0} className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Next</button>
-                                    <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages || totalPages === 0} className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">Last</button>
+                                    <button
+                                        onClick={() => setCurrentPage(1)}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        <ChevronFirst className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+
+                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm  text-green-600">
+                                        Halaman {currentPage} dari {totalPages || 1}
+                                    </span>
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                        <ChevronLast className="w-5 h-5" />
+                                    </button>
                                 </nav>
                             </div>
                         </div>
@@ -1783,9 +1800,9 @@ export default function Pembelian() {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                                     <div className="flex gap-2">
                                         {[
-                                            { value: 'Pending',   label: 'Pending',   active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-600 border-yellow-400 hover:bg-yellow-50' },
-                                            { value: 'Received',  label: 'Received',  active: 'bg-green-600 text-white border-green-600',   inactive: 'bg-white text-green-700 border-green-500 hover:bg-green-50' },
-                                            { value: 'Cancelled', label: 'Cancelled', active: 'bg-red-500 text-white border-red-500',        inactive: 'bg-white text-red-600 border-red-400 hover:bg-red-50' },
+                                            { value: 'Pending', label: 'Pending', active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-600 border-yellow-400 hover:bg-yellow-50' },
+                                            { value: 'Received', label: 'Received', active: 'bg-green-600 text-white border-green-600', inactive: 'bg-white text-green-700 border-green-500 hover:bg-green-50' },
+                                            { value: 'Cancelled', label: 'Cancelled', active: 'bg-red-500 text-white border-red-500', inactive: 'bg-white text-red-600 border-red-400 hover:bg-red-50' },
                                         ].map(({ value, label, active, inactive }) => (
                                             <button
                                                 key={value}

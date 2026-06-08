@@ -1,11 +1,12 @@
 // src/pages/Kategori.jsx
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Edit, Trash2, Download, Upload, Search, X, Save, RefreshCw } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { authAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import * as XLSX from 'xlsx';
+import { Plus, Edit, Trash2, Download, Upload, Search, X, Save, RefreshCw,
+  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function Kategori() {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -396,113 +397,115 @@ export default function Kategori() {
               )}
             </tbody>
           </table>
+
           {/* Pagination Controls */}
           <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
 
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
-                {/* Rows Per Page Selector */}
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <span>Show</span>
-                  <select
-                    value={rowsPerPage}
-                    onChange={(e) => {
-                      setRowsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="border border-gray-300 rounded px-2 py-1 focus:ring-green-500 outline-none"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={30}>30</option>
-                    <option value={50}>50</option>
-                    <option value={rowsPerPage} hidden={[10, 20, 30, 50].includes(rowsPerPage)}>
-                      {rowsPerPage}
-                    </option>
-                  </select>
-
-                  {/* Custom Rows Input */}
-                  <div className="flex items-center border border-gray-300 rounded ml-1">
-                    <input
-                      type="number"
-                      placeholder="Custom"
-                      value={customRowsInput}
-                      onChange={(e) => setCustomRowsInput(e.target.value)}
-                      className="w-16 px-2 py-1 text-sm outline-none rounded-l"
-                    />
-                    <button
-                      onClick={handleCustomRowsApply}
-                      className="bg-gray-100 px-2 py-1 text-xs border-l hover:bg-gray-200 rounded-r"
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  
+                  {/* Rows Per Page Selector */}
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <span>Tampilkan</span>
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className="border border-gray-300 rounded px-2 py-1 focus:ring-green-500 outline-none"
                     >
-                      Apply
-                    </button>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={50}>50</option>
+                      <option value={rowsPerPage} hidden={[10, 20, 30, 50].includes(rowsPerPage)}>
+                        {rowsPerPage}
+                      </option>
+                    </select>
+
+                    {/* Custom Rows Input */}
+                    <div className="flex items-center border border-gray-300 rounded ml-1">
+                      <input
+                        type="number"
+                        placeholder="Sesuaikan"
+                        value={customRowsInput}
+                        onChange={(e) => setCustomRowsInput(e.target.value)}
+                        className="w-16 px-2 py-1 text-sm outline-none rounded-l"
+                      />
+                      <button
+                        onClick={handleCustomRowsApply}
+                        className="bg-gray-100 px-2 py-1 text-sm font-medium border-l hover:bg-gray-200 rounded-r"
+                      >
+                        Terapkan
+                      </button>
+                    </div>
                   </div>
+
+                  <p className="text-sm text-gray-700">
+                    Menampilkan <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> -{' '}
+                    <span className="font-medium">
+                      {Math.min(currentPage * rowsPerPage, totalRows)}
+                    </span> dari{' '}
+                    <span className="font-medium">{totalRows}</span> hasil
+                  </p>
                 </div>
 
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * rowsPerPage, totalRows)}
-                  </span> of{' '}
-                  <span className="font-medium">{totalRows}</span> results
-                </p>
-              </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronFirst className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
 
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    First
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Prev
-                  </button>
+                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm  text-green-600">
+                      Halaman {currentPage} dari {totalPages || 1}
+                    </span>
 
-                  <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">
-                    Page {currentPage} of {totalPages || 1}
-                  </span>
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Last
-                  </button>
-                </nav>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <ChevronLast className="w-5 h-5" />
+                    </button>
+                  </nav>
+                </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
 

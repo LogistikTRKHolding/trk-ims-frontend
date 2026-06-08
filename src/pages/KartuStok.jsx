@@ -6,18 +6,15 @@ const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerC
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
-    Filter, X, ChevronLeft, Menu,
-    // Icons for Image Modal
-    ZoomIn, Download, ExternalLink, Image as ImageIcon, Maximize2
-} from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI, gudangAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import { cloudinaryService } from '../services/cloudinary'; // Import cloudinary service
+import { Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
+    Filter, X, ChevronLeft, Menu, ZoomIn, Download, 
+    ExternalLink, Image as ImageIcon, Maximize2 } from 'lucide-react';
 
-const useDesktopMediaQuery = () => {
+    const useDesktopMediaQuery = () => {
     const [isDesktop, setDesktop] = useState(false);
     useEffect(() => {
         if (typeof window === 'undefined') return;

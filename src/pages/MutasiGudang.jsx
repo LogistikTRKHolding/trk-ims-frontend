@@ -5,29 +5,15 @@ const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerC
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Search,
-  Filter,
-  X,
-  Download,
-  Upload,
-  Plus,
-  Edit,
-  Trash2,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Package,
-  FileText,
-  FileCheck,
-  FileX,
-  RefreshCw,
-} from 'lucide-react';
 import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
 import { useDataTable } from '../hooks/useDataTable';
-import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
+import { gudangAPI, mutasiAPI, barangAPI, authAPI, 
+  kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
+import { Search, Filter, X, Download, Upload, Plus, Edit, Trash2, TrendingUp, 
+  TrendingDown, Calendar, Package, FileText, FileCheck, FileX, RefreshCw,
+  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function MutasiGudang() {
   const navigate = useNavigate()
@@ -1608,16 +1594,16 @@ export default function MutasiGudang() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
-                Previous
+                <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, groupedTotalPages))}
                 disabled={currentPage === groupedTotalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
-                Next
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
 
@@ -1625,7 +1611,7 @@ export default function MutasiGudang() {
               <div className="flex items-center gap-4">
                 {/* Rows Per Page Selector */}
                 <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <span>Show</span>
+                  <span>Tampilkan</span>
                   <select
                     value={rowsPerPage}
                     onChange={(e) => {
@@ -1647,29 +1633,29 @@ export default function MutasiGudang() {
                   <div className="flex items-center border border-gray-300 rounded ml-1">
                     <input
                       type="number"
-                      placeholder="Custom"
+                      placeholder="Sesuaikan"
                       value={customRowsInput}
                       onChange={(e) => setCustomRowsInput(e.target.value)}
                       className="w-16 px-2 py-1 text-sm outline-none rounded-l"
                     />
                     <button
                       onClick={handleCustomRowsApply}
-                      className="bg-gray-100 px-2 py-1 text-xs border-l hover:bg-gray-200 rounded-r"
+                      className="bg-gray-100 px-2 py-1 text-sm font-medium border-l hover:bg-gray-200 rounded-r"
                     >
-                      Apply
+                      Terapkan
                     </button>
                   </div>
                 </div>
 
                 <p className="text-sm text-gray-700">
-                  Showing{' '}
+                  Menampilkan{' '}
                   <span className="font-medium">
                     {(currentPage - 1) * rowsPerPage + 1}
                   </span>–
                   <span className="font-medium">
                     {Math.min(currentPage * rowsPerPage, groupedTotalGroups)}
                   </span>{' '}
-                  of{' '}
+                  dari{' '}
                   <span className="font-medium">{groupedTotalGroups}</span> barang
                   {' '}
                   <span className="text-gray-400">({groupedTotalRows} transaksi)</span>
@@ -1681,20 +1667,20 @@ export default function MutasiGudang() {
                   <button
                     onClick={() => setCurrentPage(1)}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    First
+                    <ChevronFirst className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Prev
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
 
                   <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">
-                    Page {currentPage} of {groupedTotalPages}
+                    Halaman {currentPage} dari {groupedTotalPages}
                   </span>
 
                   <button
@@ -1702,14 +1688,14 @@ export default function MutasiGudang() {
                     disabled={currentPage === groupedTotalPages || groupedTotalPages === 0}
                     className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Next
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setCurrentPage(groupedTotalPages)}
                     disabled={currentPage === groupedTotalPages || groupedTotalPages === 0}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    Last
+                    <ChevronLast className="w-5 h-5" />
                   </button>
                 </nav>
               </div>

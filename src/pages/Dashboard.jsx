@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ClipboardList, TrendingUp, Package, AlertTriangle, ShoppingCart, Clock, DollarSign } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { dashboardAPI } from '../services/api';
+import { ClipboardList, TrendingUp, Package, AlertTriangle, 
+  ShoppingCart, Clock, DollarSign } from 'lucide-react';
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);

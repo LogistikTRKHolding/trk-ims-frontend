@@ -24,43 +24,39 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
 import {
-    permintaanBarangAPI,
-    barangAPI,
-    authAPI,
-    kategoriAPI,
-    subKategoriAPI,
-    armadaAPI,
+    permintaanBarangAPI, barangAPI, authAPI,
+    kategoriAPI, subKategoriAPI, armadaAPI,
 } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 import {
     Search, Filter, X, Download, Plus, Edit, Trash2,
-    Calendar, Package, RefreshCw, CheckCircle2, XCircle,
-    Clock, AlertTriangle, ShoppingCart, Send, ArrowRight,
-    FileCheck, FileX, FileText, RotateCcw, Warehouse,
-    TrendingDown, PackageCheck,
+    Calendar, Package, RefreshCw, CheckCircle2, XCircle, Clock,
+    AlertTriangle, ShoppingCart, Send, ArrowRight, FileCheck, FileX,
+    FileText, RotateCcw, Warehouse, TrendingDown, PackageCheck,
+    ChevronFirst, ChevronLast, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 // ─── Status / Prioritas metadata ─────────────────────────────────────────────
 const STATUS_META = {
     Draft: { color: 'bg-gray-100   text-gray-700   border-gray-200', icon: FileText },
-    Submitted: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
-    Approved: { color: 'bg-green-100  text-green-800  border-green-200', icon: CheckCircle2 },
-    Rejected: { color: 'bg-red-100    text-red-800    border-red-200', icon: XCircle },
+    Diajukan: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: Clock },
+    Disetujui: { color: 'bg-green-100  text-green-800  border-green-200', icon: CheckCircle2 },
+    Ditolak: { color: 'bg-red-100    text-red-800    border-red-200', icon: XCircle },
     Diproses: { color: 'bg-blue-100   text-blue-800   border-blue-200', icon: ShoppingCart },
     Diterima: { color: 'bg-purple-100 text-purple-800 border-purple-200', icon: PackageCheck },
     Diserahkan: { color: 'bg-teal-100   text-teal-800   border-teal-200', icon: Warehouse },
 };
 const PRIORITAS_META = {
     Normal: { cls: 'bg-gray-100   text-gray-700' },
-    High: { cls: 'bg-orange-100 text-orange-800' },
-    Critical: { cls: 'bg-red-100    text-red-800' },
+    Tinggi: { cls: 'bg-orange-100 text-orange-800' },
+    Kritis: { cls: 'bg-red-100    text-red-800' },
 };
 
 // ─── Stat card data ───────────────────────────────────────────────────────────
 const STAT_DEFS = [
     { key: 'total', label: 'Total PR', icon: FileText, statuses: null, border: 'border-gray-200', iconCls: 'bg-gray-50   text-gray-600' },
-    { key: 'submitted', label: 'Menunggu Review', icon: Clock, statuses: ['Submitted'], border: 'border-yellow-200', iconCls: 'bg-yellow-50 text-yellow-600' },
-    { key: 'approved', label: 'Disetujui', icon: CheckCircle2, statuses: ['Approved'], border: 'border-green-200', iconCls: 'bg-green-50  text-green-600' },
+    { key: 'diajukan', label: 'Menunggu Review', icon: Clock, statuses: ['Submitted'], border: 'border-yellow-200', iconCls: 'bg-yellow-50 text-yellow-600' },
+    { key: 'disetujui', label: 'Disetujui', icon: CheckCircle2, statuses: ['Approved'], border: 'border-green-200', iconCls: 'bg-green-50  text-green-600' },
     { key: 'diproses', label: 'Diproses', icon: ShoppingCart, statuses: ['Diproses', 'Diterima'], border: 'border-blue-200', iconCls: 'bg-blue-50   text-blue-600' },
     { key: 'selesai', label: 'Selesai', icon: Warehouse, statuses: ['Diserahkan'], border: 'border-teal-200', iconCls: 'bg-teal-50   text-teal-600' },
 ];
@@ -86,7 +82,7 @@ const PriorityBadge = ({ prioritas }) => {
     const m = PRIORITAS_META[prioritas] || PRIORITAS_META.Normal;
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full ${m.cls}`}>
-            {prioritas === 'Critical' && <AlertTriangle className="w-3 h-3" />}
+            {prioritas === 'Kritis' && <AlertTriangle className="w-3 h-3" />}
             {prioritas}
         </span>
     );
@@ -229,8 +225,8 @@ export default function PermintaanBarang() {
     // ── Stat cards (dari allData, bukan filteredData) ─────────────────────────
     const stats = useMemo(() => ({
         total: allData.length,
-        submitted: allData.filter(r => r.status === 'Submitted').length,
-        approved: allData.filter(r => r.status === 'Approved').length,
+        diajukan: allData.filter(r => r.status === 'Diajukan').length,
+        disetujui: allData.filter(r => r.status === 'Disetujui').length,
         diproses: allData.filter(r => ['Diproses', 'Diterima'].includes(r.status)).length,
         selesai: allData.filter(r => r.status === 'Diserahkan').length,
     }), [allData]);
@@ -351,17 +347,17 @@ export default function PermintaanBarang() {
         } catch (err) { alert('Error: ' + err.message); }
     };
 
-    // Draft → Submitted
+    // Draft → Diajukan
     const handleSubmitPR = async (item) => {
-        if (!confirm(`Submit ${item.no_pr} untuk direview?`)) return;
+        if (!confirm(`Ajukan ${item.no_pr} untuk direview?`)) return;
         try {
             await permintaanBarangAPI.submit(item.id, userName);
-            alert(`${item.no_pr} berhasil disubmit!`);
+            alert(`${item.no_pr} berhasil diajukan!`);
             await refresh();
         } catch (err) { alert('Error: ' + err.message); }
     };
 
-    // Rejected → Draft (revisi)
+    // Ditolak → Draft (revisi)
     const handleRevisi = async (item) => {
         if (!confirm(`Reset ${item.no_pr} ke Draft untuk direvisi?`)) return;
         try {
@@ -379,7 +375,7 @@ export default function PermintaanBarang() {
         setShowActionModal(true);
     };
 
-    // Konfirmasi approve/reject
+    // Konfirmasi setujui/tolak
     const handleConfirmAction = async () => {
         if (!actionTarget) return;
         try {
@@ -396,13 +392,13 @@ export default function PermintaanBarang() {
         } catch (err) { alert('Error: ' + err.message); }
     };
 
-    // Approved → Diserahkan (stok tersedia, ambil dari gudang)
+    // Disetujui → Diserahkan (stok tersedia, ambil dari gudang)
     // Navigasi ke Mutasi Gudang dengan params agar modal Tambah Mutasi (Keluar) ter-prefill otomatis
     const handleSerahkan = async (item) => {
         const cukup = Number(item.stok_tersedia ?? 0) >= Number(item.qty_request ?? 0);
         const msg = cukup
             ? `Serahkan ${item.no_pr} dari stok gudang?\n\nStok Tersedia: ${fmtQty(item.stok_tersedia)} ${item.satuan || ''}\nQty Request : ${fmtQty(item.qty_request)} ${item.satuan || ''}\n\nSetelah konfirmasi, Anda akan diarahkan ke Mutasi Gudang untuk membuat mutasi Keluar.`
-            : `⚠️ Stok Tersedia (${fmtQty(item.stok_tersedia)}) KURANG dari Qty Request (${fmtQty(item.qty_request)}).\n\nAnda yakin tetap ingin menyerahkan secara parsial?`;
+            : `⚠️ Stok Tersedia (${fmtQty(item.stok_tersedia)}) KURANG dari Jumlah Permintaan (${fmtQty(item.qty_request)}).\n\nAnda yakin tetap ingin menyerahkan secara parsial?`;
         if (!confirm(msg)) return;
         try {
             await permintaanBarangAPI.serahkan(item.id, userName);
@@ -419,10 +415,10 @@ export default function PermintaanBarang() {
         } catch (err) { alert('Error: ' + err.message); }
     };
 
-    // Approved → Diproses (stok kosong, perlu beli)
+    // Disetujui → Diproses (stok kosong, perlu beli)
     // Navigasi ke Pembelian dengan params agar modal Tambah PO ter-prefill otomatis
     const handleProsesPembelian = async (item) => {
-        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n\nStok tidak tersedia → modal PO baru akan terbuka otomatis.\nData Vendor & Harga perlu dilengkapi di halaman Pembelian.`)) return;
+        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n\nStok tidak tersedia → formulir PO baru akan terbuka otomatis.\nData Vendor & Harga perlu dilengkapi di halaman Pembelian.`)) return;
         try {
             await permintaanBarangAPI.proses(item.id, ''); // no_po dikosongkan dulu, diisi setelah PO dibuat
             alert(`PR ${item.no_pr} → Diproses.\n\nLengkapi dan simpan PO di halaman Pembelian.`);
@@ -640,7 +636,6 @@ export default function PermintaanBarang() {
                                 <button
                                     onClick={handleRefresh}
                                     disabled={isRefreshing}
-                                    title="Segarkan Data"
                                     className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
                                     <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                     <span>Refresh</span>
@@ -652,8 +647,7 @@ export default function PermintaanBarang() {
                                 {canCreate && (
                                     <button onClick={() => { resetForm(); setShowModal(true); loadMasterData(); }}
                                         className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium">
-                                        <Plus className="w-4 h-4" /> Buat Permintaan
-                                    </button>
+                                        <Plus className="w-4 h-4" /> Buat                                    </button>
                                 )}
                             </div>
                         </div>
@@ -819,11 +813,11 @@ export default function PermintaanBarang() {
                                                                         <Edit className="w-3.5 h-3.5" />
                                                                     </button>
                                                                 )}
-                                                                {/* Submit: hanya pemohon PR itu sendiri (atau Admin) */}
+                                                                {/* Ajukan: hanya pemohon PR itu sendiri (atau Admin) */}
                                                                 {(item.requested_by === userName || currentUser?.role === 'Admin') && (
                                                                     <button onClick={() => handleSubmitPR(item)}
                                                                         className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
-                                                                        <Send className="w-3 h-3" /> Submit
+                                                                        <Send className="w-3 h-3" /> Ajukan
                                                                     </button>
                                                                 )}
                                                                 {canDelete && (
@@ -835,8 +829,8 @@ export default function PermintaanBarang() {
                                                             </>
                                                         )}
 
-                                                        {/* Submitted: Approve / Reject */}
-                                                        {item.status === 'Submitted' && canApprove && (
+                                                        {/* Diajukan: Setuju / Tolak */}
+                                                        {item.status === 'Diajukan' && canApprove && (
                                                             <>
                                                                 <button onClick={() => openActionModal(item, 'approve')}
                                                                     className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
@@ -849,8 +843,8 @@ export default function PermintaanBarang() {
                                                             </>
                                                         )}
 
-                                                        {/* Approved: Serahkan + Proses Pembelian */}
-                                                        {item.status === 'Approved' && (
+                                                        {/* Disetujui: Serahkan + Proses Pembelian */}
+                                                        {item.status === 'Disetujui' && (
                                                             <>
                                                                 {cukup && canSerahkan && (
                                                                     <button onClick={() => handleSerahkan(item)}
@@ -886,8 +880,8 @@ export default function PermintaanBarang() {
                                                             </button>
                                                         )}
 
-                                                        {/* Rejected: Revisi (kembali ke Draft) + Delete */}
-                                                        {item.status === 'Rejected' && (
+                                                        {/* Ditolak: Revisi (kembali ke Draft) + Delete */}
+                                                        {item.status === 'Ditolak' && (
                                                             <>
                                                                 {/* Revisi: hanya pemohon PR itu sendiri (atau Admin) */}
                                                                 {(item.requested_by === userName || currentUser?.role === 'Admin') && (
@@ -916,30 +910,29 @@ export default function PermintaanBarang() {
 
                     {/* Pagination Controls */}
                     <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                        {/* Mobile */}
                         <div className="flex-1 flex justify-between sm:hidden">
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                             >
-                                Previous
+                                <ChevronLeft className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                             >
-                                Next
+                                <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
 
-                        {/* Desktop */}
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4">
+
                                 {/* Rows Per Page Selector */}
                                 <div className="flex items-center gap-2 text-sm text-gray-700">
-                                    <span>Show</span>
+                                    <span>Tampilkan</span>
                                     <select
                                         value={rowsPerPage}
                                         onChange={(e) => {
@@ -949,9 +942,10 @@ export default function PermintaanBarang() {
                                         className="border border-gray-300 rounded px-2 py-1 focus:ring-green-500 outline-none"
                                     >
                                         <option value={10}>10</option>
-                                        <option value={25}>25</option>
+                                        <option value={20}>20</option>
+                                        <option value={30}>30</option>
                                         <option value={50}>50</option>
-                                        <option value={rowsPerPage} hidden={[10, 25, 50].includes(rowsPerPage)}>
+                                        <option value={rowsPerPage} hidden={[10, 20, 30, 50].includes(rowsPerPage)}>
                                             {rowsPerPage}
                                         </option>
                                     </select>
@@ -960,31 +954,26 @@ export default function PermintaanBarang() {
                                     <div className="flex items-center border border-gray-300 rounded ml-1">
                                         <input
                                             type="number"
-                                            placeholder="Custom"
+                                            placeholder="Sesuaikan"
                                             value={customRowsInput}
                                             onChange={(e) => setCustomRowsInput(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && handleCustomRowsApply()}
                                             className="w-16 px-2 py-1 text-sm outline-none rounded-l"
                                         />
                                         <button
                                             onClick={handleCustomRowsApply}
-                                            className="bg-gray-100 px-2 py-1 text-xs border-l hover:bg-gray-200 rounded-r"
+                                            className="bg-gray-100 px-2 py-1 text-sm font-medium border-l hover:bg-gray-200 rounded-r"
                                         >
-                                            Apply
+                                            Terapkan
                                         </button>
                                     </div>
                                 </div>
 
                                 <p className="text-sm text-gray-700">
-                                    Menampilkan{' '}
-                                    <span className="font-medium">
-                                        {(currentPage - 1) * rowsPerPage + 1}
-                                    </span>–
+                                    Menampilkan <span className="font-medium">{(currentPage - 1) * rowsPerPage + 1}</span> -{' '}
                                     <span className="font-medium">
                                         {Math.min(currentPage * rowsPerPage, totalRows)}
-                                    </span>{' '}
-                                    dari{' '}
-                                    <span className="font-medium">{totalRows}</span> permintaan
+                                    </span> dari{' '}
+                                    <span className="font-medium">{totalRows}</span> hasil
                                 </p>
                             </div>
 
@@ -993,35 +982,35 @@ export default function PermintaanBarang() {
                                     <button
                                         onClick={() => setCurrentPage(1)}
                                         disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        First
+                                        <ChevronFirst className="w-5 h-5" />
                                     </button>
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        Prev
+                                        <ChevronLeft className="w-5 h-5" />
                                     </button>
 
-                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm font-medium text-green-600">
-                                        Page {currentPage} of {totalPages}
+                                    <span className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-green-50 text-sm  text-green-600">
+                                        Halaman {currentPage} dari {totalPages || 1}
                                     </span>
 
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages || totalPages === 0}
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        Next
+                                        <ChevronRight className="w-5 h-5" />
                                     </button>
                                     <button
                                         onClick={() => setCurrentPage(totalPages)}
                                         disabled={currentPage === totalPages || totalPages === 0}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        Last
+                                        <ChevronLast className="w-5 h-5" />
                                     </button>
                                 </nav>
                             </div>
@@ -1210,7 +1199,7 @@ export default function PermintaanBarang() {
                                                 <input type="radio" name="prioritas" value={val}
                                                     checked={formData.prioritas === val} onChange={handleInputChange}
                                                     className="sr-only" />
-                                                {val === 'Critical' && <AlertTriangle className="w-3.5 h-3.5" />}
+                                                {val === 'Kritis' && <AlertTriangle className="w-3.5 h-3.5" />}
                                                 {val}
                                             </label>
                                         ))}
