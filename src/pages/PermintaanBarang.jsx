@@ -636,24 +636,26 @@ export default function PermintaanBarang() {
 
                             <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
 
-                            <button
-                                onClick={handleRefresh}
-                                disabled={isRefreshing}
-                                title="Segarkan Data"
-                                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
-                                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                                <span>Refresh</span>
-                            </button>
-                            <button onClick={handleExport}
-                                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium">
-                                <Download className="w-4 h-4" /> Export
-                            </button>
-                            {canCreate && (
-                                <button onClick={() => { resetForm(); setShowModal(true); loadMasterData(); }}
-                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium">
-                                    <Plus className="w-4 h-4" /> Buat Permintaan
+                            <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                                <button
+                                    onClick={handleRefresh}
+                                    disabled={isRefreshing}
+                                    title="Segarkan Data"
+                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                    <span>Refresh</span>
                                 </button>
-                            )}
+                                <button onClick={handleExport}
+                                    className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium">
+                                    <Download className="w-4 h-4" /> Export
+                                </button>
+                                {canCreate && (
+                                    <button onClick={() => { resetForm(); setShowModal(true); loadMasterData(); }}
+                                        className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium">
+                                        <Plus className="w-4 h-4" /> Buat Permintaan
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Active filter badges */}
