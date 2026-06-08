@@ -1,13 +1,15 @@
 // src/pages/SubKategori.jsx
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Edit, Trash2, Download, Upload, Search, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Download, Upload, Search, X, RefreshCw } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { authAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import * as XLSX from 'xlsx';
 
 export default function SubKategori() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // ============================================
   // Define fetchData with useCallback
   // ============================================
@@ -161,7 +163,6 @@ export default function SubKategori() {
   // ============================================
   // CRUD Operations
   // ============================================
-
   // CREATE & UPDATE
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -267,6 +268,11 @@ export default function SubKategori() {
     XLSX.writeFile(wb, `export_sub_kategori_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try { await refresh(); } finally { setIsRefreshing(false); }
+  };
+
   // ============================================
   // RENDER
   // ============================================
@@ -330,12 +336,9 @@ export default function SubKategori() {
             </select>
 
             {hasActiveFilters && (
-              <button
-                onClick={clearAllFilters}
-                className="p-2 text-red-500 hover:bg-red-50 rounded"
-                title="Hapus semua filter"
-              >
-                <X className="w-5 h-5" />
+              <button onClick={clearAllFilters}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                <X className="w-4 h-4" /> Reset
               </button>
             )}
 
@@ -343,6 +346,14 @@ export default function SubKategori() {
 
             {/* Action Buttons */}
             <div className="flex gap-2 w-full lg:w-auto">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title="Segarkan Data"
+                className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
               <button
                 onClick={handleExport}
                 className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"

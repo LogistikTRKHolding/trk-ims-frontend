@@ -1,10 +1,13 @@
 // src/pages/Pembelian.jsx
 
+// Hapus semua karakter selain huruf dan angka untuk normalisasi pencarian
+const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerCase();
+
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
-import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI } from '../services/api';
+import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, subKategoriAPI, armadaAPI, permintaanBarangAPI } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
 import {
@@ -22,10 +25,14 @@ import {
     CheckCircle2,
     XCircle,
     RefreshCw,
+    ShoppingCart,
+    FileX,
+    FileCheck,
 } from 'lucide-react';
 
 export default function Pembelian() {
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams();
     const currentUser = authAPI.getCurrentUser();
 
     // States untuk master data
@@ -38,23 +45,36 @@ export default function Pembelian() {
     const [showModal, setShowModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+
     // Import progress & result
     const [importProgress, setImportProgress] = useState({ loading: false, total: 0, processed: 0 });
     const [importResult, setImportResult] = useState(null);
+
     // importResult: null | { successCount, apiErrorCount, parseErrors: string[], apiErrors: string[] }
     const [editingItem, setEditingItem] = useState(null);
+
+    // no_pr yang di-link dari PermintaanBarang — dipakai untuk update no_po ke PR setelah PO tersimpan
+    const [linkedPrNo, setLinkedPrNo] = useState('');
+
     const [formData, setFormData] = useState({
         no_po: '',
         tanggal_po: new Date().toISOString().split('T')[0],
         kode_vendor: '',
+        nama_vendor: '',
         kode_barang: '',
-        qty_order: 0,
+        nama_barang: '',
+        qty_order: 1,
         harga_satuan: 0,
+        total_harga: 0,
         total_harga: 0,
         tanggal_terima: '',
         status: 'Pending',
         keterangan: '',
     });
+
+    // Currency display state for harga_satuan input
+    const [hargaDisplayValue, setHargaDisplayValue] = useState('');
+
     const [loadingMaster, setLoadingMaster] = useState(false);
 
     // State untuk search di dalam modal
@@ -110,6 +130,52 @@ export default function Pembelian() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // ── Auto-buka modal Tambah PO dari PermintaanBarang ──────────────────────
+    // FASE 1: Saat params masuk → simpan intent ke state dan kick-off loadMasterData.
+    //         Params langsung dibersihkan agar tidak re-trigger di tab keep-alive.
+    const [prIntent, setPrIntent] = useState(null); // { kodeBarang, qty, prNo }
+
+    useEffect(() => {
+        const action = searchParams.get('action');
+        const kodeBarang = searchParams.get('kode_barang');
+        const qty = searchParams.get('qty');
+        const prNo = searchParams.get('pr_no');
+
+        if (action !== 'tambah_po' || !kodeBarang) return;
+
+        // Simpan intent, load master data, bersihkan URL
+        setPrIntent({ kodeBarang, qty: parseFloat(qty) || 0, prNo: prNo || '' });
+        loadMasterData();
+        setSearchParams({}, { replace: true });
+    }, [searchParams]);
+
+    // FASE 2: Setelah barangList terisi dan intent tersimpan → prefill + buka modal.
+    useEffect(() => {
+        if (!prIntent || barangList.length === 0) return;
+
+        const { kodeBarang, qty, prNo } = prIntent;
+        const barang = barangList.find(b => b.kode_barang === kodeBarang);
+
+        setFormData(prev => ({
+            ...prev,
+            kode_barang: kodeBarang,
+            nama_barang: barang?.nama_barang || '',
+            qty_order: qty,
+            harga_satuan: barang?.harga_satuan || 0,
+            total_harga: qty * (barang?.harga_satuan || 0),
+            keterangan: prNo ? `Pembelian dari PR: ${prNo}` : '',
+            status: 'Pending',
+        }));
+        setSelectedBarangPreview({
+            part_number: barang?.part_number || '',
+            satuan: barang?.satuan || '',
+        });
+        setLinkedPrNo(prNo);
+        setEditingItem(null);
+        setShowModal(true);
+        setPrIntent(null); // clear intent setelah dipakai
+    }, [prIntent, barangList]);
 
     const fetchPembelianData = useCallback(async () => {
         const result = await pembelianAPI.getAll();
@@ -276,21 +342,23 @@ export default function Pembelian() {
     // Filter vendor berdasarkan search input
     const filteredVendors = useMemo(() => {
         if (!vendorSearch) return [];
-        const term = vendorSearch.toLowerCase();
+        const term = normalizeSearch(vendorSearch);
+        if (!term) return [];
         return vendorList.filter(v =>
-            v.nama_vendor.toLowerCase().includes(term) ||
-            v.kode_vendor.toLowerCase().includes(term)
+            normalizeSearch(v.nama_vendor).includes(term) ||
+            normalizeSearch(v.kode_vendor).includes(term)
         ).slice(0, 10);
     }, [vendorList, vendorSearch]);
 
     // Filter barang berdasarkan search input
     const filteredBarang = useMemo(() => {
         if (!barangSearch) return [];
-        const term = barangSearch.toLowerCase();
+        const term = normalizeSearch(barangSearch);
+        if (!term) return [];
         return barangList.filter(b =>
-            b.nama_barang.toLowerCase().includes(term) ||
-            b.kode_barang.toLowerCase().includes(term) ||
-            (b.part_number && b.part_number.toLowerCase().includes(term))
+            normalizeSearch(b.nama_barang).includes(term) ||
+            normalizeSearch(b.kode_barang).includes(term) ||
+            normalizeSearch(b.part_number).includes(term)
         ).slice(0, 10);
     }, [barangList, barangSearch]);
 
@@ -324,13 +392,19 @@ export default function Pembelian() {
             no_po: item.no_po,
             tanggal_po: item.tanggal_po?.split('T')[0] || '',
             kode_vendor: item.kode_vendor,
+            nama_vendor: item.nama_vendor,
             kode_barang: item.kode_barang,
+            nama_barang: item.nama_barang,
             qty_order: item.qty_order,
             harga_satuan: item.harga_satuan,
+            total_harga: item.total_harga,
             tanggal_terima: item.tanggal_terima?.split('T')[0] || '',
             status: item.status,
             keterangan: item.keterangan || '',
         });
+
+        setHargaDisplayValue(formatCurrency(item.harga_satuan || 0));
+
         setSelectedBarangPreview({ part_number: item.part_number || '', satuan: item.satuan || '' });
         setVendorSearch('');
         setBarangSearch('');
@@ -345,7 +419,7 @@ export default function Pembelian() {
             tanggal_po: new Date().toISOString().split('T')[0],
             kode_vendor: '',
             kode_barang: '',
-            qty_order: 0,
+            qty_order: 1,
             harga_satuan: 0,
             total_harga: 0,
             tanggal_terima: '',
@@ -356,6 +430,13 @@ export default function Pembelian() {
         setVendorSearch('');
         setBarangSearch('');
         setSelectedBarangPreview({ part_number: '', satuan: '' });
+        setLinkedPrNo('');
+        setHargaDisplayValue('');
+    };
+
+    const formatCurrency = (value) => {
+        const num = parseFloat(String(value).replace(/\./g, '').replace(',', '.')) || 0;
+        return num === 0 ? '' : num.toLocaleString('id-ID');
     };
 
     const handleInputChange = (e) => {
@@ -590,7 +671,16 @@ export default function Pembelian() {
                 await pembelianAPI.update(editingItem.id, payload);
                 alert('Purchase Order berhasil diupdate!');
             } else {
-                await pembelianAPI.create(payload);
+                const createdPO = await pembelianAPI.create(payload);
+                // Jika PO ini berasal dari PR, update no_po di tabel permintaan_barang
+                if (linkedPrNo && createdPO?.no_po) {
+                    try {
+                        await permintaanBarangAPI.updateNoPO(linkedPrNo, createdPO.no_po);
+                    } catch (linkErr) {
+                        console.warn('[Pembelian] Gagal link no_po ke PR:', linkErr.message);
+                        // Non-fatal: PO tetap tersimpan
+                    }
+                }
                 alert('Purchase Order berhasil ditambah!');
             }
 
@@ -634,8 +724,8 @@ export default function Pembelian() {
     // ── Import ───────────────────────────────────────────────────────────────
     // Kolom wajib yang harus ada di baris header (baris 1) file Excel.
     const IMPORT_REQUIRED_COLS = ['No PO', 'Tanggal PO', 'Kode Vendor', 'Kode Barang', 'Jumlah Order', 'Harga Satuan'];
-    const IMPORT_MAX_ROWS      = 10000;
-    const IMPORT_BATCH_SIZE    = 50;   // baris per batch Promise.allSettled
+    const IMPORT_MAX_ROWS = 10000;
+    const IMPORT_BATCH_SIZE = 50;   // baris per batch Promise.allSettled
 
     /**
      * Konversi nilai sel tanggal dari Excel ke string ISO yyyy-mm-dd.
@@ -719,12 +809,12 @@ export default function Pembelian() {
             dataRows.forEach((row, i) => {
                 const excelRowNum = i + 2; // baris ke-2 di Excel = indeks 0 di dataRows
 
-                const no_po          = String(row[colIdx['No PO']]        ?? '').trim();
-                const tanggalPoRaw   = row[colIdx['Tanggal PO']];
-                const kode_vendor    = String(row[colIdx['Kode Vendor']]   ?? '').trim();
-                const kode_barang    = String(row[colIdx['Kode Barang']]   ?? '').trim();
-                const jumlahRaw      = row[colIdx['Jumlah Order']];
-                const hargaRaw       = row[colIdx['Harga Satuan']];
+                const no_po = String(row[colIdx['No PO']] ?? '').trim();
+                const tanggalPoRaw = row[colIdx['Tanggal PO']];
+                const kode_vendor = String(row[colIdx['Kode Vendor']] ?? '').trim();
+                const kode_barang = String(row[colIdx['Kode Barang']] ?? '').trim();
+                const jumlahRaw = row[colIdx['Jumlah Order']];
+                const hargaRaw = row[colIdx['Harga Satuan']];
 
                 // Skip baris benar-benar kosong (semua sel kosong)
                 if (!no_po && !kode_barang && !tanggalPoRaw) return;
@@ -1017,12 +1107,9 @@ export default function Pembelian() {
 
                                 {/* Clear All Filters */}
                                 {hasActiveFilters && (
-                                    <button
-                                        onClick={clearAllFilters}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Clear all filters"
-                                    >
-                                        <X className="w-5 h-5" />
+                                    <button onClick={clearAllFilters}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                                        <X className="w-4 h-4" /> Reset
                                     </button>
                                 )}
                             </div>
@@ -1056,7 +1143,7 @@ export default function Pembelian() {
                                         <span>Import</span>
                                     </button>
                                 )}
-                                {canCreate && (                                    
+                                {canCreate && (
                                     <button
                                         onClick={openCreateModal}
                                         className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -1158,13 +1245,12 @@ export default function Pembelian() {
 
                 {/* ── Import Result Panel ── tampil setelah proses import selesai */}
                 {importResult && !importProgress.loading && (
-                    <div className={`rounded-lg shadow px-5 py-4 border ${
-                        importResult.successCount > 0 && importResult.apiErrorCount === 0 && importResult.parseErrors.length === 0
-                            ? 'bg-green-50 border-green-200'
-                            : importResult.successCount > 0
-                                ? 'bg-yellow-50 border-yellow-200'
-                                : 'bg-red-50 border-red-200'
-                    }`}>
+                    <div className={`rounded-lg shadow px-5 py-4 border ${importResult.successCount > 0 && importResult.apiErrorCount === 0 && importResult.parseErrors.length === 0
+                        ? 'bg-green-50 border-green-200'
+                        : importResult.successCount > 0
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-red-50 border-red-200'
+                        }`}>
                         {/* Header */}
                         <div className="flex items-start justify-between gap-2">
                             <div className="space-y-0.5">
@@ -1248,7 +1334,7 @@ export default function Pembelian() {
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vendor</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
-                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>                                    
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Armada</th>
                                     <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase">jumlah</th>
@@ -1307,7 +1393,7 @@ export default function Pembelian() {
                                                         {item.kode_barang}
                                                     </button>
                                                     <p className="text-xs text-blue-800">{item.part_number}</p>
-                                                </td>                                                
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     <div>
                                                         <p className="text-xs">{item.nama_kategori}</p>
@@ -1439,20 +1525,29 @@ export default function Pembelian() {
             {showModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                        {/* Header Modal */}
-                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingItem ? 'Edit Purchase Order' : 'Tambah Purchase Order Baru'}
-                            </h2>
-                            <button
-                                onClick={() => { setShowModal(false); resetForm(); }}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            {/* Header Modal */}
+                            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    {editingItem ? 'Edit Purchase Order' : 'Tambah Purchase Order Baru'}
+                                </h2>
+                                <button
+                                    onClick={() => { setShowModal(false); resetForm(); }}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Banner: form berasal dari PR tertentu */}
+                            {linkedPrNo && (
+                                <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">
+                                    <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+                                    <span>PO ini dibuat dari <strong>{linkedPrNo}</strong>. Setelah disimpan, nomor PO akan otomatis tercatat di PR tersebut.</span>
+                                </div>
+                            )}
+
+                            {/* Modal Body */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                                 {/* No. PO */}
@@ -1618,7 +1713,7 @@ export default function Pembelian() {
 
                                 {/* Qty Order */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Qty Order *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Jumlah Order *</label>
                                     <input
                                         type="number"
                                         name="qty_order"
@@ -1634,27 +1729,41 @@ export default function Pembelian() {
                                 {/* Harga Satuan */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Harga Satuan *</label>
-                                    <input
-                                        type="number"
-                                        name="harga_satuan"
-                                        value={formData.harga_satuan}
-                                        onChange={handleInputChange}
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    />
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                                        <input
+                                            type="text"
+                                            name="harga_satuan"
+                                            value={hargaDisplayValue}
+                                            onChange={(e) => {
+                                                // Strip semua titik (pemisah ribuan), ambil angka saja
+                                                const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+                                                const num = parseInt(raw) || 0;
+                                                setFormData(prev => ({ ...prev, harga_satuan: num, total_harga: num * prev.qty_order }));
+                                                setHargaDisplayValue(num === 0 ? '' : num.toLocaleString('id-ID'));
+                                            }}
+                                            onBlur={() => {
+                                                // Format ulang saat blur (pastikan konsisten)
+                                                setHargaDisplayValue(formData.harga_satuan ? formData.harga_satuan.toLocaleString('id-ID') : '');
+                                            }}
+                                            placeholder="0"
+                                            className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Total Harga (Auto-calculated) */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Total Harga</label>
-                                    <input
-                                        type="number"
-                                        value={formData.total_harga}
-                                        readOnly
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
-                                    />
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                                        <input
+                                            type="text"
+                                            value={(formData.total_harga || 0).toLocaleString('id-ID')}
+                                            readOnly
+                                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Tanggal Terima */}
@@ -1672,18 +1781,22 @@ export default function Pembelian() {
                                 {/* Status */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
-                                    <select
-                                        name="status"
-                                        value={formData.status}
-                                        onChange={handleInputChange}
-                                        required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    >
-                                        <option value="Pending">Pending</option>
-                                        <option value="Received">Received</option>
-                                        <option value="Cancelled">Cancelled</option>
-                                        {/* 'Completed' tidak ada di CHECK constraint database */}
-                                    </select>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { value: 'Pending',   label: 'Pending',   active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-600 border-yellow-400 hover:bg-yellow-50' },
+                                            { value: 'Received',  label: 'Received',  active: 'bg-green-600 text-white border-green-600',   inactive: 'bg-white text-green-700 border-green-500 hover:bg-green-50' },
+                                            { value: 'Cancelled', label: 'Cancelled', active: 'bg-red-500 text-white border-red-500',        inactive: 'bg-white text-red-600 border-red-400 hover:bg-red-50' },
+                                        ].map(({ value, label, active, inactive }) => (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                onClick={() => handleInputChange({ target: { name: 'status', value } })}
+                                                className={`flex-1 py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${formData.status === value ? active : inactive}`}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* Keterangan */}
@@ -1705,15 +1818,13 @@ export default function Pembelian() {
                                 <button
                                     type="button"
                                     onClick={() => { setShowModal(false); resetForm(); }}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                                >
-                                    Batal
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileX className="w-4 h-4" />Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                                >
-                                    {editingItem ? 'Update' : 'Simpan'}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileCheck className="w-4 h-4" />{editingItem ? 'Update' : 'Simpan'}
                                 </button>
                             </div>
                         </form>
@@ -1892,15 +2003,13 @@ export default function Pembelian() {
                                 <button
                                     type="button"
                                     onClick={() => { setShowAddBarangModal(false); resetNewBarangData(); }}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                                >
-                                    Batal
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileX className="w-4 h-4" />Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                                >
-                                    Simpan Barang
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileCheck className="w-4 h-4" />Simpan Barang
                                 </button>
                             </div>
                         </form>
@@ -2017,15 +2126,13 @@ export default function Pembelian() {
                                 <button
                                     type="button"
                                     onClick={() => { setShowAddVendorModal(false); resetNewVendorData(); }}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                                >
-                                    Batal
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileX className="w-4 h-4" />Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                                >
-                                    Simpan Vendor
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    <FileCheck className="w-4 h-4" />Simpan Vendor
                                 </button>
                             </div>
                         </form>

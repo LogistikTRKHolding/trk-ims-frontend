@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, Package, AlertTriangle, ShoppingCart, Clock, DollarSign } from 'lucide-react';
+import { ClipboardList, TrendingUp, Package, AlertTriangle, ShoppingCart, Clock, DollarSign } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import { dashboardAPI } from '../services/api';
 
@@ -412,7 +412,15 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Link
+              to="/permintaan_barang"
+              className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <ClipboardList className="w-8 h-8 text-green-600 mb-2" />
+              <span className="text-sm font-medium text-gray-900">Permintaan Barang</span>
+            </Link>
+
             <Link
               to="/mutasi_gudang"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

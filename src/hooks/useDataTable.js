@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
+// Hapus semua karakter selain huruf dan angka untuk normalisasi pencarian
+const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerCase();
+
 /**
  * Custom hook untuk data table dengan fitur lengkap:
  * - Data fetching
@@ -165,13 +168,15 @@ export const useDataTable = ({
 
     // Apply search filter
     if (debouncedSearchQuery && searchKeys.length > 0) {
-      const query = debouncedSearchQuery.toLowerCase();
-      result = result.filter((item) =>
-        searchKeys.some((key) => {
-          const value = String(item[key] || '').toLowerCase();
-          return value.includes(query);
-        })
-      );
+      const query = normalizeSearch(debouncedSearchQuery);
+      if (query) {
+        result = result.filter((item) =>
+          searchKeys.some((key) => {
+            const value = normalizeSearch(item[key] || '');
+            return value.includes(query);
+          })
+        );
+      }
     }
 
     // Apply regular filters (skip keys yang dihandle oleh customFilterFn)

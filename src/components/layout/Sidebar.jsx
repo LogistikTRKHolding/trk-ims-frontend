@@ -67,8 +67,12 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     {
       title: 'Transactions',
       items: [
-        { name: 'Mutasi Gudang', path: '/mutasi_gudang', icon: TrendingUp, roles: ['Admin', 'Manager', 'Staff_gudang'] },
-        { name: 'Pembelian', path: '/pembelian', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Staff_pembelian'] },
+        { name: 'Permintaan Barang', path: '/permintaan_barang', icon: ClipboardList,
+          roles: ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'] },
+        { name: 'Mutasi Gudang', path: '/mutasi_gudang', icon: TrendingUp, 
+          roles: ['Admin', 'Manager', 'Staff_gudang'] },
+        { name: 'Pembelian', path: '/pembelian', icon: ShoppingCart, 
+          roles: ['Admin', 'Manager', 'Staff_pembelian'] },        
       ]
     },
     {

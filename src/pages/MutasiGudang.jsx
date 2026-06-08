@@ -1,7 +1,10 @@
 // src/pages/MutasiGudang.jsx
 
+// Hapus semua karakter selain huruf dan angka untuk normalisasi pencarian
+const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerCase();
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -16,6 +19,8 @@ import {
   Calendar,
   Package,
   FileText,
+  FileCheck,
+  FileX,
   RefreshCw,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -26,6 +31,7 @@ import { gudangAPI, mutasiAPI, barangAPI, authAPI, kategoriAPI, subKategoriAPI, 
 
 export default function MutasiGudang() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Current user & permissions
   const currentUser = authAPI.getCurrentUser();
@@ -37,9 +43,11 @@ export default function MutasiGudang() {
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Import progress & result
   const [importProgress, setImportProgress] = useState({ loading: false, total: 0, processed: 0 });
   const [importResult, setImportResult] = useState(null);
+
   // importResult: null | { successCount, apiErrorCount, parseErrors: string[], apiErrors: string[] }
   const [editingItem, setEditingItem] = useState(null);
   const [barangList, setBarangList] = useState([]);
@@ -97,6 +105,53 @@ export default function MutasiGudang() {
     loadDropdownData();
   }, []);
 
+  // ── Auto-buka modal Tambah Mutasi Keluar dari PermintaanBarang ──────────────
+  // FASE 1: Saat params masuk → simpan intent ke state, bersihkan URL.
+  //         loadBarangList() sudah dipanggil di mount, tapi jika belum selesai, Fase 2 menunggu.
+  const [prIntent, setPrIntent] = useState(null); // { action, kodeBarang, qty, refNo }
+
+  useEffect(() => {
+    const action = searchParams.get('action');
+    const kodeBarang = searchParams.get('kode_barang');
+    const qty = searchParams.get('qty');
+    // tambah_masuk -> ref_no berisi No PO; tambah_keluar -> pr_no berisi No PR
+    const refNo = searchParams.get('ref_no') || searchParams.get('pr_no') || '';
+
+    if (!['tambah_keluar', 'tambah_masuk'].includes(action) || !kodeBarang) return;
+
+    // Simpan intent dan bersihkan URL — barangList mungkin belum siap, Fase 2 yang tunggu
+    setPrIntent({ action, kodeBarang, qty: parseFloat(qty) || 0, refNo });
+    setSearchParams({}, { replace: true });
+  }, [searchParams]);
+
+  // FASE 2: Setelah barangList terisi dan intent tersimpan → prefill + buka modal.
+  useEffect(() => {
+    if (!prIntent || barangList.length === 0) return;
+
+    const { action, kodeBarang, qty, refNo } = prIntent;
+    const barang = barangList.find(b => b.kode_barang === kodeBarang);
+    const jenis = action === 'tambah_masuk' ? 'Masuk' : 'Keluar';
+    const ket = action === 'tambah_masuk'
+      ? (refNo ? `Penerimaan barang dari PO: ${refNo}` : '')
+      : (refNo ? `Penyerahan dari PR: ${refNo}` : '');
+
+    setFormData(prev => ({
+      ...prev,
+      jenis_transaksi: jenis,
+      kode_barang: kodeBarang,
+      part_number: barang?.part_number || '',
+      nama_barang: barang?.nama_barang || '',
+      alias: barang?.alias || '',
+      satuan: barang?.satuan || '',
+      qty: qty,
+      referensi: refNo,
+      keterangan: ket,
+    }));
+    setEditingItem(null);
+    setShowModal(true);
+    setPrIntent(null); // clear intent setelah dipakai
+  }, [prIntent, barangList]);
+
   const loadBarangList = async () => {
     try {
       const result = await barangAPI.getAll();
@@ -144,12 +199,13 @@ export default function MutasiGudang() {
   // Filter barang berdasarkan input search di modal
   const filteredBarangSearch = useMemo(() => {
     if (!searchTermBarang) return [];
-    const term = searchTermBarang.toLowerCase();
+    const term = normalizeSearch(searchTermBarang);
+    if (!term) return [];
     return barangList.filter(b =>
-      b.kode_barang.toLowerCase().includes(term) ||
-      b.nama_barang.toLowerCase().includes(term) ||
-      (b.alias && b.alias.toLowerCase().includes(term)) ||
-      (b.part_number && b.part_number.toLowerCase().includes(term))
+      normalizeSearch(b.kode_barang).includes(term) ||
+      normalizeSearch(b.nama_barang).includes(term) ||
+      (b.alias && normalizeSearch(b.alias).includes(term)) ||
+      (b.part_number && normalizeSearch(b.part_number).includes(term))
     ).slice(0, 10); // Batasi 10 hasil untuk kenyamanan visual
   }, [searchTermBarang, barangList]);
 
@@ -467,7 +523,7 @@ export default function MutasiGudang() {
       part_number: '',
       nama_barang: '',
       alias: '',
-      qty: 0,
+      qty: 1,
       satuan: '',
       kode_rak: '',
       nama_rak: '',
@@ -607,9 +663,9 @@ export default function MutasiGudang() {
   // ── Import ───────────────────────────────────────────────────────────────
   // Kolom wajib yang harus ada di baris header (baris 1) file Excel.
   const IMPORT_REQUIRED_COLS = ['Kode Gudang', 'Tanggal', 'Jenis Transaksi', 'Kode Barang', 'Jumlah'];
-  const IMPORT_VALID_JENIS   = ['Masuk', 'Keluar'];
-  const IMPORT_MAX_ROWS      = 10000;
-  const IMPORT_BATCH_SIZE    = 50;   // baris per batch Promise.allSettled
+  const IMPORT_VALID_JENIS = ['Masuk', 'Keluar'];
+  const IMPORT_MAX_ROWS = 10000;
+  const IMPORT_BATCH_SIZE = 50;   // baris per batch Promise.allSettled
 
   /**
    * Konversi nilai sel tanggal dari Excel ke string ISO yyyy-mm-dd.
@@ -705,13 +761,13 @@ export default function MutasiGudang() {
       dataRows.forEach((row, i) => {
         const excelRowNum = i + 2; // baris ke-2 di Excel = indeks 0 di dataRows
 
-        const kode_gudang      = String(row[colIdx['Kode Gudang']]     ?? '').trim();
-        const tanggalRaw       = row[colIdx['Tanggal']];
-        const jenis_transaksi  = String(row[colIdx['Jenis Transaksi']] ?? '').trim();
-        const kode_barang      = String(row[colIdx['Kode Barang']]     ?? '').trim();
-        const jumlahRaw        = row[colIdx['Jumlah']];
-        const referensi        = String(row[colIdx['Referensi (PO No)']] ?? '').trim() || null;
-        const lokasi           = String(row[colIdx['Lokasi']]           ?? '').trim() || null;
+        const kode_gudang = String(row[colIdx['Kode Gudang']] ?? '').trim();
+        const tanggalRaw = row[colIdx['Tanggal']];
+        const jenis_transaksi = String(row[colIdx['Jenis Transaksi']] ?? '').trim();
+        const kode_barang = String(row[colIdx['Kode Barang']] ?? '').trim();
+        const jumlahRaw = row[colIdx['Jumlah']];
+        const referensi = String(row[colIdx['Referensi (PO No)']] ?? '').trim() || null;
+        const lokasi = String(row[colIdx['Lokasi']] ?? '').trim() || null;
 
         // Skip baris benar-benar kosong (semua sel kosong)
         if (!kode_gudang && !kode_barang && !tanggalRaw) return;
@@ -1076,12 +1132,9 @@ export default function MutasiGudang() {
 
                 {/* Clear All Filters */}
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Clear all filters"
-                  >
-                    <X className="w-5 h-5" />
+                  <button onClick={clearAllFilters}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                    <X className="w-4 h-4" /> Reset
                   </button>
                 )}
               </div>
@@ -1115,7 +1168,7 @@ export default function MutasiGudang() {
                     <span>Import</span>
                   </button>
                 )}
-                {canCreate && (                  
+                {canCreate && (
                   <button
                     onClick={openCreateModal}
                     className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -1220,13 +1273,12 @@ export default function MutasiGudang() {
 
         {/* ── Import Result Panel ── tampil setelah proses import selesai */}
         {importResult && !importProgress.loading && (
-          <div className={`rounded-lg shadow px-5 py-4 border ${
-            importResult.successCount > 0 && importResult.apiErrorCount === 0 && importResult.parseErrors.length === 0
-              ? 'bg-green-50 border-green-200'
-              : importResult.successCount > 0
-                ? 'bg-yellow-50 border-yellow-200'
-                : 'bg-red-50 border-red-200'
-          }`}>
+          <div className={`rounded-lg shadow px-5 py-4 border ${importResult.successCount > 0 && importResult.apiErrorCount === 0 && importResult.parseErrors.length === 0
+            ? 'bg-green-50 border-green-200'
+            : importResult.successCount > 0
+              ? 'bg-yellow-50 border-yellow-200'
+              : 'bg-red-50 border-red-200'
+            }`}>
             {/* Header */}
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-0.5">
@@ -1691,6 +1743,21 @@ export default function MutasiGudang() {
 
                 {/* Modal Body */}
                 <div className="px-6 py-4 space-y-6">
+
+                  {/* Banner: form berasal dari PR (Diterima → Masuk, atau Diserahkan → Keluar) */}
+                  {formData.referensi && !editingItem && (
+                    formData.jenis_transaksi === 'Masuk' ? (
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-50 border border-purple-200 text-sm text-purple-800">
+                        <TrendingUp className="w-4 h-4 flex-shrink-0" />
+                        <span>Mutasi <strong>Masuk</strong> ini untuk menerima barang dari PO terkait <strong>{formData.referensi}</strong>. Pilih Gudang &amp; Rak, lalu simpan.</span>
+                      </div>
+                    ) : formData.jenis_transaksi === 'Keluar' ? (
+                      <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-teal-50 border border-teal-200 text-sm text-teal-800">
+                        <TrendingDown className="w-4 h-4 flex-shrink-0" />
+                        <span>Mutasi <strong>Keluar</strong> ini untuk menyerahkan barang ke peminta terkait <strong>{formData.referensi}</strong>. Pilih Gudang &amp; Rak, lalu simpan.</span>
+                      </div>
+                    ) : null
+                  )}
                   {/* Tanggal & Jenis Transaksi*/}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -1821,7 +1888,15 @@ export default function MutasiGudang() {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Jumlah *</label>
-                      <input type="number" name="qty" value={formData.qty} onChange={handleInputChange} required min="0.01" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+                      <input
+                        type="number"
+                        name="qty"
+                        value={formData.qty}
+                        onChange={handleInputChange}
+                        required
+                        min="1"
+                        step="1"
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Referensi</label>
@@ -1830,7 +1905,7 @@ export default function MutasiGudang() {
                         name="referensi"
                         value={formData.referensi}
                         onChange={handleInputChange}
-                        placeholder="PO/DO Number"
+                        placeholder="Nomor PR/PO"
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       />
                     </div>
@@ -1874,15 +1949,13 @@ export default function MutasiGudang() {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                  >
-                    Batal
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileX className="w-4 h-4" />Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                  >
-                    {editingItem ? 'Update' : 'Simpan'}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileCheck className="w-4 h-4" />{editingItem ? 'Update' : 'Simpan'}
                   </button>
                 </div>
               </form>
@@ -2100,15 +2173,13 @@ export default function MutasiGudang() {
                         nama_armada: '',
                       });
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                  >
-                    Batal
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileX className="w-4 h-4" />Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                  >
-                    Simpan Barang
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileCheck className="w-4 h-4" />Simpan Barang
                   </button>
                 </div>
               </form>
@@ -2116,6 +2187,7 @@ export default function MutasiGudang() {
           </div>
         )
       }
+
       {/* ── Import Modal ── */}
       <ImportModal
         isOpen={showImportModal}

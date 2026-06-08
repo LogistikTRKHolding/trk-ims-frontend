@@ -19,12 +19,14 @@ import {
   ZoomIn,
   ExternalLink,
   Package,
-  PackageCheck
+  PackageCheck,
+  RefreshCw
 } from 'lucide-react';
 
 export default function Stok() {
   const navigate = useNavigate();
-  
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Fetch data function with useCallback to prevent infinite loop
   const fetchStokData = useCallback(async () => {
     const result = await stokAPI.getAll();
@@ -72,6 +74,7 @@ export default function Stok() {
     filteredData,
     loading,
     error,
+    refresh,
 
     // Search
     searchQuery,
@@ -220,55 +223,62 @@ export default function Stok() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try { await refresh(); } finally { setIsRefreshing(false); }
+  };
+
   // ============================================
   // RENDER
   // ============================================
   return (
     <MainLayout title="Stok">
       <div className="space-y-6">
-        {/* Summary Stats */}
-        {stats && (
-          //<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-600 flex items-center">
-                <Package className="w-4 h-4 mr-1" />
-                Barang
-              </p>
-              <p className="text-2xl font-bold text-gray-900">{stats.filtered.totalItems}</p>
-            </div>
+        {/* STATS CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-sm text-green-600 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-1" />
-                Jumlah masuk
-              </p>
-              <p className="text-2xl font-bold text-green-700">
-                {stats.filtered.totalMasuk.toLocaleString('id-ID')}
-              </p>
-            </div>
-
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <p className="text-sm text-red-600 flex items-center">
-                <TrendingDown className="w-4 h-4 mr-1" />
-                Jumlah keluar
-              </p>
-              <p className="text-2xl font-bold text-red-700">
-                {stats.filtered.totalKeluar.toLocaleString('id-ID')}
-              </p>
-            </div>
-
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-sm text-green-600 flex items-center">
-                <PackageCheck className="w-4 h-4 mr-1" />
-                Stok akhir
-              </p>
-              <p className="text-2xl font-bold text-green-700">
-                {stats.filtered.totalStok.toLocaleString('id-ID')}
-              </p>
-            </div>
+          {/* Total Items */}
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-600 flex items-center">
+              <Package className="w-4 h-4 mr-1" />
+              Barang
+            </p>
+            <p className="text-2xl font-bold text-gray-900">{stats.filtered.totalItems}</p>
           </div>
-        )}
+
+          {/* Total Masuk */}
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <p className="text-sm text-green-600 flex items-center">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              Jumlah masuk
+            </p>
+            <p className="text-2xl font-bold text-green-700">
+              {stats.filtered.totalMasuk.toLocaleString('id-ID')}
+            </p>
+          </div>
+
+          {/* Total Keluar */}
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+            <p className="text-sm text-red-600 flex items-center">
+              <TrendingDown className="w-4 h-4 mr-1" />
+              Jumlah keluar
+            </p>
+            <p className="text-2xl font-bold text-red-700">
+              {stats.filtered.totalKeluar.toLocaleString('id-ID')}
+            </p>
+          </div>
+
+          {/* Stok Akhir */}
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <p className="text-sm text-green-600 flex items-center">
+              <PackageCheck className="w-4 h-4 mr-1" />
+              Stok akhir
+            </p>
+            <p className="text-2xl font-bold text-green-700">
+              {stats.filtered.totalStok.toLocaleString('id-ID')}
+            </p>
+          </div>
+        </div>
 
         {/* Toolbar: Two-row layout */}
         <div className="bg-white rounded-lg shadow p-4">
@@ -341,12 +351,9 @@ export default function Stok() {
 
                 {/* Clear All Filters */}
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Clear all filters"
-                  >
-                    <X className="w-5 h-5" />
+                  <button onClick={clearAllFilters}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                    <X className="w-4 h-4" /> Reset
                   </button>
                 )}
               </div>
@@ -355,6 +362,14 @@ export default function Stok() {
 
               {/* Right: Action Buttons */}
               <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  title="Segarkan Data"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
                 <button
                   onClick={handleExport}
                   className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"

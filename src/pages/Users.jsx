@@ -2,13 +2,15 @@
 // User Management page with CRUD operations (Admin Only)
 
 import { useState, useEffect, useMemo } from 'react';
-import { Edit, Trash2, Users as UsersIcon, X, Search, Mail, Phone, Building } from 'lucide-react';
+import { Edit, Trash2, Users as UsersIcon, X, Search, Mail, Phone, Building, RefreshCw } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import ProfileModal from '../components/common/ProfileModal';
 import { authAPI } from '../services/api';
 import * as XLSX from 'xlsx';
 
 export default function Users() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -75,7 +77,6 @@ export default function Users() {
   // ============================================
   // CRUD OPERATIONS
   // ============================================
-
   const handleEdit = (item) => {
     setProfileUserId(item.user_id);
     setShowProfileModal(true);
@@ -198,6 +199,11 @@ export default function Users() {
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try { await loadUsers(); } finally { setIsRefreshing(false); }
+  };
+
   return (
     <MainLayout title="User Management">
       <div className="space-y-6">
@@ -249,14 +255,24 @@ export default function Users() {
 
               {/* Clear Filters Button */}
               {hasActiveFilters() && (
-                <button
-                  onClick={clearFilters}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded"
-                  title="Clear all filters"
-                >
-                  <X className="w-4 h-4" />
+                <button onClick={clearFilters}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                  <X className="w-4 h-4" /> Reset
                 </button>
               )}
+
+              <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
+
+              <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  title="Segarkan Data"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -321,12 +337,11 @@ export default function Users() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          item.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${item.role === 'Admin' ? 'bg-red-100 text-red-800' :
                           item.role === 'Manager' ? 'bg-purple-100 text-purple-800' :
-                          item.role === 'Staff_gudang' ? 'bg-blue-100 text-blue-800' : 
-                          item.role === 'Staff_pembelian' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
+                            item.role === 'Staff_gudang' ? 'bg-blue-100 text-blue-800' :
+                              item.role === 'Staff_pembelian' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
                           }`}>
                           {item.role}
                         </span>

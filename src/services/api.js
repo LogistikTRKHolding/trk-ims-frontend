@@ -2,35 +2,34 @@
 // Complete API service for Supabase backend with VIEWs support
 // Pattern: READ from VIEWs, WRITE to BASE TABLEs
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
 function getAuthToken() {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem("authToken");
 }
 
 function setAuthToken(token) {
-  localStorage.setItem('authToken', token);
+  localStorage.setItem("authToken", token);
 }
 
 function removeAuthToken() {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('currentUser');
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("currentUser");
 }
 
 async function fetchWithAuth(url, options = {}) {
   const token = getAuthToken();
-  
+
   const headers = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...options.headers,
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
@@ -41,13 +40,15 @@ async function fetchWithAuth(url, options = {}) {
   // Handle authentication errors
   if (response.status === 401) {
     removeAuthToken();
-    window.location.href = '/login';
-    throw new Error('Session expired. Please login again.');
+    window.location.href = "/login";
+    throw new Error("Session expired. Please login again.");
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.details || error.error || 'Request failed');
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Request failed" }));
+    throw new Error(error.details || error.error || "Request failed");
   }
 
   return response.json();
@@ -56,17 +57,16 @@ async function fetchWithAuth(url, options = {}) {
 // ============================================
 // AUTHENTICATION API
 // ============================================
-
 export const authAPI = {
   async login(email, password) {
     const data = await fetchWithAuth(`${API_URL}/auth/login`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
 
     if (data.token) {
       setAuthToken(data.token);
-      localStorage.setItem('currentUser', JSON.stringify(data.user));
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
     }
 
     return data;
@@ -74,7 +74,7 @@ export const authAPI = {
 
   async register(userData) {
     return fetchWithAuth(`${API_URL}/auth/register`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(userData),
     });
   },
@@ -90,11 +90,11 @@ export const authAPI = {
 
   logout() {
     removeAuthToken();
-    window.location.href = '/login';
+    window.location.href = "/login";
   },
 
   getCurrentUser() {
-    const userStr = localStorage.getItem('currentUser');
+    const userStr = localStorage.getItem("currentUser");
     return userStr ? JSON.parse(userStr) : null;
   },
 
@@ -106,7 +106,6 @@ export const authAPI = {
 // ============================================
 // GENERIC DATA API (for BASE TABLEs)
 // ============================================
-
 const baseTableAPI = {
   async getAll(table) {
     return fetchWithAuth(`${API_URL}/data/${table}`);
@@ -118,21 +117,21 @@ const baseTableAPI = {
 
   async create(table, data) {
     return fetchWithAuth(`${API_URL}/data/${table}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   async update(table, id, data) {
     return fetchWithAuth(`${API_URL}/data/${table}/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(data),
     });
   },
 
   async delete(table, id) {
     return fetchWithAuth(`${API_URL}/data/${table}/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -140,23 +139,22 @@ const baseTableAPI = {
 // ============================================
 // GENERIC VIEW API (for VIEWs - READ ONLY)
 // ============================================
-
 const viewAPI = {
   async getAll(viewName, filters = {}) {
     const params = new URLSearchParams();
-    
+
     // Add filters to query string
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '') {
+      if (value !== null && value !== undefined && value !== "") {
         params.append(key, value);
       }
     });
-    
+
     const queryString = params.toString();
-    const url = queryString 
+    const url = queryString
       ? `${API_URL}/views/${viewName}?${queryString}`
       : `${API_URL}/views/${viewName}`;
-    
+
     return fetchWithAuth(url);
   },
 
@@ -168,35 +166,34 @@ const viewAPI = {
 // ============================================
 // BARANG API (with VIEWs)
 // ============================================
-
 export const barangAPI = {
   // READ Operations - Use VIEW
   async getAll(filters = {}) {
-    return viewAPI.getAll('v_barang_complete', filters);
+    return viewAPI.getAll("v_barang_complete", filters);
   },
 
   async getById(id) {
-    return viewAPI.getById('v_barang_complete', id);
+    return viewAPI.getById("v_barang_complete", id);
   },
 
   async getByKategori(kodeKategori) {
-    return viewAPI.getAll('v_barang_complete', { kode_kategori: kodeKategori });
+    return viewAPI.getAll("v_barang_complete", { kode_kategori: kodeKategori });
   },
 
   async getByArmada(kodeArmada) {
-    return viewAPI.getAll('v_barang_complete', { kode_armada: kodeArmada });
+    return viewAPI.getAll("v_barang_complete", { kode_armada: kodeArmada });
   },
 
   async getStocked() {
-    return viewAPI.getAll('v_barang_stocked');
+    return viewAPI.getAll("v_barang_stocked");
   },
 
   async getNonStocked() {
-    return viewAPI.getAll('v_barang_non_stocked');
+    return viewAPI.getAll("v_barang_non_stocked");
   },
 
   async getByStockType(isStocked) {
-    return viewAPI.getAll('v_barang_complete', { is_stocked: isStocked });
+    return viewAPI.getAll("v_barang_complete", { is_stocked: isStocked });
   },
 
   // WRITE Operations - Use BASE TABLE
@@ -217,7 +214,7 @@ export const barangAPI = {
       kode_kategori: data.kode_kategori,
       kode_sub_kategori: data.kode_sub_kategori || null,
       kode_armada: data.kode_armada || undefined,
-      
+
       // New field
       is_stocked: data.is_stocked ?? true,
 
@@ -226,8 +223,8 @@ export const barangAPI = {
       created_by: data.created_by || authAPI.getCurrentUser()?.userId,
     };
 
-    const result = await baseTableAPI.create('barang', payload);
-    
+    const result = await baseTableAPI.create("barang", payload);
+
     // Fetch kembali dari VIEW untuk dapat nama lengkap
     if (result.id) {
       return this.getById(result.id);
@@ -246,28 +243,28 @@ export const barangAPI = {
       max_stok: data.max_stok,
       keterangan: data.keterangan,
       gambar_url: data.gambar_url,
-      
+
       // Foreign keys - update KODE saja
       kode_kategori: data.kode_kategori,
       kode_sub_kategori: data.kode_sub_kategori ?? null,
       kode_armada: data.kode_armada,
-      
+
       // Update is_stocked
       is_stocked: data.is_stocked,
-      
+
       // Metadata
       updated_by: data.updated_by,
     };
 
-    const result = await baseTableAPI.update('barang', id, payload);
-    
+    const result = await baseTableAPI.update("barang", id, payload);
+
     // Fetch kembali dari VIEW untuk dapat nama lengkap
     return this.getById(id);
   },
 
   async delete(id, userId) {
     // Soft delete - set is_active = false
-    return baseTableAPI.update('barang', id, {
+    return baseTableAPI.update("barang", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -275,22 +272,21 @@ export const barangAPI = {
 
   async hardDelete(id) {
     // Hard delete - permanent (Admin only)
-    return baseTableAPI.delete('barang', id);
+    return baseTableAPI.delete("barang", id);
   },
 };
 
 // ============================================
 // KATEGORI API
 // ============================================
-
 export const kategoriAPI = {
   // READ Operations
   async getAll() {
-    return baseTableAPI.getAll('kategori');
+    return baseTableAPI.getAll("kategori");
   },
 
   async getById(id) {
-    return baseTableAPI.getById('kategori', id);
+    return baseTableAPI.getById("kategori", id);
   },
 
   async getActive() {
@@ -307,7 +303,7 @@ export const kategoriAPI = {
       is_active: true,
       created_by: data.created_by,
     };
-    return baseTableAPI.create('kategori', payload);
+    return baseTableAPI.create("kategori", payload);
   },
 
   async update(id, data) {
@@ -317,11 +313,11 @@ export const kategoriAPI = {
       deskripsi: data.deskripsi,
       updated_by: data.updated_by,
     };
-    return baseTableAPI.update('kategori', id, payload);
+    return baseTableAPI.update("kategori", id, payload);
   },
 
   async delete(id, userId) {
-    return baseTableAPI.update('kategori', id, {
+    return baseTableAPI.update("kategori", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -331,23 +327,22 @@ export const kategoriAPI = {
 // ============================================
 // SUB-KATEGORI API
 // ============================================
-
 export const subKategoriAPI = {
   // READ Operations — gunakan VIEW (dapat nama_kategori dari join)
   async getAll(filters = {}) {
-    return viewAPI.getAll('v_sub_kategori', filters);
+    return viewAPI.getAll("v_sub_kategori", filters);
   },
 
   async getById(id) {
-    return viewAPI.getById('v_sub_kategori', id);
+    return viewAPI.getById("v_sub_kategori", id);
   },
 
   async getByKategori(kodeKategori) {
-    return viewAPI.getAll('v_sub_kategori', { kode_kategori: kodeKategori });
+    return viewAPI.getAll("v_sub_kategori", { kode_kategori: kodeKategori });
   },
 
   async getActive() {
-    return viewAPI.getAll('v_sub_kategori', { is_active: true });
+    return viewAPI.getAll("v_sub_kategori", { is_active: true });
   },
 
   // WRITE Operations — gunakan BASE TABLE
@@ -360,7 +355,7 @@ export const subKategoriAPI = {
       is_active: true,
       created_by: data.created_by || authAPI.getCurrentUser()?.id,
     };
-    const result = await baseTableAPI.create('sub_kategori', payload);
+    const result = await baseTableAPI.create("sub_kategori", payload);
 
     // Fetch kembali dari VIEW untuk dapat nama_kategori dari join
     if (result.id) {
@@ -376,7 +371,7 @@ export const subKategoriAPI = {
       is_active: data.is_active,
       updated_by: data.updated_by || authAPI.getCurrentUser()?.id,
     };
-    await baseTableAPI.update('sub_kategori', id, payload);
+    await baseTableAPI.update("sub_kategori", id, payload);
 
     // Fetch kembali dari VIEW
     return this.getById(id);
@@ -384,7 +379,7 @@ export const subKategoriAPI = {
 
   // Soft delete — set is_active = false
   async delete(id) {
-    return baseTableAPI.update('sub_kategori', id, {
+    return baseTableAPI.update("sub_kategori", id, {
       is_active: false,
       updated_by: authAPI.getCurrentUser()?.id,
     });
@@ -392,22 +387,21 @@ export const subKategoriAPI = {
 
   // Hard delete — hanya untuk Admin
   async hardDelete(id) {
-    return baseTableAPI.delete('sub_kategori', id);
+    return baseTableAPI.delete("sub_kategori", id);
   },
 };
 
 // ============================================
-// ARMADA API 
+// ARMADA API
 // ============================================
-
 export const armadaAPI = {
   // READ Operations
   async getAll() {
-    return baseTableAPI.getAll('armada');
+    return baseTableAPI.getAll("armada");
   },
 
   async getById(id) {
-    return baseTableAPI.getById('armada', id);
+    return baseTableAPI.getById("armada", id);
   },
 
   async getActive() {
@@ -422,7 +416,7 @@ export const armadaAPI = {
       is_active: true,
       created_by: data.created_by,
     };
-    return baseTableAPI.create('armada', payload);
+    return baseTableAPI.create("armada", payload);
   },
 
   async update(id, data) {
@@ -430,11 +424,11 @@ export const armadaAPI = {
       nama_armada: data.nama_armada,
       updated_by: data.updated_by,
     };
-    return baseTableAPI.update('armada', id, payload);
+    return baseTableAPI.update("armada", id, payload);
   },
 
   async delete(id, userId) {
-    return baseTableAPI.update('armada', id, {
+    return baseTableAPI.update("armada", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -444,15 +438,14 @@ export const armadaAPI = {
 // ============================================
 // VENDOR API
 // ============================================
-
 export const vendorAPI = {
   // READ Operations
   async getAll() {
-    return baseTableAPI.getAll('vendor');
+    return baseTableAPI.getAll("vendor");
   },
 
   async getById(id) {
-    return baseTableAPI.getById('vendor', id);
+    return baseTableAPI.getById("vendor", id);
   },
 
   async getActive() {
@@ -472,7 +465,7 @@ export const vendorAPI = {
       is_active: true,
       created_by: data.created_by,
     };
-    return baseTableAPI.create('vendor', payload);
+    return baseTableAPI.create("vendor", payload);
   },
 
   async update(id, data) {
@@ -485,11 +478,11 @@ export const vendorAPI = {
       keterangan: data.keterangan,
       updated_by: data.updated_by,
     };
-    return baseTableAPI.update('vendor', id, payload);
+    return baseTableAPI.update("vendor", id, payload);
   },
 
   async delete(id, userId) {
-    return baseTableAPI.update('vendor', id, {
+    return baseTableAPI.update("vendor", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -499,15 +492,14 @@ export const vendorAPI = {
 // ============================================
 // GUDANG API
 // ============================================
-
 export const gudangAPI = {
   // READ Operations
   async getAll() {
-    return baseTableAPI.getAll('gudang');
+    return baseTableAPI.getAll("gudang");
   },
 
   async getById(id) {
-    return baseTableAPI.getById('gudang', id);
+    return baseTableAPI.getById("gudang", id);
   },
 
   async getActive() {
@@ -522,7 +514,7 @@ export const gudangAPI = {
       is_active: true,
       created_by: data.created_by,
     };
-    return baseTableAPI.create('gudang', payload);
+    return baseTableAPI.create("gudang", payload);
   },
 
   async update(id, data) {
@@ -530,11 +522,11 @@ export const gudangAPI = {
       nama_gudang: data.nama_gudang,
       updated_by: data.updated_by,
     };
-    return baseTableAPI.update('gudang', id, payload);
+    return baseTableAPI.update("gudang", id, payload);
   },
 
   async delete(id, userId) {
-    return baseTableAPI.update('gudang', id, {
+    return baseTableAPI.update("gudang", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -544,15 +536,14 @@ export const gudangAPI = {
 // ============================================
 // RAK API
 // ============================================
-
 export const rakAPI = {
   // READ Operations
   async getAll() {
-    return baseTableAPI.getAll('rak');
+    return baseTableAPI.getAll("rak");
   },
 
   async getById(id) {
-    return baseTableAPI.getById('rak', id);
+    return baseTableAPI.getById("rak", id);
   },
 
   async getActive() {
@@ -572,7 +563,7 @@ export const rakAPI = {
       is_active: true,
       created_by: data.created_by,
     };
-    return baseTableAPI.create('rak', payload);
+    return baseTableAPI.create("rak", payload);
   },
 
   async update(id, data) {
@@ -580,11 +571,11 @@ export const rakAPI = {
       nama_rak: data.nama_rak,
       updated_by: data.updated_by,
     };
-    return baseTableAPI.update('rak', id, payload);
+    return baseTableAPI.update("rak", id, payload);
   },
 
   async delete(id, userId) {
-    return baseTableAPI.update('rak', id, {
+    return baseTableAPI.update("rak", id, {
       is_active: false,
       updated_by: userId,
     });
@@ -594,32 +585,31 @@ export const rakAPI = {
 // ============================================
 // PEMBELIAN API (with VIEWs)
 // ============================================
-
 export const pembelianAPI = {
   // READ Operations - Use VIEW
   async getAll(filters = {}) {
-    return viewAPI.getAll('v_pembelian_complete', filters);
+    return viewAPI.getAll("v_pembelian_complete", filters);
   },
 
   async getById(id) {
-    return viewAPI.getById('v_pembelian_complete', id);
+    return viewAPI.getById("v_pembelian_complete", id);
   },
 
   async getByVendor(kodeVendor) {
-    return viewAPI.getAll('v_pembelian_complete', { kode_vendor: kodeVendor });
+    return viewAPI.getAll("v_pembelian_complete", { kode_vendor: kodeVendor });
   },
 
   async getByBarang(kodeBarang) {
-    return viewAPI.getAll('v_pembelian_complete', { kode_barang: kodeBarang });
+    return viewAPI.getAll("v_pembelian_complete", { kode_barang: kodeBarang });
   },
 
   async getByStatus(status) {
-    return viewAPI.getAll('v_pembelian_complete', { status });
+    return viewAPI.getAll("v_pembelian_complete", { status });
   },
 
   async getByPeriod(month, year) {
-    return viewAPI.getAll('v_pembelian_complete', { month, year });
-  }, 
+    return viewAPI.getAll("v_pembelian_complete", { month, year });
+  },
 
   // WRITE Operations - Use BASE TABLE
   async create(data) {
@@ -627,21 +617,19 @@ export const pembelianAPI = {
       no_po: data.no_po,
       tanggal_po: data.tanggal_po,
       kode_vendor: data.kode_vendor,
-      //nama_vendor: data.nama_vendor,
       kode_barang: data.kode_barang,
-      //nama_barang: data.nama_barang,
       qty_order: data.qty_order,
       harga_satuan: data.harga_satuan,
       // FIX: total_harga adalah kolom GENERATED ALWAYS di PostgreSQL.
       // DILARANG dikirim dalam payload — database hitung otomatis: qty_order * harga_satuan.
       tanggal_terima: data.tanggal_terima || null,
-      status: data.status || 'Pending',
+      status: data.status || "Pending",
       keterangan: data.keterangan,
       created_by: data.created_by,
     };
 
-    const result = await baseTableAPI.create('pembelian', payload);
-    
+    const result = await baseTableAPI.create("pembelian", payload);
+
     if (result.id) {
       return this.getById(result.id);
     }
@@ -664,39 +652,123 @@ export const pembelianAPI = {
       updated_by: data.updated_by,
     };
 
-    const result = await baseTableAPI.update('pembelian', id, payload);
+    const result = await baseTableAPI.update("pembelian", id, payload);
     return this.getById(id);
   },
 
   async delete(id) {
-    return baseTableAPI.delete('pembelian', id);
+    return baseTableAPI.delete("pembelian", id);
+  },
+};
+
+// ============================================
+// PERMINTAAN BARANG API (with VIEWs)
+// ============================================
+export const permintaanBarangAPI = {
+  getAll: () => viewAPI.getAll("v_permintaan_barang"),
+  getById: (id) => viewAPI.getById("v_permintaan_barang", id),
+  create: (data) => baseTableAPI.create("permintaan_barang", data),
+  update: (id, data) => baseTableAPI.update("permintaan_barang", id, data),
+  delete: (id) => baseTableAPI.delete("permintaan_barang", id),
+
+  // Status transitions
+  submit: (id, requestedBy) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Submitted",
+      requested_by: requestedBy,
+    }),
+
+  approve: (id, approvedBy, catatan) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Approved",
+      approved_by: approvedBy,
+      tanggal_approve: new Date().toISOString(),
+      catatan_approve: catatan || "",
+    }),
+
+  reject: (id, approvedBy, catatan) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Rejected",
+      approved_by: approvedBy,
+      tanggal_approve: new Date().toISOString(),
+      catatan_approve: catatan || "",
+    }),
+
+  convertToPO: (id, noPO) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Converted",
+      no_po: noPO,
+    }),
+
+  serahkan: (id, by) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Diserahkan",
+      approved_by: by,
+      tanggal_approve: new Date().toISOString(),
+    }),
+
+  proses: (id, noPO) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Diproses",
+      no_po: noPO || "",
+    }),
+
+  // Diproses → Diterima: barang dari PO sudah diterima di gudang (via Mutasi Masuk).
+  // Staff_gudang membuat mutasi Masuk, lalu status PR di-update ke Diterima.
+  // Langkah berikutnya: Diserahkan (via Mutasi Keluar).
+  terima: (id, by) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Diterima",
+      approved_by: by,
+      tanggal_approve: new Date().toISOString(),
+    }),
+    
+  resetToDraft: (id) =>
+    baseTableAPI.update("permintaan_barang", id, {
+      status: "Draft",
+      approved_by: null,
+      tanggal_approve: null,
+      catatan_approve: null,
+    }),
+
+  // Link no_po ke baris PR berdasarkan no_pr.
+  // Dipakai oleh Pembelian.jsx setelah PO berhasil dibuat dari alur Proses Beli.
+  // Karena baseTableAPI.update hanya support by id, kita fetch id-nya dulu via viewAPI.
+  async updateNoPO(noPr, noPo) {
+    const rows = await viewAPI.getAll("v_permintaan_barang", { no_pr: noPr });
+    const row = Array.isArray(rows) && rows[0];
+    if (!row?.id) throw new Error(`PR "${noPr}" tidak ditemukan.`);
+    return baseTableAPI.update("permintaan_barang", row.id, { no_po: noPo });
   },
 };
 
 // ============================================
 // MUTASI GUDANG API (with VIEWs)
 // ============================================
-
 export const mutasiAPI = {
   // READ Operations - Use VIEW
   async getAll(filters = {}) {
-    return viewAPI.getAll('v_mutasi_gudang_complete', filters);
+    return viewAPI.getAll("v_mutasi_gudang_complete", filters);
   },
 
   async getById(id) {
-    return viewAPI.getById('v_mutasi_gudang_complete', id);
+    return viewAPI.getById("v_mutasi_gudang_complete", id);
   },
 
   async getByBarang(kodeBarang) {
-    return viewAPI.getAll('v_mutasi_gudang_complete', { kode_barang: kodeBarang });
+    return viewAPI.getAll("v_mutasi_gudang_complete", {
+      kode_barang: kodeBarang,
+    });
   },
 
   async getByJenis(jenis) {
-    return viewAPI.getAll('v_mutasi_gudang_complete', { jenis_transaksi: jenis });
+    return viewAPI.getAll("v_mutasi_gudang_complete", {
+      jenis_transaksi: jenis,
+    });
   },
 
   async getByPeriod(month, year) {
-    return viewAPI.getAll('v_mutasi_gudang_complete', { month, year });
+    return viewAPI.getAll("v_mutasi_gudang_complete", { month, year });
   },
 
   // WRITE Operations - Use BASE TABLE
@@ -714,8 +786,8 @@ export const mutasiAPI = {
       created_by: data.created_by,
     };
 
-    const result = await baseTableAPI.create('mutasi', payload);
-    
+    const result = await baseTableAPI.create("mutasi", payload);
+
     if (result.id) {
       return this.getById(result.id);
     }
@@ -735,58 +807,56 @@ export const mutasiAPI = {
       updated_by: data.updated_by,
     };
 
-    const result = await baseTableAPI.update('mutasi', id, payload);
+    const result = await baseTableAPI.update("mutasi", id, payload);
     return this.getById(id);
   },
 
   async delete(id) {
-    return baseTableAPI.delete('mutasi', id);
+    return baseTableAPI.delete("mutasi", id);
   },
 };
 
 // ============================================
 // STOK API (VIEW only - READ ONLY)
 // ============================================
-
 export const stokAPI = {
   // READ Operations - Use VIEW (v_stok_summary)
   async getAll(filters = {}) {
-    return viewAPI.getAll('v_stok_summary', filters);
+    return viewAPI.getAll("v_stok_summary", filters);
   },
 
   async getById(id) {
-    return viewAPI.getById('v_stok_summary', id);
+    return viewAPI.getById("v_stok_summary", id);
   },
 
   async getByKategori(kodeKategori) {
-    return viewAPI.getAll('v_stok_summary', { kode_kategori: kodeKategori });
+    return viewAPI.getAll("v_stok_summary", { kode_kategori: kodeKategori });
   },
 
   async getByArmada(kodeArmada) {
-    return viewAPI.getAll('v_stok_summary', { kode_armada: kodeArmada });
+    return viewAPI.getAll("v_stok_summary", { kode_armada: kodeArmada });
   },
 
   async getByStatus(status) {
-    return viewAPI.getAll('v_stok_summary', { status_stok: status });
+    return viewAPI.getAll("v_stok_summary", { status_stok: status });
   },
 
   async getStocked() {
-    return viewAPI.getAll('v_stok_summary', { is_stocked: true });
+    return viewAPI.getAll("v_stok_summary", { is_stocked: true });
   },
 
   async getLowStock() {
-    return viewAPI.getAll('v_stok_summary', { status_stok: 'Stok Kurang' });
+    return viewAPI.getAll("v_stok_summary", { status_stok: "Stok Kurang" });
   },
 
   async getOutOfStock() {
-    return viewAPI.getAll('v_stok_summary', { status_stok: 'Habis' });
+    return viewAPI.getAll("v_stok_summary", { status_stok: "Habis" });
   },
 };
 
 // ============================================
 // USERS API (Admin only)
 // ============================================
-
 export const usersAPI = {
   async getAll() {
     return fetchWithAuth(`${API_URL}/users`);
@@ -798,14 +868,14 @@ export const usersAPI = {
 
   async update(userId, updates) {
     return fetchWithAuth(`${API_URL}/users/${userId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(updates),
     });
   },
 
   async delete(userId) {
     return fetchWithAuth(`${API_URL}/users/${userId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
@@ -825,34 +895,25 @@ export const usersAPI = {
    * @param {string} currentPassword - password saat ini (wajib untuk non-admin)
    * @param {string} newPassword - password baru
    */
-  /* async changePassword(userId, currentPassword, newPassword) {
-    return fetchWithAuth(`${API_URL}/users/${userId}/change-password`, {
-      method: 'POST',
-      body: JSON.stringify({
-        current_password: currentPassword || null,
-        new_password: newPassword,
-      }),
-    });
-  }, */
   changePassword: async (userId, currentPassword, newPassword) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem("authToken");
     const response = await fetch(`${API_URL}/users/${userId}/change-password`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         current_password: currentPassword || null, // null jika admin reset
         new_password: newPassword,
       }),
     });
-  
+
     if (!response.ok) {
       const result = await response.json();
-      throw new Error(result.error || 'Gagal mengubah password');
+      throw new Error(result.error || "Gagal mengubah password");
     }
-  
+
     return response.json();
   },
 };
@@ -860,18 +921,17 @@ export const usersAPI = {
 // ============================================
 // DASHBOARD API
 // ============================================
-
 export const dashboardAPI = {
   async getMetrics(month, year) {
     const params = new URLSearchParams();
-    if (month) params.append('month', month);
-    if (year) params.append('year', year);
-    
+    if (month) params.append("month", month);
+    if (year) params.append("year", year);
+
     const queryString = params.toString();
-    const url = queryString 
+    const url = queryString
       ? `${API_URL}/dashboard/metrics?${queryString}`
       : `${API_URL}/dashboard/metrics`;
-    
+
     return fetchWithAuth(url);
   },
 
@@ -881,15 +941,15 @@ export const dashboardAPI = {
 
   async getTopPurchases(month, year, limit = 10) {
     const params = new URLSearchParams();
-    if (month) params.append('month', month);
-    if (year) params.append('year', year);
-    if (limit) params.append('limit', limit);
-    
+    if (month) params.append("month", month);
+    if (year) params.append("year", year);
+    if (limit) params.append("limit", limit);
+
     const queryString = params.toString();
-    const url = queryString 
+    const url = queryString
       ? `${API_URL}/dashboard/top-purchases?${queryString}`
       : `${API_URL}/dashboard/top-purchases`;
-    
+
     return fetchWithAuth(url);
   },
 
@@ -901,7 +961,6 @@ export const dashboardAPI = {
 // ============================================
 // HEALTH CHECK
 // ============================================
-
 export const healthAPI = {
   async check() {
     const response = await fetch(`${API_URL}/health`);
@@ -912,7 +971,6 @@ export const healthAPI = {
 // ============================================
 // EXPORT DEFAULT
 // ============================================
-
 export default {
   auth: authAPI,
   barang: barangAPI,
@@ -926,4 +984,4 @@ export default {
   users: usersAPI,
   dashboard: dashboardAPI,
   health: healthAPI,
-}
+};

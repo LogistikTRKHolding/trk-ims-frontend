@@ -20,10 +20,14 @@ import {
   Loader,
   ZoomIn,
   ExternalLink,
-  Maximize2
+  FileX,
+  FileCheck,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function Barang() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // Permissions (based on user role)
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
@@ -51,6 +55,9 @@ export default function Barang() {
     is_stocked: true,
     gambar_url: '',
   });
+
+  // Currency display state for harga_satuan input
+  const [hargaDisplayValue, setHargaDisplayValue] = useState('');
 
   // Image Upload States
   const [selectedFile, setSelectedFile] = useState(null);
@@ -136,7 +143,6 @@ export default function Barang() {
   // ============================================
   // Image Preview Handlers
   // ============================================
-
   const handleThumbnailClick = (item) => {
     if (!item.gambar_url) return;
 
@@ -180,7 +186,6 @@ export default function Barang() {
   // ============================================
   // Image Upload Handlers
   // ============================================
-
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -279,8 +284,8 @@ export default function Barang() {
         alias: formData.alias || null,
         satuan: formData.satuan,
         harga_satuan: parseFloat(formData.harga_satuan) || 0,
-        min_stok: parseInt(formData.min_stok) || 0,
-        max_stok: parseInt(formData.max_stok) || 0,
+        min_stok: parseInt(formData.min_stok) || 1,
+        max_stok: parseInt(formData.max_stok) || 1,
         kode_kategori: formData.kode_kategori,
         kode_sub_kategori: formData.kode_sub_kategori || null,
         kode_armada: formData.kode_armada || null,
@@ -350,7 +355,6 @@ export default function Barang() {
   // ============================================
   // Form Handlers
   // ============================================
-
   const openCreateModal = () => {
     resetForm();
     setShowModal(true);
@@ -365,8 +369,8 @@ export default function Barang() {
       alias: item.alias || '',
       satuan: item.satuan || '',
       harga_satuan: item.harga_satuan || 0,
-      min_stok: item.min_stok || 0,
-      max_stok: item.max_stok || 0,
+      min_stok: item.min_stok || 1,
+      max_stok: item.max_stok || 1,
       kode_kategori: item.kode_kategori || '',
       kode_sub_kategori: item.kode_sub_kategori || '',
       kode_armada: item.kode_armada || '',
@@ -376,6 +380,9 @@ export default function Barang() {
       is_stocked: item.is_stocked ?? true,
       gambar_url: item.gambar_url || '',
     });
+
+    // Set currecy display
+    setHargaDisplayValue(formatCurrency(item.harga_satuan || 0));
 
     // Set preview if image exists
     if (item.gambar_url) {
@@ -394,8 +401,8 @@ export default function Barang() {
       alias: '',
       satuan: '',
       harga_satuan: 0,
-      min_stok: 0,
-      max_stok: 0,
+      min_stok: 1,
+      max_stok: 1,
       kode_kategori: '',
       kode_sub_kategori: '',
       kode_armada: '',
@@ -408,6 +415,12 @@ export default function Barang() {
     setSelectedFile(null);
     setPreviewUrl(null);
     setUploading(false);
+    setHargaDisplayValue('');
+  };
+
+  const formatCurrency = (value) => {
+    const num = parseFloat(String(value).replace(/\./g, '').replace(',', '.')) || 0;
+    return num === 0 ? '' : num.toLocaleString('id-ID');
   };
 
   const handleInputChange = (e) => {
@@ -433,7 +446,6 @@ export default function Barang() {
   // ============================================
   // Export Handler
   // ============================================
-
   const handleExport = () => {
     const exportData = filteredData.map(item => ({
       'Kode Barang': item.kode_barang,
@@ -458,6 +470,11 @@ export default function Barang() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Barang');
     XLSX.writeFile(wb, `barang_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try { await refresh(); } finally { setIsRefreshing(false); }
   };
 
   // ============================================
@@ -547,12 +564,9 @@ export default function Barang() {
 
                 {/* Clear All Filters */}
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Clear all filters"
-                  >
-                    <X className="w-5 h-5" />
+                  <button onClick={clearAllFilters}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                    <X className="w-4 h-4" /> Reset
                   </button>
                 )}
               </div>
@@ -561,6 +575,14 @@ export default function Barang() {
 
               {/* Right: Action Buttons */}
               <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  title="Segarkan Data"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
                 <button
                   onClick={handleExport}
                   className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -1199,15 +1221,27 @@ export default function Barang() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Harga Satuan
                       </label>
-                      <input
-                        type="number"
-                        name="harga_satuan"
-                        value={formData.harga_satuan}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                        <input
+                          type="text"
+                          name="harga_satuan"
+                          value={hargaDisplayValue}
+                          onChange={(e) => {
+                            // Strip semua titik (pemisah ribuan), ambil angka saja
+                            const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+                            const num = parseInt(raw) || 0;
+                            setFormData(prev => ({ ...prev, harga_satuan: num }));
+                            setHargaDisplayValue(num === 0 ? '' : num.toLocaleString('id-ID'));
+                          }}
+                          onBlur={() => {
+                            // Format ulang saat blur (pastikan konsisten)
+                            setHargaDisplayValue(formData.harga_satuan ? formData.harga_satuan.toLocaleString('id-ID') : '');
+                          }}
+                          placeholder="0"
+                          className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
                     </div>
                     {/* Stock Limits (only for stocked items) */}
                     {formData.is_stocked && (
@@ -1221,7 +1255,7 @@ export default function Barang() {
                             name="min_stok"
                             value={formData.min_stok}
                             onChange={handleInputChange}
-                            min="0"
+                            min="1"
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                           />
                         </div>
@@ -1262,19 +1296,14 @@ export default function Barang() {
                 <div className="px-6 py-4 border-t flex justify-end gap-3 sticky bottom-0 bg-white">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowModal(false);
-                      resetForm();
-                    }}
-                    className="flex-1 px-4 py-2  bg-green-600 text-white rounded-lg"
-                  >
-                    Batal
+                    onClick={() => { setShowModal(false); resetForm(); }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileX className="w-4 h-4" />Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg"
-                  >
-                    {editingItem ? 'Update' : 'Simpan'}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    <FileCheck className="w-4 h-4" />{editingItem ? 'Update' : 'Simpan'}
                   </button>
                 </div>
               </form>

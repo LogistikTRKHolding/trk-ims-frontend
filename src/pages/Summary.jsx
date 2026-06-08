@@ -20,11 +20,13 @@ import {
   PackageCheck,
   PackageMinus,
   PackagePlus,
-  PackageOpen
+  PackageOpen,
+  RefreshCw
 } from 'lucide-react';
 
 export default function Summary() {
   const navigate = useNavigate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ============================================
   // CUSTOM HOOK - Replace all state & logic!
@@ -34,6 +36,7 @@ export default function Summary() {
     data: paginatedData,
     filteredData,
     loading,
+    refresh,
 
     // Search
     searchQuery,
@@ -192,7 +195,6 @@ export default function Summary() {
   // ============================================
   // Image Preview Handlers
   // ============================================
-
   // Image Preview Modal States
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState(null);
@@ -238,6 +240,11 @@ export default function Summary() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try { await refresh(); } finally { setIsRefreshing(false); }
+  };
+
   // ============================================
   // RENDER
   // ============================================
@@ -245,9 +252,10 @@ export default function Summary() {
     <MainLayout title="Summary">
       <div className="space-y-6">
         {/* STATS CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
           {/* Total Items */}
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-600 flex items-center">
               <Package className="w-4 h-4 mr-1" />
               Barang
@@ -256,7 +264,7 @@ export default function Summary() {
           </div>
 
           {/* Tersedia */}
-          <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
             <p className="text-sm text-green-600 flex items-center">
               <PackageCheck className="w-4 h-4 mr-1" />
               Tersedia
@@ -265,7 +273,7 @@ export default function Summary() {
           </div>
 
           {/* Stok Kurang */}
-          <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
             <p className="text-sm text-yellow-600 flex items-center">
               <PackageMinus className="w-4 h-4 mr-1" />
               Stok kurang
@@ -274,7 +282,7 @@ export default function Summary() {
           </div>
 
           {/* Habis */}
-          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
             <p className="text-sm text-red-600 flex items-center">
               <PackageOpen className="w-4 h-4 mr-1" />
               Habis</p>
@@ -282,18 +290,17 @@ export default function Summary() {
           </div>
 
           {/* Kritis = Stok Kurang + Habis */}
-          {/* <div
-            className="bg-orange-50 p-6 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+          <div
+            className="bg-orange-50 p-4 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
             onClick={() => setFilter('status_stok', 'Kritis')}
             title="Klik untuk filter Kritis"
           >
             <p className="text-sm text-orange-600 flex items-center">
               <PackageMinus className="w-4 h-4 mr-1" />
-              Kritis
+              Kritis (Kurang + Habis)
             </p>
             <p className="text-2xl font-bold text-orange-700">{stats?.kritis || 0}</p>
-            <p className="text-xs text-orange-400 mt-1">Kurang + Habis</p>
-          </div> */}
+          </div>
 
           {/* Stok Lebih */}
           <div className="bg-green-50 p-6 rounded-lg border border-green-200">
@@ -389,12 +396,9 @@ export default function Summary() {
 
                 {/* Clear All Filters */}
                 {hasActiveFilters && (
-                  <button
-                    onClick={clearAllFilters}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title="Clear all filters"
-                  >
-                    <X className="w-5 h-5" />
+                  <button onClick={clearAllFilters}
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors">
+                    <X className="w-4 h-4" /> Reset
                   </button>
                 )}
               </div>
@@ -403,6 +407,14 @@ export default function Summary() {
 
               {/* Right: Action Buttons */}
               <div className="flex gap-2 w-full lg:w-auto shrink-0">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  title="Segarkan Data"
+                  className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
                 <button
                   onClick={handleExport}
                   className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"

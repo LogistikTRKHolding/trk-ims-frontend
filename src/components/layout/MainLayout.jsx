@@ -31,18 +31,19 @@ export const MainLayoutContext = createContext(false);
 
 // ─── Page metadata ────────────────────────────────────────────────────────────
 const pageInfo = {
-  '/dashboard':     { title: 'Dashboard',           description: 'Overview dan analitik inventori gudang',  icon: LayoutDashboard },
-  '/summary':       { title: 'Summary',              description: 'Ringkasan status inventori',              icon: TrendingUp      },
-  '/stok':          { title: 'Stok',                 description: 'Data stok barang di gudang',              icon: Warehouse       },
-  '/kartu-stok':    { title: 'Kartu Stok',           description: 'Riwayat mutasi per barang',               icon: ClipboardList   },
-  '/barang':        { title: 'Master Barang',        description: 'Kelola data master barang',               icon: Package         },
-  '/kategori':      { title: 'Master Kategori',      description: 'Kelola kategori barang',                  icon: FolderOpen      },
-  '/sub_kategori':  { title: 'Master Sub Kategori',  description: 'Kelola sub kategori barang',              icon: FolderOpen      },
-  '/armada':        { title: 'Master Armada',        description: 'Kelola data armada/mesin',                icon: Settings        },
-  '/vendor':        { title: 'Master Vendor',        description: 'Kelola data vendor/supplier',             icon: Truck           },
-  '/mutasi_gudang': { title: 'Mutasi Gudang',        description: 'Transaksi keluar masuk barang',           icon: TrendingUp      },
-  '/pembelian':     { title: 'Pembelian',            description: 'Data purchase order',                     icon: ShoppingCart    },
-  '/users':         { title: 'User Management',      description: 'Kelola pengguna sistem',                  icon: Users           },
+  '/dashboard':         { title: 'Dashboard',           description: 'Overview dan analitik inventori gudang',  icon: LayoutDashboard  },
+  '/summary':           { title: 'Summary',              description: 'Ringkasan status inventori',              icon: TrendingUp      },
+  '/stok':              { title: 'Stok',                 description: 'Data stok barang di gudang',              icon: Warehouse       },
+  '/kartu-stok':        { title: 'Kartu Stok',           description: 'Riwayat mutasi per barang',               icon: ClipboardList   },
+  '/barang':            { title: 'Master Barang',        description: 'Kelola data master barang',               icon: Package         },
+  '/kategori':          { title: 'Master Kategori',      description: 'Kelola kategori barang',                  icon: FolderOpen      },
+  '/sub_kategori':      { title: 'Master Sub Kategori',  description: 'Kelola sub kategori barang',              icon: FolderOpen      },
+  '/armada':            { title: 'Master Armada',        description: 'Kelola data armada/mesin',                icon: Settings        },
+  '/vendor':            { title: 'Master Vendor',        description: 'Kelola data vendor/supplier',             icon: Truck           },
+  '/permintaan_barang': { title: 'Permintaan Barang',    description: 'Permintaan pengadaan barang',             icon: ClipboardList   },
+  '/mutasi_gudang':     { title: 'Mutasi Gudang',        description: 'Transaksi keluar masuk barang',           icon: TrendingUp      },
+  '/pembelian':         { title: 'Pembelian',            description: 'Data purchase order',                     icon: ShoppingCart    },
+  '/users':             { title: 'User Management',      description: 'Kelola pengguna sistem',                  icon: Users           },
 };
 
 const defaultPage = {
@@ -178,7 +179,7 @@ export default function MainLayout({ children }) {
           <footer className="bg-white border-t border-gray-200 py-4 px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-600">
               <p>© 2025 TRK Holding</p>
-              <p>Version 1.15</p>
+              <p>Version 3.0</p>
             </div>
           </footer>
         </div>

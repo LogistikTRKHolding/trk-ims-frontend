@@ -1,5 +1,8 @@
 // src/pages/KartuStok.jsx
 
+// Hapus semua karakter selain huruf dan angka untuk normalisasi pencarian
+const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerCase();
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -203,11 +206,14 @@ export default function KartuStok() {
 
     // Filter items berdasarkan pencarian, kategori, dan sub kategori
     const filteredItems = items.filter(item => {
-        const searchMatch = item.nama_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.alias?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.kode_barang?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.nama_kategori?.toLowerCase().includes(searchTerm.toLowerCase());
+        const _term = normalizeSearch(searchTerm);
+        const searchMatch = !_term || (
+            normalizeSearch(item.nama_barang).includes(_term) ||
+            normalizeSearch(item.alias).includes(_term) ||
+            normalizeSearch(item.kode_barang).includes(_term) ||
+            normalizeSearch(item.part_number).includes(_term) ||
+            normalizeSearch(item.nama_kategori).includes(_term)
+        );
 
         if (!searchMatch) return false;
 
@@ -385,7 +391,7 @@ export default function KartuStok() {
                                                 }}
                                                 className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                                             >
-                                                <X className="w-4 h-4" /> Clear Filter
+                                                <X className="w-4 h-4" /> Reset
                                             </button>
                                         )}
                                     </div>
@@ -610,7 +616,7 @@ export default function KartuStok() {
                                                 onClick={clearAllFilters}
                                                 className="flex items-center gap-1 px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg ml-2"
                                             >
-                                                <X className="w-4 h-4" />Clear Filter
+                                                <X className="w-4 h-4" />Reset
                                             </button>
                                         )}
                                     </div>
