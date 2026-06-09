@@ -1856,6 +1856,7 @@ export default function Pembelian() {
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
                         <form onSubmit={handleAddNewBarang}>
+                            
                             {/* Header */}
                             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-bold">Tambah Barang Baru</h2>
@@ -1945,11 +1946,12 @@ export default function Pembelian() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sub Kategori</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sub Kategori *</label>
                                         <select
                                             name="kode_sub_kategori"
-                                            value={newBarangData.kode_sub_kategori}
+                                            value={newBarangData.kode_sub_kategori}                                    
                                             onChange={handleNewBarangChange}
+                                            required
                                             disabled={!newBarangData.kode_kategori || subKategoriListModal.length === 0}
                                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
