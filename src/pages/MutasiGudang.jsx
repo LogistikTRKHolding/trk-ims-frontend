@@ -23,7 +23,7 @@ export default function MutasiGudang() {
   const currentUser = authAPI.getCurrentUser();
   const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canEdit = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
-  const canDelete = ['Admin', 'Manager'].includes(currentUser?.role);
+  const canDelete = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
 
   // Modal & Form states
   const [showModal, setShowModal] = useState(false);
@@ -1710,6 +1710,7 @@ export default function MutasiGudang() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSubmit}>
+                
                 {/* Modal Header */}
                 <div className="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-white">
                   <h2 className="text-xl font-bold">
@@ -1744,6 +1745,7 @@ export default function MutasiGudang() {
                       </div>
                     ) : null
                   )}
+                  
                   {/* Tanggal & Jenis Transaksi*/}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -1765,6 +1767,7 @@ export default function MutasiGudang() {
                         ))}
                       </select>
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Tanggal *
@@ -1778,6 +1781,7 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Jenis Transaksi *
@@ -1824,6 +1828,7 @@ export default function MutasiGudang() {
                                   {barang.nama_barang}{barang.alias && ` (${barang.alias})`}
                                 </span>
                               </div>
+                              
                               <div className="text-sm text-gray-600">
                                 {barang.kode_barang && (
                                   <span className="text-sm text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">

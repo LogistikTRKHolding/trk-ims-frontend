@@ -7,13 +7,17 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
-import { pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI, 
-    subKategoriAPI, armadaAPI, permintaanBarangAPI } from '../services/api';
+import {
+    pembelianAPI, barangAPI, vendorAPI, authAPI, kategoriAPI,
+    subKategoriAPI, armadaAPI, permintaanBarangAPI
+} from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
-import { Search, Filter, X, Download, Upload, Plus, Edit, Trash2, Calendar, Package, 
+import {
+    Search, Filter, X, Download, Upload, Plus, Edit, Trash2, Calendar, Package,
     Clock, CheckCircle2, XCircle, RefreshCw, ShoppingCart, FileX, FileCheck,
-    ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
+    ChevronFirst, ChevronLast, ChevronLeft, ChevronRight
+} from 'lucide-react';
 
 export default function Pembelian() {
     const navigate = useNavigate()
@@ -48,11 +52,12 @@ export default function Pembelian() {
         nama_vendor: '',
         kode_barang: '',
         nama_barang: '',
+        alias: '',
         qty_order: 1,
         harga_satuan: 0,
         total_harga: 0,
         tanggal_terima: '',
-        status: 'Pending',
+        status: 'Diproses',
         keterangan: '',
     });
 
@@ -149,7 +154,7 @@ export default function Pembelian() {
             harga_satuan: barang?.harga_satuan || 0,
             total_harga: qty * (barang?.harga_satuan || 0),
             keterangan: prNo ? `Pembelian dari PR: ${prNo}` : '',
-            status: 'Pending',
+            status: 'Diproses',
         }));
         setSelectedBarangPreview({
             part_number: barang?.part_number || '',
@@ -229,8 +234,8 @@ export default function Pembelian() {
                     ? filtered.reduce((sum, i) => sum + (parseFloat(i.lead_time_days) || 0), 0) /
                     filtered.filter(i => i.lead_time_days).length
                     : 0,
-                pending: filtered.filter(i => i.status === 'Pending').length,
-                completed: filtered.filter(i => i.status === 'Completed').length,
+                diproses: filtered.filter(i => i.status === 'Diproses').length,
+                selesai: filtered.filter(i => i.status === 'Diterima').length,
             };
 
             const globalStats = {
@@ -271,7 +276,7 @@ export default function Pembelian() {
     // Permissions
     const canCreate = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
     const canEdit = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
-    const canDelete = ['Admin', 'Manager'].includes(currentUser?.role);
+    const canDelete = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
 
     // Load master data untuk form — sekarang menggunakan API dedicated
     const loadMasterData = async () => {
@@ -341,6 +346,7 @@ export default function Pembelian() {
         if (!term) return [];
         return barangList.filter(b =>
             normalizeSearch(b.nama_barang).includes(term) ||
+            normalizeSearch(b.alias).includes(term) ||
             normalizeSearch(b.kode_barang).includes(term) ||
             normalizeSearch(b.part_number).includes(term)
         ).slice(0, 10);
@@ -362,6 +368,7 @@ export default function Pembelian() {
             ...prev,
             kode_barang: barang.kode_barang,
             nama_barang: barang.nama_barang,
+            alias: barang.alias,
             harga_satuan: barang.harga_satuan || 0,
             total_harga: prev.qty_order * (barang.harga_satuan || 0),
         }));
@@ -402,12 +409,15 @@ export default function Pembelian() {
             no_po: '',
             tanggal_po: new Date().toISOString().split('T')[0],
             kode_vendor: '',
+            nama_vendor: '',
             kode_barang: '',
+            nama_barang: '',
+            alias: '',
             qty_order: 1,
             harga_satuan: 0,
             total_harga: 0,
             tanggal_terima: '',
-            status: 'Pending',
+            status: 'Diproses',
             keterangan: '',
         });
         setEditingItem(null);
@@ -450,6 +460,7 @@ export default function Pembelian() {
                 ...prev,
                 kode_barang: selectedBarang.kode_barang,
                 nama_barang: selectedBarang.nama_barang,
+                alias: selectedBarang.alias,
                 harga_satuan: selectedBarang.harga_satuan || 0,
                 total_harga: prev.qty_order * (selectedBarang.harga_satuan || 0),
             }));
@@ -543,6 +554,7 @@ export default function Pembelian() {
                 ...prev,
                 kode_barang: savedBarang.kode_barang,
                 nama_barang: savedBarang.nama_barang,
+                alias: savedBarang.alias,
                 harga_satuan: savedBarang.harga_satuan || 0,
                 total_harga: prev.qty_order * (savedBarang.harga_satuan || 0),
             }));
@@ -636,7 +648,7 @@ export default function Pembelian() {
 
             let payload;
             if (editingItem) {
-                const { created_by, ...updateFields } = sanitizedForm;
+                const { created_by, nama_barang, nama_vendor, ...updateFields } = sanitizedForm;
                 payload = {
                     ...updateFields,
                     updated_by: currentUser?.userId,
@@ -843,7 +855,7 @@ export default function Pembelian() {
                     qty_order,
                     harga_satuan,
                     total_harga: qty_order * harga_satuan,
-                    status: 'Pending',            // default saat import
+                    status: 'Diproses',            // default saat import
                     tanggal_terima: null,
                     created_by: currentUser?.userId ?? null,
                     updated_by: currentUser?.userId ?? null,
@@ -941,16 +953,16 @@ export default function Pembelian() {
     // Status badge helper
     const getStatusBadge = (status) => {
         const colors = {
-            'Pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-            'Received': 'bg-blue-100 text-blue-800 border-blue-200',
-            'Completed': 'bg-green-100 text-green-800 border-green-200',
-            'Cancelled': 'bg-red-100 text-red-800 border-red-200',
+            'Diproses': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Diterima': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Selesai': 'bg-green-100 text-green-800 border-green-200',
+            'Dibatalkan': 'bg-red-100 text-red-800 border-red-200',
         };
         const icons = {
-            'Pending': Clock,
-            'Received': Package,
-            'Completed': CheckCircle2,
-            'Cancelled': XCircle,
+            'Diproses': Clock,
+            'Diterima': Package,
+            'Selesai': CheckCircle2,
+            'Dibatalkan': XCircle,
         };
         const Icon = icons[status] || Clock;
         return (
@@ -1037,10 +1049,10 @@ export default function Pembelian() {
                                     className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
                                 >
                                     <option value="all">Semua Status</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Received">Received</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Cancelled">Cancelled</option>
+                                    <option value="Diproses">Diproses</option>
+                                    <option value="Diterima">Diterima</option>
+                                    <option value="Selesai">Selesai</option>
+                                    <option value="Dibatalkan">Dibatalkan</option>
                                 </select>
 
                                 {/* Date Filter Mode */}
@@ -1543,6 +1555,7 @@ export default function Pembelian() {
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
                             {/* Header Modal */}
                             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-bold text-gray-900">
@@ -1578,7 +1591,7 @@ export default function Pembelian() {
                                         disabled={!!editingItem}
                                         required
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                        placeholder="PO-2025-001"
+                                        placeholder="#123456"
                                     />
                                 </div>
 
@@ -1622,6 +1635,7 @@ export default function Pembelian() {
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-xs font-medium text-gray-800">{v.nama_vendor}</span>
                                                         </div>
+
                                                         <div className="text-xs text-gray-600">
                                                             {v.kode_vendor && (
                                                                 <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
@@ -1645,11 +1659,11 @@ export default function Pembelian() {
                                     {/* Preview Vendor terpilih */}
                                     <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400">Nama Vendor</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Nama Vendor</span>
                                             <span className="text-xs font-medium">{formData.nama_vendor}</span>
                                         </div>
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400">Kode Vendor</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Kode Vendor</span>
                                             <span className="text-xs">{formData.kode_vendor}</span>
                                         </div>
                                     </div>
@@ -1680,8 +1694,12 @@ export default function Pembelian() {
                                                         className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                     >
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.satuan})</span>
+                                                            {/* <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.alias})</span> */}
+                                                            <span className="text-sm font-medium text-gray-800">
+                                                                {b.nama_barang}{b.alias && ` (${b.alias})`}
+                                                            </span>
                                                         </div>
+
                                                         <div className="text-xs text-gray-600">
                                                             {b.kode_barang && (
                                                                 <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
@@ -1710,20 +1728,24 @@ export default function Pembelian() {
                                     {/* Preview Barang terpilih */}
                                     <div className="mt-2 grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Nama Barang</span>
-                                            <span className="text-sm font-mono font-semibold">{formData.nama_barang}</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Nama Barang</span>
+                                            <span className="text-xs font-medium">{formData.nama_barang}</span><br />
+                                            <span className="text-xs text-green-800">{formData.alias}</span>
                                         </div>
+
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Kode Barang</span>
-                                            <span className="text-sm">{formData.kode_barang}</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Kode Barang</span>
+                                            <span className="text-xs">{formData.kode_barang || '-'}</span>
                                         </div>
+
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Part Number</span>
-                                            <span className="text-sm font-mono text-blue-600">{selectedBarangPreview.part_number}</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Part Number</span>
+                                            <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
                                         </div>
+
                                         <div>
-                                            <span className="block text-[10px] uppercase text-gray-400 font-bold">Satuan</span>
-                                            <span className="text-sm">{selectedBarangPreview.satuan}</span>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Satuan</span>
+                                            <span className="text-xs">{formData.satuan || '-'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1800,9 +1822,9 @@ export default function Pembelian() {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                                     <div className="flex gap-2">
                                         {[
-                                            { value: 'Pending', label: 'Pending', active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-600 border-yellow-400 hover:bg-yellow-50' },
-                                            { value: 'Received', label: 'Received', active: 'bg-green-600 text-white border-green-600', inactive: 'bg-white text-green-700 border-green-500 hover:bg-green-50' },
-                                            { value: 'Cancelled', label: 'Cancelled', active: 'bg-red-500 text-white border-red-500', inactive: 'bg-white text-red-600 border-red-400 hover:bg-red-50' },
+                                            { value: 'Diproses', label: 'Diproses', active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-600 border-yellow-400 hover:bg-yellow-50' },
+                                            { value: 'Diterima', label: 'Diterima', active: 'bg-green-600 text-white border-green-600', inactive: 'bg-white text-green-700 border-green-500 hover:bg-green-50' },
+                                            { value: 'Dibatalkan', label: 'Dibatalkan', active: 'bg-red-500 text-white border-red-500', inactive: 'bg-white text-red-600 border-red-400 hover:bg-red-50' },
                                         ].map(({ value, label, active, inactive }) => (
                                             <button
                                                 key={value}
@@ -1838,10 +1860,11 @@ export default function Pembelian() {
                                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                                     <FileX className="w-4 h-4" />Batal
                                 </button>
+
                                 <button
                                     type="submit"
                                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                                    <FileCheck className="w-4 h-4" />{editingItem ? 'Update' : 'Simpan'}
+                                    <FileCheck className="w-4 h-4" /> {editingItem ? 'Update' : 'Simpan'}
                                 </button>
                             </div>
                         </form>
@@ -1856,7 +1879,7 @@ export default function Pembelian() {
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg w-full max-w-2xl max-h-[85vh] overflow-y-auto">
                         <form onSubmit={handleAddNewBarang}>
-                            
+
                             {/* Header */}
                             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
                                 <h2 className="text-xl font-bold">Tambah Barang Baru</h2>
@@ -1889,6 +1912,7 @@ export default function Pembelian() {
                                             placeholder="(dibuat otomatis)"
                                         />
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Part Number</label>
                                         <input
@@ -1915,6 +1939,7 @@ export default function Pembelian() {
                                             placeholder="Contoh: OLI MESIN"
                                         />
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Alias</label>
                                         <input
@@ -1945,11 +1970,12 @@ export default function Pembelian() {
                                             ))}
                                         </select>
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Sub Kategori *</label>
                                         <select
                                             name="kode_sub_kategori"
-                                            value={newBarangData.kode_sub_kategori}                                    
+                                            value={newBarangData.kode_sub_kategori}
                                             onChange={handleNewBarangChange}
                                             required
                                             disabled={!newBarangData.kode_kategori || subKategoriListModal.length === 0}
@@ -1995,6 +2021,7 @@ export default function Pembelian() {
                                             <p className="mt-1 text-xs text-red-500">Armada wajib diisi untuk kategori Suku Cadang</p>
                                         )}
                                     </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Satuan *</label>
                                         <select
