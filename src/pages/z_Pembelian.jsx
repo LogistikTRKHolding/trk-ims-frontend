@@ -1579,6 +1579,7 @@ export default function Pembelian() {
 
                             {/* Modal Body */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                                 {/* No. PO */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">No. PO *</label>
@@ -1606,151 +1607,149 @@ export default function Pembelian() {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
-                            </div>
 
-                            {/* ── Searchable Vendor ── */}
-                            <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cari Vendor *</label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                                        placeholder="Cari kode atau nama vendor..."
-                                        value={vendorSearch}
-                                        onChange={(e) => { setVendorSearch(e.target.value); setShowVendorList(true); }}
-                                        onFocus={() => setShowVendorList(true)}
-                                    />
-                                </div>
+                                {/* ── Searchable Vendor ── */}
+                                <div className="md:col-span-2 relative" ref={vendorDropdownRef}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cari Vendor *</label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Cari kode atau nama vendor..."
+                                            value={vendorSearch}
+                                            onChange={(e) => { setVendorSearch(e.target.value); setShowVendorList(true); }}
+                                            onFocus={() => setShowVendorList(true)}
+                                        />
+                                    </div>
 
-                                {showVendorList && vendorSearch && (
-                                    <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {filteredVendors.length > 0 ? (
-                                            filteredVendors.map((v) => (
-                                                <div
-                                                    key={v.kode_vendor}
-                                                    onClick={() => selectVendor(v)}
-                                                    className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-medium text-gray-800">{v.nama_vendor}</span>
+                                    {showVendorList && vendorSearch && (
+                                        <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                            {filteredVendors.length > 0 ? (
+                                                filteredVendors.map((v) => (
+                                                    <div
+                                                        key={v.kode_vendor}
+                                                        onClick={() => selectVendor(v)}
+                                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-medium text-gray-800">{v.nama_vendor}</span>
+                                                        </div>
+
+                                                        <div className="text-xs text-gray-600">
+                                                            {v.kode_vendor && (
+                                                                <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
+                                                                    KODE: {v.kode_vendor}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-
-                                                    <div className="text-xs text-gray-600">
-                                                        {v.kode_vendor && (
-                                                            <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
-                                                                KODE: {v.kode_vendor}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                    Vendor tidak ditemukan —{' '}
+                                                    <button type="button" onClick={openAddVendorModal} className="text-green-600 font-medium hover:underline">
+                                                        Tambah baru
+                                                    </button>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                                Vendor tidak ditemukan —{' '}
-                                                <button type="button" onClick={openAddVendorModal} className="text-green-600 font-medium hover:underline">
-                                                    Tambah baru
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                            )}
+                                        </div>
+                                    )}
 
-                                {/* Preview Vendor terpilih */}
-                                <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Nama Vendor</span>
-                                        <span className="text-xs font-medium">{formData.nama_vendor}</span>
-                                    </div>
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Kode Vendor</span>
-                                        <span className="text-xs">{formData.kode_vendor}</span>
+                                    {/* Preview Vendor terpilih */}
+                                    <div className="mt-2 grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Nama Vendor</span>
+                                            <span className="text-xs font-medium">{formData.nama_vendor}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Kode Vendor</span>
+                                            <span className="text-xs">{formData.kode_vendor}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* ── Searchable Barang ── */}
-                            <div className="md:col-span-2 relative" ref={barangDropdownRef}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cari Barang *</label>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                                        placeholder="Cari kode, nama barang atau part number..."
-                                        value={barangSearch}
-                                        onChange={(e) => { setBarangSearch(e.target.value); setShowBarangList(true); }}
-                                        onFocus={() => setShowBarangList(true)}
-                                    />
-                                </div>
+                                {/* ── Searchable Barang ── */}
+                                <div className="md:col-span-2 relative" ref={barangDropdownRef}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cari Barang *</label>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Cari kode, nama barang atau part number..."
+                                            value={barangSearch}
+                                            onChange={(e) => { setBarangSearch(e.target.value); setShowBarangList(true); }}
+                                            onFocus={() => setShowBarangList(true)}
+                                        />
+                                    </div>
 
-                                {showBarangList && barangSearch && (
-                                    <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {filteredBarang.length > 0 ? (
-                                            filteredBarang.map((b) => (
-                                                <div
-                                                    key={b.kode_barang}
-                                                    onClick={() => selectBarang(b)}
-                                                    className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        {/* <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.alias})</span> */}
-                                                        <span className="text-sm font-medium text-gray-800">
-                                                            {b.nama_barang}{b.alias && ` (${b.alias})`}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="text-xs text-gray-600">
-                                                        {b.kode_barang && (
-                                                            <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
-                                                                KB: {b.kode_barang}
+                                    {showBarangList && barangSearch && (
+                                        <div className="absolute z-[60] w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                            {filteredBarang.length > 0 ? (
+                                                filteredBarang.map((b) => (
+                                                    <div
+                                                        key={b.kode_barang}
+                                                        onClick={() => selectBarang(b)}
+                                                        className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            {/* <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.alias})</span> */}
+                                                            <span className="text-sm font-medium text-gray-800">
+                                                                {b.nama_barang}{b.alias && ` (${b.alias})`}
                                                             </span>
-                                                        )}
-                                                        {b.part_number && (
-                                                            <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                                                                PN: {b.part_number}
-                                                            </span>
-                                                        )}
+                                                        </div>
+
+                                                        <div className="text-xs text-gray-600">
+                                                            {b.kode_barang && (
+                                                                <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
+                                                                    KB: {b.kode_barang}
+                                                                </span>
+                                                            )}
+                                                            {b.part_number && (
+                                                                <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                                                                    PN: {b.part_number}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                    Barang tidak ditemukan —{' '}
+                                                    <button type="button" onClick={openAddBarangModal} className="text-green-600 font-medium hover:underline">
+                                                        Tambah baru
+                                                    </button>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                                Barang tidak ditemukan —{' '}
-                                                <button type="button" onClick={openAddBarangModal} className="text-green-600 font-medium hover:underline">
-                                                    Tambah baru
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                            )}
+                                        </div>
+                                    )}
 
-                                {/* Preview Barang terpilih */}
-                                <div className="mt-2 grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Nama Barang</span>
-                                        <span className="text-xs font-medium">{formData.nama_barang}</span><br />
-                                        <span className="text-xs text-green-800">{formData.alias}</span>
-                                    </div>
+                                    {/* Preview Barang terpilih */}
+                                    <div className="mt-2 grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border">
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Nama Barang</span>
+                                            <span className="text-xs font-medium">{formData.nama_barang}</span><br />
+                                            <span className="text-xs text-green-800">{formData.alias}</span>
+                                        </div>
 
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Kode Barang</span>
-                                        <span className="text-xs">{formData.kode_barang || '-'}</span>
-                                    </div>
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Kode Barang</span>
+                                            <span className="text-xs">{formData.kode_barang || '-'}</span>
+                                        </div>
 
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Part Number</span>
-                                        <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
-                                    </div>
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Part Number</span>
+                                            <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
+                                        </div>
 
-                                    <div>
-                                        <span className="block text-xs uppercase text-gray-400 font-bold">Satuan</span>
-                                        <span className="text-xs">{formData.satuan || '-'}</span>
+                                        <div>
+                                            <span className="block text-xs uppercase text-gray-400 font-bold">Satuan</span>
+                                            <span className="text-xs">{formData.satuan || '-'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Qty Order */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Jumlah Order *</label>
@@ -1805,9 +1804,7 @@ export default function Pembelian() {
                                         />
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Tanggal Terima */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Terima</label>
@@ -1821,7 +1818,7 @@ export default function Pembelian() {
                                 </div>
 
                                 {/* Status */}
-                                <div>
+                                <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                                     <div className="flex gap-2">
                                         {[
@@ -1840,19 +1837,19 @@ export default function Pembelian() {
                                         ))}
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Keterangan */}
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
-                                <textarea
-                                    name="keterangan"
-                                    value={formData.keterangan}
-                                    onChange={handleInputChange}
-                                    rows="3"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    placeholder="Catatan tambahan..."
-                                />
+                                {/* Keterangan */}
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
+                                    <textarea
+                                        name="keterangan"
+                                        value={formData.keterangan}
+                                        onChange={handleInputChange}
+                                        rows="3"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        placeholder="Catatan tambahan..."
+                                    />
+                                </div>
                             </div>
 
                             {/* Modal Footer */}
