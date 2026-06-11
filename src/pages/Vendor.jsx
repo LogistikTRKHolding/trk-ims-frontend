@@ -81,8 +81,9 @@ export default function Vendor() {
 
   // Get current user for permissions
   const currentUser = authAPI.getCurrentUser();
-  const canEdit = ['Admin', 'Manager'].includes(currentUser?.role);
-  const canDelete = currentUser?.role === 'Admin';
+  const canEdit = ['Admin', 'Manager', 'Staff_pembelian'].includes(currentUser?.role);
+  const canDelete = ['Admin', 'Staff_pembelian'].includes(currentUser?.role);
+  //const canDelete = currentUser?.role === 'Admin';
 
   // ============================================
   // Form Handlers

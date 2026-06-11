@@ -18,7 +18,8 @@ export default function Barang() {
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canEdit = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
-  const canDelete = currentUser?.role === 'Admin';
+  const canDelete = ['Admin', 'Staff_gudang'].includes(currentUser?.role);
+  //const canDelete = currentUser?.role === 'Admin';
 
   // Modal & Form States
   const [showModal, setShowModal] = useState(false);

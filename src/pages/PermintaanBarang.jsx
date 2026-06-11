@@ -55,7 +55,7 @@ const PRIORITAS_META = {
 // ─── Stat card data ───────────────────────────────────────────────────────────
 const STAT_DEFS = [
     { key: 'total', label: 'Total PR', icon: FileText, statuses: null, border: 'border-gray-200', iconCls: 'bg-gray-50   text-gray-600' },
-    { key: 'diajukan', label: 'Menunggu Review', icon: Clock, statuses: ['Submitted'], border: 'border-yellow-200', iconCls: 'bg-yellow-50 text-yellow-600' },
+    { key: 'diajukan', label: 'Menunggu Persetujuan', icon: Clock, statuses: ['Submitted'], border: 'border-yellow-200', iconCls: 'bg-yellow-50 text-yellow-600' },
     { key: 'disetujui', label: 'Disetujui', icon: CheckCircle2, statuses: ['Approved'], border: 'border-green-200', iconCls: 'bg-green-50  text-green-600' },
     { key: 'diproses', label: 'Diproses', icon: ShoppingCart, statuses: ['Diproses', 'Diterima'], border: 'border-blue-200', iconCls: 'bg-blue-50   text-blue-600' },
     { key: 'selesai', label: 'Selesai', icon: Warehouse, statuses: ['Diserahkan'], border: 'border-teal-200', iconCls: 'bg-teal-50   text-teal-600' },
@@ -108,7 +108,7 @@ export default function PermintaanBarang() {
 
     // ── Role permissions ──────────────────────────────────────────────────────
     // Pembuat: staff lapangan / mekanik
-    const canCreate = ['Admin', 'Manager', 'Staff', 'Staff_gudang'].includes(currentUser?.role);
+    const canCreate = ['Admin', 'Manager', 'Staff'].includes(currentUser?.role);
     // Approver: manager atau admin
     const canApprove = ['Admin', 'Manager'].includes(currentUser?.role);
     // Serahkan barang dari gudang (mutasi keluar)
@@ -216,7 +216,7 @@ export default function PermintaanBarang() {
     } = useDataTable({
         fetchData,
         filterKeys: ['status', 'prioritas', 'kode_kategori', 'kode_sub_kategori', 'nama_armada'],
-        searchKeys: ['no_pr', 'nama_barang', 'part_number', 'keterangan', 'requested_by'],
+        searchKeys: ['no_pr', 'nama_barang', 'alias', 'part_number', 'keterangan', 'requested_by'],
         dateFilterKey: 'tanggal_pr',
         defaultSort: { key: 'tanggal_pr', direction: 'desc' },
         defaultRowsPerPage: 10,
@@ -239,6 +239,7 @@ export default function PermintaanBarang() {
         return barangList
             .filter(b =>
                 normalizeSearch(b.nama_barang).includes(q) ||
+                normalizeSearch(b.alias).includes(q) ||
                 normalizeSearch(b.part_number).includes(q) ||
                 normalizeSearch(b.kode_barang).includes(q)
             )
@@ -279,6 +280,7 @@ export default function PermintaanBarang() {
         // Cari barang di list untuk mendapatkan stok real-time
         const barang = barangList.find(b => b.kode_barang === item.kode_barang) || {
             nama_barang: item.nama_barang,
+            alias: item.alias,
             part_number: item.part_number,
             satuan: item.satuan,
             stok_akhir: item.stok_fisik,
@@ -1103,7 +1105,10 @@ export default function PermintaanBarang() {
                                                 {filteredBarangSearch.map(b => (
                                                     <div key={b.kode_barang} onClick={() => selectBarang(b)}
                                                         className="px-3 py-2.5 hover:bg-green-50 cursor-pointer border-b border-gray-50 last:border-0">
-                                                        <div className="text-sm font-semibold text-gray-800">{b.nama_barang}</div>
+                                                        <div className="text-sm font-semibold text-gray-800">
+                                                            {b.nama_barang}{b.alias && ` (${b.alias})`}
+                                                        </div>
+                                                        
                                                         <div className="text-xs text-gray-400">
                                                             {b.kode_barang}
                                                             {b.part_number && ` · ${b.part_number}`}
@@ -1133,7 +1138,9 @@ export default function PermintaanBarang() {
                                                 <div className="flex items-start gap-2">
                                                     <Package className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                                                     <div>
-                                                        <p className="text-sm font-semibold text-gray-800">{selectedBarang.nama_barang}</p>
+                                                        <p className="text-sm font-semibold text-gray-800">
+                                                            {selectedBarang.nama_barang}{selectedBarang.alias && ` (${selectedBarang.alias})`}
+                                                        </p>
                                                         <p className="text-xs text-gray-400">
                                                             {selectedBarang.kode_barang}
                                                             {selectedBarang.part_number && ` · ${selectedBarang.part_number}`}

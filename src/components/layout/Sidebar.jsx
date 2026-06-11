@@ -61,7 +61,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         { name: 'Kategori', path: '/kategori', icon: FolderOpen, roles: ['Admin'] },
         { name: 'Sub Kategori', path: '/sub_kategori', icon: FolderOpen, roles: ['Admin'] },
         { name: 'Armada', path: '/armada', icon: Settings, roles: ['Admin'] },
-        { name: 'Vendor', path: '/vendor', icon: Truck, roles: ['Admin'] },
+        { name: 'Vendor', path: '/vendor', icon: Truck, roles: ['Admin', 'Staff_pembelian'] },
       ]
     },
     {

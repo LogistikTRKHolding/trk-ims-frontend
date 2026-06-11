@@ -13,7 +13,7 @@ import { gudangAPI, mutasiAPI, barangAPI, authAPI,
   kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
 import { Search, Filter, X, Download, Upload, Plus, Edit, Trash2, TrendingUp, 
   TrendingDown, Calendar, Package, FileText, FileCheck, FileX, RefreshCw,
-  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
+  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function MutasiGudang() {
   const navigate = useNavigate()
@@ -36,6 +36,16 @@ export default function MutasiGudang() {
 
   // importResult: null | { successCount, apiErrorCount, parseErrors: string[], apiErrors: string[] }
   const [editingItem, setEditingItem] = useState(null);
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
+
+  const toggleGroup = useCallback((kode_barang) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      next.has(kode_barang) ? next.delete(kode_barang) : next.add(kode_barang);
+      return next;
+    });
+  }, []);
+  
   const [barangList, setBarangList] = useState([]);
   const [formData, setFormData] = useState({
     no_transaksi: '',
@@ -1441,12 +1451,20 @@ export default function MutasiGudang() {
                       return (
                         <React.Fragment key={group.kode_barang}>
                           {/* ── Group Header Row ── */}
-                          <tr className="bg-green-50 border-t-2 border-green-300">
+                          <tr
+                            className="bg-green-50 border-t-2 border-green-300 cursor-pointer select-none hover:bg-green-100 transition-colors"
+                            onClick={() => toggleGroup(group.kode_barang)}
+                          >
                             <td
                               colSpan={(canEdit || canDelete) ? 11 : 10}
                               className="px-4 py-2"
                             >
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                {/* Chevron */}
+                                {collapsedGroups.has(group.kode_barang)
+                                  ? <ChevronRight className="w-4 h-4 text-green-600 shrink-0" />
+                                  : <ChevronDown  className="w-4 h-4 text-green-600 shrink-0" />
+                                }
                                 {/* Nama Barang */}
                                 <span className="text-xs font-bold text-green-900">
                                   {group.nama_barang}{group.alias && ` (${group.alias})`}
@@ -1481,13 +1499,18 @@ export default function MutasiGudang() {
                                     <Package className="w-3 h-3" />
                                     Stok: {stokAktual} {satuan}
                                   </span>
+                                  {collapsedGroups.has(group.kode_barang) && (
+                                    <span className="text-gray-400 font-normal italic">
+                                      ({group.rows.length} transaksi tersembunyi)
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                             </td>
                           </tr>
 
                           {/* ── Data Rows ── */}
-                          {group.rows.map((item) => (
+                          {!collapsedGroups.has(group.kode_barang) && group.rows.map((item) => (
                             <tr key={item.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-xs">{item.nama_gudang}</td>
                               <td className="px-6 py-4 whitespace-nowrap text-xs">{formatDate(item.tanggal)}</td>
@@ -1557,7 +1580,7 @@ export default function MutasiGudang() {
                           ))}
 
                           {/* ── Saldo Sebelum Filter (hanya ketika filter aktif) ── */}
-                          {hasActiveFilters && (() => {
+                          {!collapsedGroups.has(group.kode_barang) && hasActiveFilters && (() => {
                             const saldo = stokLuarFilterByBarang.get(group.kode_barang) ?? { qty: 0, satuan };
                             return (
                               <tr key={`saldo-${group.kode_barang}`} style={{ fontStyle: "italic" }}>
