@@ -277,6 +277,7 @@ export default function PermintaanBarang() {
             keterangan: item.keterangan || '',
             status: item.status,
         });
+
         // Cari barang di list untuk mendapatkan stok real-time
         const barang = barangList.find(b => b.kode_barang === item.kode_barang) || {
             nama_barang: item.nama_barang,
@@ -406,6 +407,7 @@ export default function PermintaanBarang() {
             await permintaanBarangAPI.serahkan(item.id, userName);
             alert(`${item.no_pr} berhasil ditandai Diserahkan.\nBuat Mutasi Keluar di halaman Mutasi Gudang.`);
             await refresh();
+            
             // Bawa kode_barang, qty, dan pr_no sebagai query params
             const params = new URLSearchParams({
                 action: 'tambah_keluar',
@@ -425,6 +427,7 @@ export default function PermintaanBarang() {
             await permintaanBarangAPI.proses(item.id, ''); // no_po dikosongkan dulu, diisi setelah PO dibuat
             alert(`PR ${item.no_pr} → Diproses.\n\nLengkapi dan simpan PO di halaman Pembelian.`);
             await refresh();
+            
             // Bawa kode_barang dan qty sebagai query params
             const params = new URLSearchParams({
                 action: 'tambah_po',
@@ -447,6 +450,7 @@ export default function PermintaanBarang() {
         )) return;
         try {
             await permintaanBarangAPI.terima(item.id, userName);
+            
             // Fetch ulang data PR untuk memastikan no_po yang dipakai adalah nilai terkini di DB
             const fresh = await permintaanBarangAPI.getById(item.id);
             const noPO = fresh?.no_po || item.no_po || '';
@@ -497,6 +501,7 @@ export default function PermintaanBarang() {
             'Tanggal': r.tanggal_pr?.split('T')[0] || '',
             'Kode Barang': r.kode_barang,
             'Nama Barang': r.nama_barang,
+            'Alias': r.alias || '',
             'Part Number': r.part_number || '',
             'Satuan': r.satuan || '',
             'Qty Request': r.qty_request,
@@ -750,7 +755,7 @@ export default function PermintaanBarang() {
                                                 {/* Barang */}
                                                 <td className="px-6 py-4 max-w-[200px]">
                                                     <div>
-                                                        <p className="text-xs font-medium text-gray-800 leading-snug truncate" title={item.nama_barang}>{item.nama_barang}</p>
+                                                        <p className="text-xs font-medium text-gray-800 leading-snug truncate">{item.nama_barang}{item.alias && ` (${item.alias})`}</p>
                                                         <p className="text-xs text-gray-400">{item.kode_barang}{item.part_number && ` · ${item.part_number}`}</p>
                                                         {item.nama_armada && <p className="text-xs text-gray-400">{item.nama_armada}</p>}
                                                     </div>
@@ -1274,7 +1279,7 @@ export default function PermintaanBarang() {
                             {/* Ringkasan PR */}
                             <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-2">
                                 {[
-                                    ['Barang', actionTarget.nama_barang],
+                                    ['Barang', `${actionTarget.nama_barang}${actionTarget.alias ? ` (${actionTarget.alias})` : ''}`],
                                     ['Part Number', actionTarget.part_number || '-'],
                                     ['Qty Request', `${fmtQty(actionTarget.qty_request)} ${actionTarget.satuan || ''}`],
                                     ['Stok Fisik', `${fmtQty(actionTarget.stok_fisik ?? 0)} ${actionTarget.satuan || ''}`],
