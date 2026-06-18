@@ -1116,8 +1116,8 @@ export default function PermintaanBarang() {
                                                         
                                                         <div className="text-xs text-gray-400">
                                                             {b.kode_barang}
-                                                            {b.part_number && ` · ${b.part_number}`}
-                                                            {b.satuan && ` (${b.satuan})`}
+                                                            {b.part_number && ` | ${b.part_number}`}
+                                                            {b.nama_armada && ` | ${b.nama_armada}`}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1149,7 +1149,7 @@ export default function PermintaanBarang() {
                                                         <p className="text-xs text-gray-400">
                                                             {selectedBarang.kode_barang}
                                                             {selectedBarang.part_number && ` · ${selectedBarang.part_number}`}
-                                                            {selectedBarang.satuan && ` · ${selectedBarang.satuan}`}
+                                                            {selectedBarang.nama_armada && ` · ${selectedBarang.nama_armada}`}
                                                         </p>
                                                     </div>
                                                 </div>

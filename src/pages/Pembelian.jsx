@@ -51,8 +51,10 @@ export default function Pembelian() {
         kode_vendor: '',
         nama_vendor: '',
         kode_barang: '',
+        part_number: '',
         nama_barang: '',
         alias: '',
+        satuan: '',
         qty_order: 1,
         harga_satuan: 0,
         total_harga: 0,
@@ -221,7 +223,7 @@ export default function Pembelian() {
     } = useDataTable({
         fetchData: fetchPembelianData,
         filterKeys: ['kode_kategori', 'kode_sub_kategori', 'kode_armada', 'status'],
-        searchKeys: ['no_po', 'kode_barang', 'nama_barang', 'alias', 'nama_vendor', 'keterangan'],
+        searchKeys: ['no_po', 'kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_vendor', 'keterangan'],
         dateFilterKey: 'tanggal_po',
         defaultSort: { key: 'tanggal_po', direction: 'desc' },
         defaultRowsPerPage: 10,
@@ -367,8 +369,10 @@ export default function Pembelian() {
         setFormData(prev => ({
             ...prev,
             kode_barang: barang.kode_barang,
+            part_number: barang.part_number,
             nama_barang: barang.nama_barang,
             alias: barang.alias,
+            satuan: barang.satuan,
             harga_satuan: barang.harga_satuan || 0,
             total_harga: prev.qty_order * (barang.harga_satuan || 0),
         }));
@@ -385,7 +389,9 @@ export default function Pembelian() {
             kode_vendor: item.kode_vendor,
             nama_vendor: item.nama_vendor,
             kode_barang: item.kode_barang,
+            part_number: item.part_number,
             nama_barang: item.nama_barang,
+            satuan: item.satuan,
             qty_order: item.qty_order,
             harga_satuan: item.harga_satuan,
             total_harga: item.total_harga,
@@ -411,8 +417,10 @@ export default function Pembelian() {
             kode_vendor: '',
             nama_vendor: '',
             kode_barang: '',
+            part_number: '',
             nama_barang: '',
             alias: '',
+            satuan: '',
             qty_order: 1,
             harga_satuan: 0,
             total_harga: 0,
@@ -459,8 +467,10 @@ export default function Pembelian() {
             setFormData(prev => ({
                 ...prev,
                 kode_barang: selectedBarang.kode_barang,
+                part_number: selectedBarang.part_number,
                 nama_barang: selectedBarang.nama_barang,
                 alias: selectedBarang.alias,
+                satuan: selectedBarang.satuan,
                 harga_satuan: selectedBarang.harga_satuan || 0,
                 total_harga: prev.qty_order * (selectedBarang.harga_satuan || 0),
             }));
@@ -553,8 +563,10 @@ export default function Pembelian() {
             setFormData(prev => ({
                 ...prev,
                 kode_barang: savedBarang.kode_barang,
+                part_number: savedBarang.part_number,
                 nama_barang: savedBarang.nama_barang,
                 alias: savedBarang.alias,
+                satuan: savedBarang.satuan,
                 harga_satuan: savedBarang.harga_satuan || 0,
                 total_harga: prev.qty_order * (savedBarang.harga_satuan || 0),
             }));
@@ -1635,13 +1647,8 @@ export default function Pembelian() {
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs font-medium text-gray-800">{v.nama_vendor}</span>
                                                     </div>
-
-                                                    <div className="text-xs text-gray-600">
-                                                        {v.kode_vendor && (
-                                                            <span className="text-xs text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
-                                                                KODE: {v.kode_vendor}
-                                                            </span>
-                                                        )}
+                                                    <div className="text-xs text-gray-400">
+                                                        {v.kode_vendor}
                                                     </div>
                                                 </div>
                                             ))
@@ -1694,23 +1701,15 @@ export default function Pembelian() {
                                                     className="px-4 py-3 hover:bg-green-50 cursor-pointer border-b last:border-0"
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        {/* <span className="text-sm font-medium text-gray-800">{b.nama_barang} ({b.alias})</span> */}
                                                         <span className="text-sm font-medium text-gray-800">
                                                             {b.nama_barang}{b.alias && ` (${b.alias})`}
                                                         </span>
                                                     </div>
 
-                                                    <div className="text-xs text-gray-600">
-                                                        {b.kode_barang && (
-                                                            <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">
-                                                                KB: {b.kode_barang}
-                                                            </span>
-                                                        )}
-                                                        {b.part_number && (
-                                                            <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                                                                PN: {b.part_number}
-                                                            </span>
-                                                        )}
+                                                    <div className="text-xs text-gray-400">
+                                                        {b.kode_barang}
+                                                        {b.part_number && ` | ${b.part_number}`}
+                                                        {b.nama_armada && ` | ${b.nama_armada}`}
                                                     </div>
                                                 </div>
                                             ))
@@ -1735,17 +1734,17 @@ export default function Pembelian() {
 
                                     <div>
                                         <span className="block text-xs uppercase text-gray-400 font-bold">Kode Barang</span>
-                                        <span className="text-xs">{formData.kode_barang || '-'}</span>
+                                        <span className="text-xs">{formData.kode_barang || ''}</span>
                                     </div>
 
                                     <div>
                                         <span className="block text-xs uppercase text-gray-400 font-bold">Part Number</span>
-                                        <span className="text-xs font-mono text-blue-600">{formData.part_number || '-'}</span>
+                                        <span className="text-xs font-mono text-blue-600">{formData.part_number || ''}</span>
                                     </div>
 
                                     <div>
                                         <span className="block text-xs uppercase text-gray-400 font-bold">Satuan</span>
-                                        <span className="text-xs">{formData.satuan || '-'}</span>
+                                        <span className="text-xs">{formData.satuan || ''}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1774,7 +1773,7 @@ export default function Pembelian() {
                                         <input
                                             type="text"
                                             name="harga_satuan"
-                                            value={hargaDisplayValue}
+                                            value={(formData.harga_satuan || 0).toLocaleString('id-ID')}
                                             onChange={(e) => {
                                                 // Strip semua titik (pemisah ribuan), ambil angka saja
                                                 const raw = e.target.value.replace(/\./g, '').replace(/[^0-9]/g, '');

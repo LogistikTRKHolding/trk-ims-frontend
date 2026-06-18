@@ -9,11 +9,15 @@ import * as XLSX from 'xlsx';
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
 import { useDataTable } from '../hooks/useDataTable';
-import { gudangAPI, mutasiAPI, barangAPI, authAPI, 
-  kategoriAPI, subKategoriAPI, armadaAPI, rakAPI } from '../services/api';
-import { Search, Filter, X, Download, Upload, Plus, Edit, Trash2, TrendingUp, 
+import {
+  gudangAPI, mutasiAPI, barangAPI, authAPI,
+  kategoriAPI, subKategoriAPI, armadaAPI, rakAPI
+} from '../services/api';
+import {
+  Search, Filter, X, Download, Upload, Plus, Edit, Trash2, TrendingUp,
   TrendingDown, Calendar, Package, FileText, FileCheck, FileX, RefreshCw,
-  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+  ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, ChevronDown
+} from 'lucide-react';
 
 export default function MutasiGudang() {
   const navigate = useNavigate()
@@ -45,7 +49,7 @@ export default function MutasiGudang() {
       return next;
     });
   }, []);
-  
+
   const [barangList, setBarangList] = useState([]);
   const [formData, setFormData] = useState({
     no_transaksi: '',
@@ -1462,7 +1466,7 @@ export default function MutasiGudang() {
                                 {/* Chevron */}
                                 {collapsedGroups.has(group.kode_barang)
                                   ? <ChevronRight className="w-4 h-4 text-green-600 shrink-0" />
-                                  : <ChevronDown  className="w-4 h-4 text-green-600 shrink-0" />
+                                  : <ChevronDown className="w-4 h-4 text-green-600 shrink-0" />
                                 }
                                 {/* Nama Barang */}
                                 <span className="text-xs font-bold text-green-900">
@@ -1732,7 +1736,7 @@ export default function MutasiGudang() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleSubmit}>
-                
+
                 {/* Modal Header */}
                 <div className="px-6 py-4 border-b flex items-center justify-between sticky top-0 bg-white">
                   <h2 className="text-xl font-bold">
@@ -1767,7 +1771,7 @@ export default function MutasiGudang() {
                       </div>
                     ) : null
                   )}
-                  
+
                   {/* Tanggal & Jenis Transaksi*/}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
@@ -1803,7 +1807,7 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Jenis Transaksi *
@@ -1850,18 +1854,11 @@ export default function MutasiGudang() {
                                   {barang.nama_barang}{barang.alias && ` (${barang.alias})`}
                                 </span>
                               </div>
-                              
-                              <div className="text-sm text-gray-600">
-                                {barang.kode_barang && (
-                                  <span className="text-sm text-purple-600 font-mono bg-purple-50 px-1.5 py-0.5 rounded">
-                                    KB: {barang.kode_barang}
-                                  </span>
-                                )}
-                                {barang.part_number && (
-                                  <span className="text-sm text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded">
-                                    PN: {barang.part_number}
-                                  </span>
-                                )}
+
+                              <div className="text-xs text-gray-400">
+                                {barang.kode_barang}
+                                {barang.part_number && ` | ${barang.part_number}`}
+                                {barang.nama_armada && ` | ${barang.nama_armada}`}
                               </div>
                             </div>
                           ))
