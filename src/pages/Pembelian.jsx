@@ -1334,12 +1334,8 @@ export default function Pembelian() {
                         <table className="w-full">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
-                                    <th onClick={() => requestSort('no_po')} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
-                                        No. PO {sortConfig.key === 'no_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                                    </th>
-                                    <th onClick={() => requestSort('tanggal_po')} className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100">
-                                        Tanggal PO {sortConfig.key === 'tanggal_po' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">No. PO</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tanggal</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Vendor</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>
