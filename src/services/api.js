@@ -169,7 +169,7 @@ const viewAPI = {
 export const barangAPI = {
   // READ Operations - Use VIEW
   async getAll(filters = {}) {
-    return viewAPI.getAll("v_barang_complete", filters);
+    return viewAPI.getAll("v_barang_complete", { is_active: true, ...filters });
   },
 
   async getById(id) {

@@ -315,30 +315,36 @@ export default function Barang() {
   };
 
   const handleDelete = async (item) => {
-    if (!confirm(`Yakin ingin menghapus barang "${item.nama_barang}"?`)) return;
-
+    const isAdmin = currentUser?.role === 'Admin';
+    const confirmMsg = isAdmin
+      ? `⚠️ HAPUS PERMANEN\n\nData barang "${item.nama_barang}" akan dihapus secara permanen dan tidak dapat dikembalikan.\n\nLanjutkan?`
+      : `Nonaktifkan barang "${item.nama_barang}"?\n\nBarang tidak akan tampil di daftar, tapi data tetap tersimpan di database.`;
+  
+    if (!confirm(confirmMsg)) return;
+  
     try {
       const token = localStorage.getItem('authToken');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/data/barang/${item.id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-
+  
       if (!response.ok) {
         const result = await response.json();
         throw new Error(result.error || 'Delete failed');
       }
-
-      alert('Barang berhasil dihapus!');
+  
+      const successMsg = isAdmin
+        ? 'Barang berhasil dihapus permanen!'
+        : 'Barang berhasil dinonaktifkan!';
+      alert(successMsg);
       await refresh();
     } catch (error) {
       console.error('Delete error:', error);
       alert('Error: ' + error.message);
     }
   };
-
+  
   // ============================================
   // Form Handlers
   // ============================================
@@ -643,19 +649,9 @@ export default function Barang() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">
                     Gambar
-                  </th>
-                  <th
-                    onClick={() => requestSort('nama_barang')}
-                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                  >
-                    Nama Barang{sortConfig.key === 'nama_barang' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th
-                    onClick={() => requestSort('part_number')}
-                    className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                  >
-                    Kode Barang,<br />Part Number{sortConfig.key === 'part_number' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
+                  </th>                  
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nama Barang</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kode Barang,<br />Part Number</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Kategori,<br />Sub Kategori</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Armada</th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tipe</th>
