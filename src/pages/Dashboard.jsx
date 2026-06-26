@@ -5,14 +5,17 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { dashboardAPI } from '../services/api';
-import { ClipboardList, TrendingUp, Package, AlertTriangle, 
-  ShoppingCart, Clock, DollarSign } from 'lucide-react';
+import {
+  ClipboardList, TrendingUp, Package, AlertTriangle,
+  ShoppingCart, Clock, DollarSign, RefreshCw,
+} from 'lucide-react';
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadMetrics();
@@ -28,6 +31,19 @@ export default function Dashboard() {
       alert('Error loading dashboard metrics: ' + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await dashboardAPI.getMetrics(selectedMonth, selectedYear);
+      setMetrics(data);
+    } catch (error) {
+      console.error('Error refreshing metrics:', error);
+      alert('Error refreshing dashboard: ' + error.message);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -164,6 +180,14 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-end">
           <div className="flex space-x-3">
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Memuat...' : 'Refresh'}</span>
+            </button>
             <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -414,7 +438,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Link
+            <Link
               to="/permintaan_barang"
               className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
@@ -452,7 +476,7 @@ export default function Dashboard() {
             >
               <AlertTriangle className="w-8 h-8 text-red-600 mb-2" />
               <span className="text-sm font-medium text-gray-900">Stok Kritis</span>
-            </Link>            
+            </Link>
           </div>
         </div>
       </div>
