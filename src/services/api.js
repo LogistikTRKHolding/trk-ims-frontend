@@ -20,6 +20,41 @@ function removeAuthToken() {
   localStorage.removeItem("currentUser");
 }
 
+// ============================================
+// JWT HELPERS (untuk auto-logout saat token expired)
+// ============================================
+
+// Decode payload JWT tanpa library eksternal.
+// JWT terdiri dari header.payload.signature, base64url-encoded.
+function decodeToken(token) {
+  try {
+    const payload = token.split(".")[1];
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
+        .join("")
+    );
+    return JSON.parse(json);
+  } catch {
+    return null; // token malformed / tidak bisa didecode
+  }
+}
+
+// Ambil waktu expiry token dalam milidetik (epoch), atau null jika tidak ada claim "exp".
+function getExpiryFromToken(token) {
+  const decoded = decodeToken(token);
+  return decoded?.exp ? decoded.exp * 1000 : null;
+}
+
+// Token dianggap expired hanya jika claim "exp" ada DAN sudah lewat.
+// Token tanpa "exp" tidak dianggap expired di sisi client (biar backend yang tentukan).
+function isTokenExpired(token) {
+  const expiry = getExpiryFromToken(token);
+  return expiry ? Date.now() >= expiry : false;
+}
+
 async function fetchWithAuth(url, options = {}) {
   const token = getAuthToken();
 
@@ -40,6 +75,7 @@ async function fetchWithAuth(url, options = {}) {
   // Handle authentication errors
   if (response.status === 401) {
     removeAuthToken();
+    sessionStorage.setItem("logoutReason", "expired");
     window.location.href = "/login";
     throw new Error("Session expired. Please login again.");
   }
@@ -99,7 +135,23 @@ export const authAPI = {
   },
 
   isAuthenticated() {
-    return !!getAuthToken();
+    const token = getAuthToken();
+    if (!token) return false;
+
+    if (isTokenExpired(token)) {
+      // Token sudah lewat masa berlakunya - bersihkan di sisi client juga
+      removeAuthToken();
+      return false;
+    }
+
+    return true;
+  },
+
+  // Waktu expiry token saat ini dalam epoch ms, atau null jika tidak ada token / tidak ada claim exp.
+  // Dipakai untuk menjadwalkan auto-logout proaktif (lihat App.jsx).
+  getTokenExpiry() {
+    const token = getAuthToken();
+    return token ? getExpiryFromToken(token) : null;
   },
 };
 
