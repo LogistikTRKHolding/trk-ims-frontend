@@ -746,12 +746,6 @@ export const permintaanBarangAPI = {
       catatan_approve: catatan || "",
     }),
 
-  /* convertToPO: (id, noPO) =>
-    baseTableAPI.update("permintaan_barang", id, {
-      status: "Converted",
-      no_po: noPO,
-    }), */
-
   serahkan: (id, by) =>
     baseTableAPI.update("permintaan_barang", id, {
       status: "Diserahkan",
