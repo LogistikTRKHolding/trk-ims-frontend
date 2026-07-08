@@ -1011,77 +1011,80 @@ export default function Pembelian() {
                             {/* Left: Filter Controls */}
                             <div className="flex flex-wrap gap-2 flex-1">
 
-                                {/* Filter Kategori */}
-                                <select
-                                    value={filters.kode_kategori || 'all'}
-                                    onChange={(e) => {
-                                        setFilter('kode_kategori', e.target.value);
-                                        setFilter('kode_sub_kategori', 'all');
-                                        loadSubKategoriByKategori(e.target.value, 'filter');
-                                    }}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                                >
-                                    <option value="all">Semua Kategori</option>
-                                    {kategoriOptions.map(kat => (
-                                        <option key={kat.kode} value={kat.kode}>{kat.nama}</option>
-                                    ))}
-                                </select>
+                                {/* Dropdown group: 2 kolom 50:50 di mobile, flex-wrap normal di sm+ */}
+                                <div className="grid grid-cols-2 gap-2 w-full sm:contents">
+                                    {/* Filter Kategori */}
+                                    <select
+                                        value={filters.kode_kategori || 'all'}
+                                        onChange={(e) => {
+                                            setFilter('kode_kategori', e.target.value);
+                                            setFilter('kode_sub_kategori', 'all');
+                                            loadSubKategoriByKategori(e.target.value, 'filter');
+                                        }}
+                                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                                    >
+                                        <option value="all">Semua Kategori</option>
+                                        {kategoriOptions.map(kat => (
+                                            <option key={kat.kode} value={kat.kode}>{kat.nama}</option>
+                                        ))}
+                                    </select>
 
-                                {/* Filter Sub Kategori (cascading dari Kategori) */}
-                                <select
-                                    value={filters.kode_sub_kategori || 'all'}
-                                    onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
-                                    disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                >
-                                    <option value="all">Semua Sub Kategori</option>
-                                    {subKategoriList.map((sub) => (
-                                        <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
-                                            {sub.nama_sub_kategori}
-                                        </option>
-                                    ))}
-                                </select>
+                                    {/* Filter Sub Kategori (cascading dari Kategori) */}
+                                    <select
+                                        value={filters.kode_sub_kategori || 'all'}
+                                        onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                                        disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || subKategoriList.length === 0}
+                                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="all">Semua Sub Kategori</option>
+                                        {subKategoriList.map((sub) => (
+                                            <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                                                {sub.nama_sub_kategori}
+                                            </option>
+                                        ))}
+                                    </select>
 
-                                {/* Filter Armada */}
-                                <select
-                                    value={filters.kode_armada || 'all'}
-                                    onChange={(e) => setFilter('kode_armada', e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                                >
-                                    <option value="all">Semua Armada</option>
-                                    {armadaOptions.map(arm => (
-                                        <option key={arm.kode} value={arm.kode}>{arm.nama}</option>
-                                    ))}
-                                </select>
+                                    {/* Filter Armada */}
+                                    <select
+                                        value={filters.kode_armada || 'all'}
+                                        onChange={(e) => setFilter('kode_armada', e.target.value)}
+                                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                                    >
+                                        <option value="all">Semua Armada</option>
+                                        {armadaOptions.map(arm => (
+                                            <option key={arm.kode} value={arm.kode}>{arm.nama}</option>
+                                        ))}
+                                    </select>
 
-                                {/* Filter Status */}
-                                <select
-                                    value={filters.status || 'all'}
-                                    onChange={(e) => setFilter('status', e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                                >
-                                    <option value="all">Semua Status</option>
-                                    <option value="Diproses">Diproses</option>
-                                    <option value="Diterima">Diterima</option>
-                                    <option value="Selesai">Selesai</option>
-                                    <option value="Dibatalkan">Dibatalkan</option>
-                                </select>
+                                    {/* Filter Status */}
+                                    <select
+                                        value={filters.status || 'all'}
+                                        onChange={(e) => setFilter('status', e.target.value)}
+                                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                                    >
+                                        <option value="all">Semua Status</option>
+                                        <option value="Diproses">Diproses</option>
+                                        <option value="Diterima">Diterima</option>
+                                        <option value="Selesai">Selesai</option>
+                                        <option value="Dibatalkan">Dibatalkan</option>
+                                    </select>
 
-                                {/* Date Filter Mode */}
-                                <select
-                                    value={dateFilterMode}
-                                    onChange={(e) => {
-                                        setDateFilterMode(e.target.value);
-                                        if (e.target.value === 'all') {
-                                            clearDateFilter();
-                                        }
-                                    }}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                                >
-                                    <option value="all">Semua Tanggal</option>
-                                    <option value="single">Tanggal Spesifik</option>
-                                    <option value="range">Rentang Tanggal</option>
-                                </select>
+                                    {/* Date Filter Mode */}
+                                    <select
+                                        value={dateFilterMode}
+                                        onChange={(e) => {
+                                            setDateFilterMode(e.target.value);
+                                            if (e.target.value === 'all') {
+                                                clearDateFilter();
+                                            }
+                                        }}
+                                        className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                                    >
+                                        <option value="all">Semua Tanggal</option>
+                                        <option value="single">Tanggal Spesifik</option>
+                                        <option value="range">Rentang Tanggal</option>
+                                    </select>
+                                </div>
 
                                 {/* Single Date Input */}
                                 {dateFilterMode === 'single' && (
@@ -1122,10 +1125,10 @@ export default function Pembelian() {
                                 )}
                             </div>
 
-                            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1" />
+                            <div className="hidden lg:block h-8 w-px bg-gray-200 mx-1 shrink-0" />
 
                             {/* Right: Action Buttons */}
-                            <div className="flex gap-2 w-full lg:w-auto">
+                            <div className="flex flex-wrap gap-2 w-full lg:w-auto shrink-0">
                                 <button
                                     onClick={handleRefresh}
                                     disabled={isRefreshing}

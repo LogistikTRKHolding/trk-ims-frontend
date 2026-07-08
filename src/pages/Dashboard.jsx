@@ -178,20 +178,21 @@ export default function Dashboard() {
     <MainLayout title="Dashboard">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-end">
-          <div className="flex space-x-3">
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex-1 lg:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span>{isRefreshing ? 'Memuat...' : 'Refresh'}</span>
-            </button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Memuat...' : 'Refresh'}</span>
+          </button>
+
+          <div className="flex gap-3">
             <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              className="flex-1 sm:flex-initial px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
             >
               {months.map((month, index) => (
                 <option key={index} value={index + 1}>
@@ -203,7 +204,7 @@ export default function Dashboard() {
             <select aria-label="Select year" name="year"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              className="flex-1 sm:flex-initial px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
             >
               {years.map((year) => (
                 <option key={year} value={year}>

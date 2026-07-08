@@ -577,46 +577,49 @@ export default function PermintaanBarang() {
                         {/* Row 2: Filters + Actions */}
                         <div className="flex flex-wrap items-center gap-2">
 
-                            {/* Status */}
-                            <select value={filters.status || 'all'} onChange={e => setFilter('status', e.target.value)}
-                                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <option value="all">Semua Status</option>
-                                {Object.keys(STATUS_META).map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
-
-                            {/* Prioritas */}
-                            <select value={filters.prioritas || 'all'} onChange={e => setFilter('prioritas', e.target.value)}
-                                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <option value="all">Semua Prioritas</option>
-                                {Object.keys(PRIORITAS_META).map(p => <option key={p} value={p}>{p}</option>)}
-                            </select>
-
-                            {/* Kategori (cascading) */}
-                            <select value={filters.kode_kategori || 'all'}
-                                onChange={e => {
-                                    setFilter('kode_kategori', e.target.value);
-                                    setFilter('kode_sub_kategori', 'all');
-                                    loadSubKategori(e.target.value === 'all' ? '' : e.target.value, 'filter');
-                                }}
-                                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <option value="all">Semua Kategori</option>
-                                {kategoriList.map(k => <option key={k.kode_kategori} value={k.kode_kategori}>{k.nama_kategori}</option>)}
-                            </select>
-
-                            {subKategoriList.length > 0 && (
-                                <select value={filters.kode_sub_kategori || 'all'} onChange={e => setFilter('kode_sub_kategori', e.target.value)}
-                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="all">Semua Sub Kat.</option>
-                                    {subKategoriList.map(sk => <option key={sk.kode_sub_kategori} value={sk.kode_sub_kategori}>{sk.nama_sub_kategori}</option>)}
+                            {/* Dropdown group: 2 kolom 50:50 di mobile, flex-wrap normal di sm+ */}
+                            <div className="grid grid-cols-2 gap-2 w-full sm:contents">
+                                {/* Status */}
+                                <select value={filters.status || 'all'} onChange={e => setFilter('status', e.target.value)}
+                                    className="w-full sm:w-auto px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="all">Semua Status</option>
+                                    {Object.keys(STATUS_META).map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
-                            )}
 
-                            {/* Armada */}
-                            <select value={filters.nama_armada || 'all'} onChange={e => setFilter('nama_armada', e.target.value)}
-                                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <option value="all">Semua Armada</option>
-                                {armadaList.map(a => <option key={a.kode_armada} value={a.nama_armada}>{a.nama_armada}</option>)}
-                            </select>
+                                {/* Prioritas */}
+                                <select value={filters.prioritas || 'all'} onChange={e => setFilter('prioritas', e.target.value)}
+                                    className="w-full sm:w-auto px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="all">Semua Prioritas</option>
+                                    {Object.keys(PRIORITAS_META).map(p => <option key={p} value={p}>{p}</option>)}
+                                </select>
+
+                                {/* Kategori (cascading) */}
+                                <select value={filters.kode_kategori || 'all'}
+                                    onChange={e => {
+                                        setFilter('kode_kategori', e.target.value);
+                                        setFilter('kode_sub_kategori', 'all');
+                                        loadSubKategori(e.target.value === 'all' ? '' : e.target.value, 'filter');
+                                    }}
+                                    className="w-full sm:w-auto px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="all">Semua Kategori</option>
+                                    {kategoriList.map(k => <option key={k.kode_kategori} value={k.kode_kategori}>{k.nama_kategori}</option>)}
+                                </select>
+
+                                {subKategoriList.length > 0 && (
+                                    <select value={filters.kode_sub_kategori || 'all'} onChange={e => setFilter('kode_sub_kategori', e.target.value)}
+                                        className="w-full sm:w-auto px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <option value="all">Semua Sub Kat.</option>
+                                        {subKategoriList.map(sk => <option key={sk.kode_sub_kategori} value={sk.kode_sub_kategori}>{sk.nama_sub_kategori}</option>)}
+                                    </select>
+                                )}
+
+                                {/* Armada */}
+                                <select value={filters.nama_armada || 'all'} onChange={e => setFilter('nama_armada', e.target.value)}
+                                    className="w-full sm:w-auto px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                    <option value="all">Semua Armada</option>
+                                    {armadaList.map(a => <option key={a.kode_armada} value={a.nama_armada}>{a.nama_armada}</option>)}
+                                </select>
+                            </div>
 
                             {/* Quick date */}
                             <div className="flex items-center gap-0.5 border border-gray-200 rounded-lg overflow-hidden">

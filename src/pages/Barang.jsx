@@ -498,62 +498,65 @@ export default function Barang() {
               {/* Left: Filter Controls */}
               <div className="flex flex-wrap gap-2 flex-1">
 
-                {/* Filter Kategori */}
-                <select
-                  value={filters.kode_kategori || 'all'}
-                  onChange={(e) => {
-                    setFilter('kode_kategori', e.target.value);
-                    setFilter('kode_sub_kategori', 'all');
-                  }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                >
-                  <option value="all">Semua Kategori</option>
-                  {kategoriList.map((kat) => (
-                    <option key={kat.kode_kategori} value={kat.kode_kategori}>
-                      {kat.nama_kategori}
-                    </option>
-                  ))}
-                </select>
+                {/* Dropdown group: 2 kolom 50:50 di mobile, flex-wrap normal di sm+ */}
+                <div className="grid grid-cols-2 gap-2 w-full sm:contents">
+                  {/* Filter Kategori */}
+                  <select
+                    value={filters.kode_kategori || 'all'}
+                    onChange={(e) => {
+                      setFilter('kode_kategori', e.target.value);
+                      setFilter('kode_sub_kategori', 'all');
+                    }}
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                  >
+                    <option value="all">Semua Kategori</option>
+                    {kategoriList.map((kat) => (
+                      <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                        {kat.nama_kategori}
+                      </option>
+                    ))}
+                  </select>
 
-                {/* Filter Sub Kategori (cascading dari Kategori) */}
-                <select
-                  value={filters.kode_sub_kategori || 'all'}
-                  onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
-                  disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || filteredSubKategoriToolbar.length === 0}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="all">Semua Sub Kategori</option>
-                  {filteredSubKategoriToolbar.map((sub) => (
-                    <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
-                      {sub.nama_sub_kategori}
-                    </option>
-                  ))}
-                </select>
+                  {/* Filter Sub Kategori (cascading dari Kategori) */}
+                  <select
+                    value={filters.kode_sub_kategori || 'all'}
+                    onChange={(e) => setFilter('kode_sub_kategori', e.target.value)}
+                    disabled={!filters.kode_kategori || filters.kode_kategori === 'all' || filteredSubKategoriToolbar.length === 0}
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[150px] disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="all">Semua Sub Kategori</option>
+                    {filteredSubKategoriToolbar.map((sub) => (
+                      <option key={sub.kode_sub_kategori} value={sub.kode_sub_kategori}>
+                        {sub.nama_sub_kategori}
+                      </option>
+                    ))}
+                  </select>
 
-                {/* Filter Armada */}
-                <select
-                  value={filters.kode_armada || 'all'}
-                  onChange={(e) => setFilter('kode_armada', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                >
-                  <option value="all">Semua Armada</option>
-                  {armadaList.map((arm) => (
-                    <option key={arm.kode_armada} value={arm.kode_armada}>
-                      {arm.nama_armada}
-                    </option>
-                  ))}
-                </select>
+                  {/* Filter Armada */}
+                  <select
+                    value={filters.kode_armada || 'all'}
+                    onChange={(e) => setFilter('kode_armada', e.target.value)}
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                  >
+                    <option value="all">Semua Armada</option>
+                    {armadaList.map((arm) => (
+                      <option key={arm.kode_armada} value={arm.kode_armada}>
+                        {arm.nama_armada}
+                      </option>
+                    ))}
+                  </select>
 
-                {/* Filter Tipe Stok */}
-                <select
-                  value={filters.is_stocked || 'all'}
-                  onChange={(e) => setFilter('is_stocked', e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm min-w-[140px]"
-                >
-                  <option value="all">Semua Tipe</option>
-                  <option value="true">Di-Stok</option>
-                  <option value="false">Non-Stok</option>
-                </select>
+                  {/* Filter Tipe Stok */}
+                  <select
+                    value={filters.is_stocked || 'all'}
+                    onChange={(e) => setFilter('is_stocked', e.target.value)}
+                    className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:min-w-[140px]"
+                  >
+                    <option value="all">Semua Tipe</option>
+                    <option value="true">Di-Stok</option>
+                    <option value="false">Non-Stok</option>
+                  </select>
+                </div>
 
                 {/* Clear All Filters */}
                 {hasActiveFilters && (
