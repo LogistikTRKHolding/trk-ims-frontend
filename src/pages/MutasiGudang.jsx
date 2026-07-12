@@ -169,7 +169,16 @@ export default function MutasiGudang() {
         armadaAPI.getAll(),
         rakAPI.getAll(),
       ]);
-      setGudangList(gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
+      const mappedGudang = gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang }));
+
+      // Staff_gudang hanya boleh melihat & memilih lokasi gudang sesuai profilnya
+      const isStaffGudang = currentUser?.role === 'Staff_gudang';
+      const userKodeGudang = currentUser?.kode_gudang || currentUser?.kodeGudang;
+      const scopedGudang = isStaffGudang && userKodeGudang
+        ? mappedGudang.filter(g => g.kode === userKodeGudang)
+        : mappedGudang;
+
+      setGudangList(scopedGudang);
       setKategoriList(kategoriResult);
       setArmadaList(armadaResult);
       setRakList(rakResult);
@@ -226,12 +235,18 @@ export default function MutasiGudang() {
   const fetchMutasiData = useCallback(async () => {
     try {
       const result = await mutasiAPI.getAll();
+      // Staff_gudang hanya melihat data mutasi untuk lokasi gudang sesuai profilnya
+      const isStaffGudang = currentUser?.role === 'Staff_gudang';
+      const userKodeGudang = currentUser?.kode_gudang || currentUser?.kodeGudang;
+      if (isStaffGudang && userKodeGudang) {
+        return result.filter(item => item.kode_gudang === userKodeGudang);
+      }
       return result;
     } catch (error) {
       console.error('Error fetching mutasi:', error);
       throw error;
     }
-  }, []);
+  }, [currentUser]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('id-ID', {
@@ -513,10 +528,14 @@ export default function MutasiGudang() {
   };
 
   const resetForm = () => {
+    // Staff_gudang: otomatis isi gudang sesuai lokasi profilnya (gudangList sudah dibatasi 1 opsi)
+    const isStaffGudang = currentUser?.role === 'Staff_gudang';
+    const defaultGudang = isStaffGudang && gudangList.length === 1 ? gudangList[0] : null;
+
     setFormData({
       no_transaksi: '',
-      kode_gudang: '',
-      nama_gudang: '',
+      kode_gudang: defaultGudang?.kode || '',
+      nama_gudang: defaultGudang?.nama || '',
       tanggal: new Date().toISOString().split('T')[0],
       jenis_transaksi: 'Masuk',
       kode_barang: '',
@@ -530,8 +549,8 @@ export default function MutasiGudang() {
       keterangan: '',
       referensi: '',
     });
+    setRakListFiltered(defaultGudang ? rakList.filter(r => r.kode_gudang === defaultGudang.kode) : []);
     setSearchTermBarang('');
-    setRakListFiltered([]);
     setEditingItem(null);
   };
 
@@ -1786,7 +1805,8 @@ export default function MutasiGudang() {
                         value={formData.kode_gudang}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                        disabled={currentUser?.role === 'Staff_gudang'}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 ${currentUser?.role === 'Staff_gudang' ? 'bg-gray-100 cursor-not-allowed text-gray-600' : ''}`}
                       >
                         <option value="">-- Pilih Gudang --</option>
                         {gudangList.map((gud) => (

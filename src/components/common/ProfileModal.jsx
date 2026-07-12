@@ -2,8 +2,8 @@
 // Modal for editing user profile from anywhere in the app
 
 import { useState, useEffect } from 'react';
-import { X, User, Mail, Phone, Building, Shield, Save, Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
-import { authAPI, usersAPI } from '../../services/api';
+import { X, User, Mail, Phone, Building, Shield, Save, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Warehouse } from 'lucide-react';
+import { authAPI, usersAPI, gudangAPI } from '../../services/api';
 
 export default function ProfileModal({ isOpen, onClose, userId }) {
   const [loading, setLoading] = useState(false);
@@ -27,7 +27,9 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
     department: '',
     role: '',
     status: '',
+    kode_gudang: '',
   });
+  const [gudangList, setGudangList] = useState([]);
 
   const currentUser = authAPI.getCurrentUser();
 
@@ -37,8 +39,19 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
       setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
       setPasswordStrength(null);
       loadUserData();
+      loadGudangList();
     }
   }, [isOpen, userId]);
+
+  const loadGudangList = async () => {
+    try {
+      const result = await gudangAPI.getAll();
+      setGudangList(result.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
+    } catch (error) {
+      console.error('Error loading gudang list:', error);
+      setGudangList([]);
+    }
+  };
 
   const loadUserData = async () => {
     try {
@@ -60,6 +73,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
           status: user.status || 'Active',
           created_at: user.created_at || user.createdAt,
           last_login: user.last_login || user.lastLogin,
+          kode_gudang: user.kode_gudang || user.kodeGudang || '',
         });
         setFormData({
           full_name: user.fullName || user.full_name || '',
@@ -67,6 +81,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
           department: user.department || '',
           role: user.role || 'Staff',
           status: user.status || 'Active',
+          kode_gudang: user.kode_gudang || user.kodeGudang || '',
         });
       } else {
         // Untuk Admin yang edit user lain: hit API (Admin punya akses GET /users)
@@ -81,6 +96,7 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
             department: user.department || '',
             role: user.role || 'Staff',
             status: user.status || 'Active',
+            kode_gudang: user.kode_gudang || '',
           });
         } else {
           throw new Error(`User dengan ID ${userId} tidak ditemukan`);
@@ -154,6 +170,12 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
       return;
     }
 
+    // Admin wajib menetapkan Lokasi Gudang saat role user adalah Staff_gudang
+    if (currentUser?.role === 'Admin' && userId !== currentUser?.userId && formData.role === 'Staff_gudang' && !formData.kode_gudang) {
+      alert('Lokasi Gudang harus dipilih untuk role Staff Gudang!');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -167,6 +189,8 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
       if (currentUser?.role === 'Admin' && userId !== currentUser?.userId) {
         updates.role = formData.role;
         updates.status = formData.status;
+        // Lokasi gudang hanya relevan untuk Staff_gudang; kosongkan jika role lain
+        updates.kode_gudang = formData.role === 'Staff_gudang' ? formData.kode_gudang : null;
       }
 
       await usersAPI.update(userId, updates);
@@ -279,6 +303,14 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                         <div>
                           <p className="text-xs text-blue-600">Terakhir Masuk</p>
                           <p>{new Date(userData.last_login).toLocaleDateString('id-ID')}</p>
+                        </div>
+                      )}
+                      {userData.role === 'Staff_gudang' && (
+                        <div>
+                          <p className="text-xs text-blue-600">Lokasi Gudang</p>
+                          <p className="font-medium">
+                            {gudangList.find(g => g.kode === userData.kode_gudang)?.nama || userData.kode_gudang || '-'}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -402,6 +434,32 @@ export default function ProfileModal({ isOpen, onClose, userId }) {
                       <option value="Inactive">Inactive</option>
                     </select>
                   </div>
+
+                  {/* Lokasi Gudang - hanya untuk role Staff_gudang */}
+                  {formData.role === 'Staff_gudang' && (
+                    <div className="col-span-2">
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <Warehouse className="w-4 h-4" />
+                        Lokasi Gudang *
+                      </label>
+                      <select
+                        required
+                        value={formData.kode_gudang}
+                        onChange={(e) => setFormData({ ...formData, kode_gudang: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      >
+                        <option value="">-- Pilih Lokasi Gudang --</option>
+                        {gudangList.map((gud) => (
+                          <option key={gud.kode} value={gud.kode}>
+                            {gud.nama}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500">
+                        User ini hanya akan bisa mengelola mutasi untuk gudang yang dipilih.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

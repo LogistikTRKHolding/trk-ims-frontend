@@ -108,7 +108,7 @@ export default function PermintaanBarang() {
 
     // ── Role permissions ──────────────────────────────────────────────────────
     // Pembuat: staff lapangan / mekanik
-    const canCreate = ['Admin', 'Manager', 'Staff', 'Staff_gudang'].includes(currentUser?.role);
+    const canCreate = ['Admin', 'Manager', 'Staff', 'Staff_gudang', 'Staff_pembelian'].includes(currentUser?.role);
     // Approver: manager atau admin
     const canApprove = ['Admin', 'Manager'].includes(currentUser?.role);
     // Serahkan barang dari gudang (mutasi keluar)
