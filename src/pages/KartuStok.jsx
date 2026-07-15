@@ -104,11 +104,52 @@ export default function KartuStok() {
         }
     };
 
+    // v_stok_summary sekarang mengembalikan 1 baris per (kode_barang + gudang),
+    // supaya lokasi bisa dipisah di halaman Summary/Stok. Untuk sidebar pemilihan
+    // barang di halaman ini, kita butuh 1 entri per barang (kartu stok menggabungkan
+    // riwayat mutasi dari semua gudang), jadi baris-baris tsb digabung kembali di sini.
+    const mergeLocationsToItems = (rows) => {
+        const merged = new Map();
+        for (const row of rows) {
+            const num = (v) => Number(v) || 0;
+            const existing = merged.get(row.kode_barang);
+            if (!existing) {
+                merged.set(row.kode_barang, {
+                    ...row,
+                    total_masuk: num(row.total_masuk),
+                    total_keluar: num(row.total_keluar),
+                    stok_akhir: num(row.stok_akhir),
+                    stok_tersedia: num(row.stok_tersedia),
+                    nilai_stok: num(row.nilai_stok),
+                    _lokasiList: row.lokasi ? [row.lokasi] : [],
+                });
+            } else {
+                existing.total_masuk += num(row.total_masuk);
+                existing.total_keluar += num(row.total_keluar);
+                existing.stok_akhir += num(row.stok_akhir);
+                existing.stok_tersedia += num(row.stok_tersedia);
+                existing.nilai_stok += num(row.nilai_stok);
+                if (row.lokasi) existing._lokasiList.push(row.lokasi);
+            }
+        }
+        return Array.from(merged.values()).map(({ _lokasiList, ...item }) => ({
+            ...item,
+            lokasi: _lokasiList.length ? _lokasiList.join(', ') : null,
+            status_stok: item.stok_akhir <= 0
+                ? 'Habis'
+                : item.stok_akhir <= (item.min_stok || 0)
+                    ? 'Stok Kurang'
+                    : item.max_stok && item.stok_akhir > item.max_stok
+                        ? 'Stok Lebih'
+                        : 'Tersedia',
+        }));
+    };
+
     const loadItems = async () => {
         setLoading(true);
         try {
             const result = await stokAPI.getAll();
-            setItems(result);
+            setItems(mergeLocationsToItems(result));
         } catch (error) {
             console.error('Error loading items:', error);
             alert('Failed to load items: ' + error.message);
@@ -506,6 +547,7 @@ export default function KartuStok() {
                                                 {selectedItem.nama_armada && (
                                                     <p>Armada: <span className="font-medium">{selectedItem.nama_armada}</span></p>
                                                 )}
+                                                <p>Lokasi: <span className="font-medium">{selectedItem.lokasi || '-'}</span></p>
                                             </div>
                                         </div>
                                     </div>

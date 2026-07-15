@@ -58,7 +58,7 @@ export default function Summary() {
     // Config
     fetchData: stokAPI.getAll,
     filterKeys: ['status_stok', 'kode_kategori', 'kode_sub_kategori', 'nama_armada',],
-    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'status_stok'],
+    searchKeys: ['kode_barang', 'part_number', 'nama_barang', 'alias', 'nama_kategori', 'nama_armada', 'nama_gudang', 'status_stok'],
     defaultSort: { key: 'nama_barang', direction: 'asc' },
     defaultRowsPerPage: 10,
     customFilterKeys: ['status_stok'], // ← TAMBAH: status_stok dihandle oleh customFilterFn
@@ -168,6 +168,7 @@ export default function Summary() {
       'Kategori': item.nama_kategori || '',
       'Sub Kategori': item.nama_sub_kategori || '',
       'Armada': item.nama_armada || '',
+      'Gudang': item.nama_gudang || item.lokasi || '',
       'Satuan': item.satuan || '',
       'Stok Akhir': item.stok_akhir,
       'Nilai Stok': item.nilai_stok,
@@ -471,19 +472,20 @@ export default function Summary() {
                   </th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase">Kategori,<br />Sub Kategori</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase">Armada</th>
-                  <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  <th onClick={() => requestSort('stok_akhir')} className="px-6 py-4 text-xs font-bold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Stok {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
-                  <th onClick={() => requestSort('nilai_stok')} className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
+                  {/* <th onClick={() => requestSort('nilai_stok')} className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase cursor-pointer hover:bg-gray-100 transition-colors">
                     Harga {sortConfig.key === 'nilai_stok' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
+                  </th> */}
+                  <th className="px-6 py-4 text-xs font-bold text-gray-600 uppercase">Lokasi</th>
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center">
+                    <td colSpan="9" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                         <span className="text-sm text-gray-500">Memuat data...</span>
@@ -492,13 +494,13 @@ export default function Summary() {
                   </tr>
                 ) : paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center text-gray-500 font-medium">
+                    <td colSpan="9" className="px-6 py-12 text-center text-gray-500 font-medium">
                       Data tidak ditemukan
                     </td>
                   </tr>
                 ) : (
                   paginatedData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                    <tr key={`${item.kode_barang}-${item.kode_gudang || 'none'}`} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-6 py-4">
                         {item.gambar_url ? (
                           <div className="relative group">
@@ -552,7 +554,8 @@ export default function Summary() {
                       </td>
                       <td className="px-6 py-4 text-xs">{item.nama_armada || '-'}</td>
                       <td className="px-6 py-4 text-xs">{item.stok_akhir.toLocaleString('id-ID')} {item.satuan}</td>
-                      <td className="px-6 py-4 text-xs text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td>
+                      {/* <td className="px-6 py-4 text-xs text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td> */}
+                      <td className="px-6 py-4 text-xs">{item.nama_gudang || item.lokasi || '-'}</td>
                       <td className="px-6 py-4 text-xs text-center">
                         <span className={`inline-flex px-3 py-1 text-[11px] font-bold uppercase rounded-full shadow-sm ${getStatusColor(item.status_stok)}`}>
                           {item.status_stok}

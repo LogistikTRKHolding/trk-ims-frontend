@@ -144,7 +144,8 @@ export default function Stok() {
       'Stok Akhir': item.stok_akhir,
       'Stok Min': item.min_stok,
       'Stok Max': item.max_stok || '',
-      'Nilai Stok': item.nilai_stok
+      'Nilai Stok': item.nilai_stok,
+      'Lokasi Gudang':item.lokasi
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -459,7 +460,7 @@ export default function Stok() {
                     className="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('stok_akhir')}
                   >
-                    Stok Akhir {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+                    Stok {sortConfig.key === 'stok_akhir' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lokasi</th>
                 </tr>
@@ -487,7 +488,7 @@ export default function Stok() {
                   </tr>
                 ) : (
                   paginatedData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
+                    <tr key={`${item.kode_barang}-${item.kode_gudang || 'none'}`} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         {item.gambar_url ? (
                           <div className="relative group">
