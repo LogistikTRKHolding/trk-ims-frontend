@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from '../components/layout/MainLayout';
-import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI, gudangAPI } from '../services/api';
+import { mutasiAPI, stokAPI, kategoriAPI, subKategoriAPI, gudangAPI, authAPI } from '../services/api';
 import { useDataTable } from '../hooks/useDataTable';
 import { cloudinaryService } from '../services/cloudinary'; // Import cloudinary service
 import { Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
@@ -30,6 +30,9 @@ import { Search, Package, TrendingUp, TrendingDown, Calendar, RefreshCw,
 
 export default function KartuStok() {
     const navigate = useNavigate()
+    const currentUser = authAPI.getCurrentUser();
+    const isStaffGudang = currentUser?.role === 'Staff_gudang';
+    const userKodeGudang = currentUser?.kode_gudang || currentUser?.kodeGudang;
     const [items, setItems] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -84,7 +87,13 @@ export default function KartuStok() {
                 gudangAPI.getAll(),
             ]);
             setKategoriList(kategoriResult);
-            setGudangList(gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang })));
+
+            const mappedGudang = gudangResult.map(g => ({ kode: g.kode_gudang, nama: g.nama_gudang }));
+            // Staff_gudang hanya boleh melihat & memilih lokasi gudang sesuai profilnya
+            const scopedGudang = isStaffGudang && userKodeGudang
+                ? mappedGudang.filter(g => g.kode === userKodeGudang)
+                : mappedGudang;
+            setGudangList(scopedGudang);
         } catch (error) {
             console.error('Error loading dropdown data:', error);
         }
@@ -149,7 +158,11 @@ export default function KartuStok() {
         setLoading(true);
         try {
             const result = await stokAPI.getAll();
-            setItems(mergeLocationsToItems(result));
+            // Staff_gudang hanya melihat stok untuk lokasi gudang sesuai profilnya
+            const scopedResult = isStaffGudang && userKodeGudang
+                ? result.filter(row => row.kode_gudang === userKodeGudang)
+                : result;
+            setItems(mergeLocationsToItems(scopedResult));
         } catch (error) {
             console.error('Error loading items:', error);
             alert('Failed to load items: ' + error.message);
@@ -161,7 +174,12 @@ export default function KartuStok() {
     // Fetch mutasi data for selected item
     const fetchMutasiData = useCallback(async () => {
         if (!selectedItem) return [];
-        const result = await mutasiAPI.getByBarang(selectedItem.kode_barang);
+        let result = await mutasiAPI.getByBarang(selectedItem.kode_barang);
+
+        // Staff_gudang hanya melihat riwayat mutasi untuk lokasi gudang sesuai profilnya
+        if (isStaffGudang && userKodeGudang) {
+            result = result.filter(item => item.kode_gudang === userKodeGudang);
+        }
 
         // Calculate running balance
         let saldo = 0;
