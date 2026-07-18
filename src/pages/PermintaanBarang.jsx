@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { useDataTable } from '../hooks/useDataTable';
 import {
-    permintaanBarangAPI, barangAPI, authAPI,
+    permintaanBarangAPI, barangAPI, stokAPI, authAPI,
     kategoriAPI, subKategoriAPI, armadaAPI,
 } from '../services/api';
 import MainLayout from '../components/layout/MainLayout';
@@ -148,6 +148,10 @@ export default function PermintaanBarang() {
     // Info barang yang sedang dipilih di modal (untuk preview stok)
     const [selectedBarang, setSelectedBarang] = useState(null);
 
+    // Breakdown lokasi stok fisik (per gudang/rak) untuk barang yang dipilih di modal
+    const [lokasiStok, setLokasiStok] = useState([]);
+    const [loadingLokasi, setLoadingLokasi] = useState(false);
+
     // Search dropdown barang
     const [barangSearch, setBarangSearch] = useState('');
     const [showBarangList, setShowBarangList] = useState(false);
@@ -266,6 +270,36 @@ export default function PermintaanBarang() {
         setSelectedBarang(null);
         setBarangSearch('');
     };
+
+    // ── Breakdown lokasi stok fisik per gudang untuk barang terpilih ──────────
+    // Sumber: v_stok_summary (via stokAPI) — granular per kode_barang + kode_gudang,
+    // sedangkan v_barang_complete cuma bawa TOTAL agregat (stok_akhir/stok_tersedia).
+    useEffect(() => {
+        const kodeBarang = selectedBarang?.kode_barang;
+        if (!kodeBarang) {
+            setLokasiStok([]);
+            return;
+        }
+
+        let cancelled = false;
+        setLoadingLokasi(true);
+
+        stokAPI.getAll({ kode_barang: kodeBarang })
+            .then((rows) => {
+                if (cancelled) return;
+                const lokasi = (Array.isArray(rows) ? rows : [])
+                    .filter(r => Number(r.stok_akhir) > 0)
+                    .sort((a, b) => Number(b.stok_akhir) - Number(a.stok_akhir));
+                setLokasiStok(lokasi);
+            })
+            .catch((err) => {
+                console.error('loadLokasiStok error:', err);
+                if (!cancelled) setLokasiStok([]);
+            })
+            .finally(() => { if (!cancelled) setLoadingLokasi(false); });
+
+        return () => { cancelled = true; };
+    }, [selectedBarang?.kode_barang]);
 
     const openEditModal = (item) => {
         setFormData({
@@ -1170,6 +1204,34 @@ export default function PermintaanBarang() {
                                                         <p className="text-gray-400 text-xs">setelah reserved PR</p>
                                                     </div>
                                                 </div>
+
+                                                {/* Lokasi stok fisik — tampil hanya jika Stok Tersedia > 0 */}
+                                                {stokTersedia > 0 && (
+                                                    <div className="text-xs">
+                                                        <p className="text-gray-400 mb-1 flex items-center gap-1">
+                                                            <Warehouse className="w-3 h-3" /> Lokasi Stok
+                                                        </p>
+                                                        {loadingLokasi ? (
+                                                            <p className="text-gray-400 italic flex items-center gap-1">
+                                                                <RefreshCw className="w-3 h-3 animate-spin" /> Memuat lokasi...
+                                                            </p>
+                                                        ) : lokasiStok.length > 0 ? (
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {lokasiStok.map((l, idx) => (
+                                                                    <span
+                                                                        key={`${l.kode_barang}-${l.kode_gudang || idx}`}
+                                                                        className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-700"
+                                                                    >
+                                                                        {l.lokasi || l.nama_gudang || '-'}
+                                                                        <span className="font-semibold text-gray-900">{fmtQty(l.stok_akhir)}</span>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-gray-400 italic">Lokasi tidak ditemukan</p>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 {/* Prediksi berdasarkan qty_request yang diisi */}
                                                 {Number(formData.qty_request) > 0 && (
