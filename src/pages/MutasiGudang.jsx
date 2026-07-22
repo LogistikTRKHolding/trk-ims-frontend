@@ -10,7 +10,7 @@ import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
 import { useDataTable } from '../hooks/useDataTable';
 import {
-  gudangAPI, mutasiAPI, barangAPI, authAPI,
+  gudangAPI, mutasiAPI, barangAPI, authAPI, permintaanBarangAPI,
   kategoriAPI, subKategoriAPI, armadaAPI, rakAPI
 } from '../services/api';
 import {
@@ -25,6 +25,10 @@ export default function MutasiGudang() {
 
   // Current user & permissions
   const currentUser = authAPI.getCurrentUser();
+  const userName    = currentUser?.fullName || currentUser?.full_name || currentUser?.email || '';
+  // Ref untuk menyimpan pr_id + action aktif saat handleSubmit dipanggil.
+  // prIntent di-clear di Fase 2 sebelum user submit, sehingga ref ini menjembatani keduanya.
+  const pendingPrUpdateRef = useRef(null);
   const canCreate = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canEdit = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
   const canDelete = ['Admin', 'Manager', 'Staff_gudang'].includes(currentUser?.role);
@@ -111,16 +115,17 @@ export default function MutasiGudang() {
   const [prIntent, setPrIntent] = useState(null); // { action, kodeBarang, qty, refNo }
 
   useEffect(() => {
-    const action = searchParams.get('action');
+    const action     = searchParams.get('action');
     const kodeBarang = searchParams.get('kode_barang');
-    const qty = searchParams.get('qty');
-    // tambah_masuk -> ref_no berisi No PO; tambah_keluar -> pr_no berisi No PR
-    const refNo = searchParams.get('ref_no') || searchParams.get('pr_no') || '';
+    const qty        = searchParams.get('qty');
+    // tambah_masuk -> ref_no = No PO; tambah_keluar -> pr_no = No PR
+    const refNo      = searchParams.get('ref_no') || searchParams.get('pr_no') || '';
+    const prId       = searchParams.get('pr_id')     || '';
+    const prStatus   = searchParams.get('pr_status') || '';
 
     if (!['tambah_keluar', 'tambah_masuk'].includes(action) || !kodeBarang) return;
 
-    // Simpan intent dan bersihkan URL — barangList mungkin belum siap, Fase 2 yang tunggu
-    setPrIntent({ action, kodeBarang, qty: parseFloat(qty) || 0, refNo });
+    setPrIntent({ action, kodeBarang, qty: parseFloat(qty) || 0, refNo, prId, prStatus });
     setSearchParams({}, { replace: true });
   }, [searchParams]);
 
@@ -149,7 +154,9 @@ export default function MutasiGudang() {
     }));
     setEditingItem(null);
     setShowModal(true);
-    setPrIntent(null); // clear intent setelah dipakai
+    // Simpan pr_id + action ke ref agar bisa diakses di handleSubmit
+    pendingPrUpdateRef.current = { prId: prIntent.prId, action: prIntent.action };
+    setPrIntent(null);
   }, [prIntent, barangList]);
 
   const loadBarangList = async () => {
@@ -552,6 +559,8 @@ export default function MutasiGudang() {
     setRakListFiltered(defaultGudang ? rakList.filter(r => r.kode_gudang === defaultGudang.kode) : []);
     setSearchTermBarang('');
     setEditingItem(null);
+    // Batalkan pending PR update jika modal ditutup tanpa menyimpan
+    pendingPrUpdateRef.current = null;
   };
 
   const openCreateModal = () => {
@@ -615,6 +624,26 @@ export default function MutasiGudang() {
         alert('Mutasi berhasil diupdate!');
       } else {
         await mutasiAPI.create(payload);
+
+        // Update status PR jika mutasi ini berasal dari alur Permintaan Barang
+        const pending = pendingPrUpdateRef.current;
+        if (pending?.prId) {
+          try {
+            if (pending.action === 'tambah_keluar') {
+              // Disetujui/Diterima → Diserahkan
+              await permintaanBarangAPI.serahkan(pending.prId, userName);
+            } else if (pending.action === 'tambah_masuk') {
+              // Diproses → Diterima
+              await permintaanBarangAPI.terima(pending.prId, userName);
+            }
+          } catch (prErr) {
+            console.warn('[MutasiGudang] Gagal update status PR:', prErr.message);
+            alert('Mutasi tersimpan, tapi gagal update status PR. Silakan refresh halaman Permintaan Barang.');
+          } finally {
+            pendingPrUpdateRef.current = null;
+          }
+        }
+
         alert('Mutasi berhasil ditambahkan!');
       }
 

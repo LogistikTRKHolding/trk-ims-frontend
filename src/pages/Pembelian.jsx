@@ -44,6 +44,7 @@ export default function Pembelian() {
 
     // no_pr yang di-link dari PermintaanBarang — dipakai untuk update no_po ke PR setelah PO tersimpan
     const [linkedPrNo, setLinkedPrNo] = useState('');
+    const [linkedPrId, setLinkedPrId] = useState(''); // id PR untuk update status → Diproses setelah PO disimpan
 
     const [formData, setFormData] = useState({
         no_po: '',
@@ -132,11 +133,12 @@ export default function Pembelian() {
         const kodeBarang = searchParams.get('kode_barang');
         const qty = searchParams.get('qty');
         const prNo = searchParams.get('pr_no');
+        const prId = searchParams.get('pr_id') || '';
 
         if (action !== 'tambah_po' || !kodeBarang) return;
 
         // Simpan intent, load master data, bersihkan URL
-        setPrIntent({ kodeBarang, qty: parseFloat(qty) || 0, prNo: prNo || '' });
+        setPrIntent({ kodeBarang, qty: parseFloat(qty) || 0, prNo: prNo || '', prId });
         loadMasterData();
         setSearchParams({}, { replace: true });
     }, [searchParams]);
@@ -145,7 +147,7 @@ export default function Pembelian() {
     useEffect(() => {
         if (!prIntent || barangList.length === 0) return;
 
-        const { kodeBarang, qty, prNo } = prIntent;
+        const { kodeBarang, qty, prNo, prId } = prIntent;
         const barang = barangList.find(b => b.kode_barang === kodeBarang);
 
         setFormData(prev => ({
@@ -163,6 +165,7 @@ export default function Pembelian() {
             satuan: barang?.satuan || '',
         });
         setLinkedPrNo(prNo);
+        setLinkedPrId(prId);
         setEditingItem(null);
         setShowModal(true);
         setPrIntent(null); // clear intent setelah dipakai
@@ -433,6 +436,7 @@ export default function Pembelian() {
         setBarangSearch('');
         setSelectedBarangPreview({ part_number: '', satuan: '' });
         setLinkedPrNo('');
+        setLinkedPrId('');
         setHargaDisplayValue('');
     };
 
@@ -680,13 +684,22 @@ export default function Pembelian() {
                 alert('Purchase Order berhasil diupdate!');
             } else {
                 const createdPO = await pembelianAPI.create(payload);
-                // Jika PO ini berasal dari PR, update no_po di tabel permintaan_barang
+                // Jika PO ini berasal dari PR (alur Proses Beli):
+                // 1. Link no_po ke baris PR
+                // 2. Update status PR → Diproses
                 if (linkedPrNo && createdPO?.no_po) {
                     try {
                         await permintaanBarangAPI.updateNoPO(linkedPrNo, createdPO.no_po);
                     } catch (linkErr) {
                         console.warn('[Pembelian] Gagal link no_po ke PR:', linkErr.message);
-                        // Non-fatal: PO tetap tersimpan
+                    }
+                }
+                if (linkedPrId) {
+                    try {
+                        await permintaanBarangAPI.proses(linkedPrId, createdPO?.no_po || '');
+                    } catch (prosesErr) {
+                        console.warn('[Pembelian] Gagal update status PR → Diproses:', prosesErr.message);
+                        alert('PO tersimpan, tapi gagal update status PR. Silakan refresh halaman Permintaan Barang.');
                     }
                 }
                 alert('Purchase Order berhasil ditambah!');

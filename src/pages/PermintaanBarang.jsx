@@ -429,72 +429,54 @@ export default function PermintaanBarang() {
         } catch (err) { alert('Error: ' + err.message); }
     };
 
-    // Disetujui → Diserahkan (stok tersedia, ambil dari gudang)
-    // Navigasi ke Mutasi Gudang dengan params agar modal Tambah Mutasi (Keluar) ter-prefill otomatis
+    // Disetujui/Diterima → Diserahkan: hanya navigate, status PR diupdate SETELAH mutasi Keluar berhasil disimpan
     const handleSerahkan = async (item) => {
         const cukup = Number(item.stok_tersedia ?? 0) >= Number(item.qty_request ?? 0);
         const msg = cukup
-            ? `Serahkan ${item.no_pr} dari stok gudang?\n\nStok Tersedia: ${fmtQty(item.stok_tersedia)} ${item.satuan || ''}\nQty Request : ${fmtQty(item.qty_request)} ${item.satuan || ''}\n\nSetelah konfirmasi, Anda akan diarahkan ke Mutasi Gudang untuk membuat mutasi Keluar.`
+            ? `Serahkan ${item.no_pr} dari stok gudang?\n\nStok Tersedia: ${fmtQty(item.stok_tersedia)} ${item.satuan || ''}\nQty Request : ${fmtQty(item.qty_request)} ${item.satuan || ''}\n\nAnda akan diarahkan ke Mutasi Gudang. Status PR berubah ke "Diserahkan" setelah mutasi disimpan.`
             : `⚠️ Stok Tersedia (${fmtQty(item.stok_tersedia)}) KURANG dari Jumlah Permintaan (${fmtQty(item.qty_request)}).\n\nAnda yakin tetap ingin menyerahkan secara parsial?`;
         if (!confirm(msg)) return;
-        try {
-            await permintaanBarangAPI.serahkan(item.id, userName);
-            alert(`${item.no_pr} berhasil ditandai Diserahkan.\nBuat Mutasi Keluar di halaman Mutasi Gudang.`);
-            await refresh();
-            
-            // Bawa kode_barang, qty, dan pr_no sebagai query params
-            const params = new URLSearchParams({
-                action: 'tambah_keluar',
-                kode_barang: item.kode_barang,
-                qty: item.qty_request,
-                pr_no: item.no_pr,
-            });
-            navigate(`/mutasi_gudang?${params.toString()}`);
-        } catch (err) { alert('Error: ' + err.message); }
+        const params = new URLSearchParams({
+            action:      'tambah_keluar',
+            kode_barang: item.kode_barang,
+            qty:         item.qty_request,
+            pr_no:       item.no_pr,
+            pr_id:       item.id,
+            pr_status:   item.status,   // 'Disetujui' atau 'Diterima'
+        });
+        navigate(`/mutasi_gudang?${params.toString()}`);
     };
 
-    // Disetujui → Diproses (stok kosong, perlu beli)
-    // Navigasi ke Pembelian dengan params agar modal Tambah PO ter-prefill otomatis
+    // Disetujui → Diproses: hanya navigate, status PR diupdate SETELAH PO berhasil disimpan di Pembelian
     const handleProsesPembelian = async (item) => {
-        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n\nStok tidak tersedia → formulir PO baru akan terbuka otomatis.\nData Vendor & Harga perlu dilengkapi di halaman Pembelian.`)) return;
-        try {
-            await permintaanBarangAPI.proses(item.id, ''); // no_po dikosongkan dulu, diisi setelah PO dibuat
-            alert(`PR ${item.no_pr} → Diproses.\n\nLengkapi dan simpan PO di halaman Pembelian.`);
-            await refresh();
-            
-            // Bawa kode_barang dan qty sebagai query params
-            const params = new URLSearchParams({
-                action: 'tambah_po',
-                kode_barang: item.kode_barang,
-                qty: item.qty_request,
-                pr_no: item.no_pr,
-            });
-            navigate(`/pembelian?${params.toString()}`);
-        } catch (err) { alert('Error: ' + err.message); }
+        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n\nStok tidak tersedia → formulir PO baru akan terbuka otomatis.\nStatus PR berubah ke "Diproses" setelah PO disimpan.`)) return;
+        const params = new URLSearchParams({
+            action:      'tambah_po',
+            kode_barang: item.kode_barang,
+            qty:         item.qty_request,
+            pr_no:       item.no_pr,
+            pr_id:       item.id,
+        });
+        navigate(`/pembelian?${params.toString()}`);
     };
 
-    // Diproses → Diterima: barang dari PO sudah datang, dibuat Mutasi Masuk di gudang.
-    // Navigasi ke Mutasi Gudang dengan params agar modal Tambah Mutasi (Masuk) ter-prefill otomatis.
+    // Diproses → Diterima: hanya navigate, status PR diupdate SETELAH mutasi Masuk berhasil disimpan
     const handleTerima = async (item) => {
         if (!confirm(
-            `Tandai ${item.no_pr} sebagai "Diterima"?\n\n` +
+            `Terima barang untuk ${item.no_pr}?\n\n` +
             `Barang dari PO ${item.no_po || '-'} sudah tiba di gudang.\n` +
-            `Setelah konfirmasi, Anda akan diarahkan ke Mutasi Gudang untuk membuat mutasi Masuk.\n\n` +
-            `Langkah berikutnya: Diserahkan (Mutasi Keluar) ke peminta.`
+            `Anda akan diarahkan ke Mutasi Gudang. Status PR berubah ke "Diterima" setelah mutasi Masuk disimpan.`
         )) return;
         try {
-            await permintaanBarangAPI.terima(item.id, userName);
-            
-            // Fetch ulang data PR untuk memastikan no_po yang dipakai adalah nilai terkini di DB
+            // Fetch fresh untuk pastikan no_po terkini
             const fresh = await permintaanBarangAPI.getById(item.id);
             const noPO = fresh?.no_po || item.no_po || '';
-            alert(`${item.no_pr} → Diterima.\nBuat Mutasi Masuk di halaman Mutasi Gudang.`);
-            await refresh();
             const params = new URLSearchParams({
-                action: 'tambah_masuk',
+                action:      'tambah_masuk',
                 kode_barang: item.kode_barang,
-                qty: item.qty_request,
-                ref_no: noPO || item.no_pr, // No PO sebagai referensi; fallback ke No PR jika benar-benar kosong
+                qty:         item.qty_request,
+                ref_no:      noPO || item.no_pr,
+                pr_id:       item.id,
             });
             navigate(`/mutasi_gudang?${params.toString()}`);
         } catch (err) { alert('Error: ' + err.message); }
