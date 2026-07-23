@@ -433,7 +433,7 @@ export default function PermintaanBarang() {
     const handleSerahkan = async (item) => {
         const cukup = Number(item.stok_tersedia ?? 0) >= Number(item.qty_request ?? 0);
         const msg = cukup
-            ? `Serahkan ${item.no_pr} dari stok gudang?\n\nStok Tersedia: ${fmtQty(item.stok_tersedia)} ${item.satuan || ''}\nQty Request : ${fmtQty(item.qty_request)} ${item.satuan || ''}\n\nAnda akan diarahkan ke Mutasi Gudang. Status PR berubah ke "Diserahkan" setelah mutasi disimpan.`
+            ? `Serahkan ${item.no_pr} dari stok gudang?\n\nStok Tersedia: ${fmtQty(item.stok_tersedia)} ${item.satuan || ''}\nQty Request : ${fmtQty(item.qty_request)} ${item.satuan || ''}\n\nAnda akan diarahkan ke Mutasi Gudang.`
             : `⚠️ Stok Tersedia (${fmtQty(item.stok_tersedia)}) KURANG dari Jumlah Permintaan (${fmtQty(item.qty_request)}).\n\nAnda yakin tetap ingin menyerahkan secara parsial?`;
         if (!confirm(msg)) return;
         const params = new URLSearchParams({
@@ -449,7 +449,7 @@ export default function PermintaanBarang() {
 
     // Disetujui → Diproses: hanya navigate, status PR diupdate SETELAH PO berhasil disimpan di Pembelian
     const handleProsesPembelian = async (item) => {
-        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n\nStok tidak tersedia → formulir PO baru akan terbuka otomatis.\nStatus PR berubah ke "Diproses" setelah PO disimpan.`)) return;
+        if (!confirm(`Proses ${item.no_pr} ke Pembelian?\n`)) return;
         const params = new URLSearchParams({
             action:      'tambah_po',
             kode_barang: item.kode_barang,
@@ -465,7 +465,7 @@ export default function PermintaanBarang() {
         if (!confirm(
             `Terima barang untuk ${item.no_pr}?\n\n` +
             `Barang dari PO ${item.no_po || '-'} sudah tiba di gudang.\n` +
-            `Anda akan diarahkan ke Mutasi Gudang. Status PR berubah ke "Diterima" setelah mutasi Masuk disimpan.`
+            `Anda akan diarahkan ke Mutasi Gudang.`
         )) return;
         try {
             // Fetch fresh untuk pastikan no_po terkini
