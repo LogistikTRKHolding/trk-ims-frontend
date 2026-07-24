@@ -133,12 +133,22 @@ export default function MutasiGudang() {
   useEffect(() => {
     if (!prIntent || barangList.length === 0) return;
 
+    // Staff_gudang: tunggu gudangList juga siap (dimuat paralel via loadDropdownData),
+    // supaya kode_gudang tidak ter-clear kosong akibat race condition saat prIntent
+    // dikonsumsi lebih dulu sebelum gudangList selesai load.
+    const isStaffGudang = currentUser?.role === 'Staff_gudang';
+    if (isStaffGudang && gudangList.length === 0) return;
+
     const { action, kodeBarang, qty, refNo } = prIntent;
     const barang = barangList.find(b => b.kode_barang === kodeBarang);
     const jenis = action === 'tambah_masuk' ? 'Masuk' : 'Keluar';
     const ket = action === 'tambah_masuk'
       ? (refNo ? `Penerimaan barang dari PO: ${refNo}` : '')
       : (refNo ? `Penyerahan dari PR: ${refNo}` : '');
+
+    // Staff_gudang: otomatis isi gudang sesuai lokasi profilnya (gudangList sudah dibatasi 1 opsi),
+    // karena field Gudang di-disable untuk role ini dan tidak bisa dipilih manual.
+    const defaultGudang = isStaffGudang && gudangList.length === 1 ? gudangList[0] : null;
 
     setFormData(prev => ({
       ...prev,
@@ -151,13 +161,18 @@ export default function MutasiGudang() {
       qty: qty,
       referensi: refNo,
       keterangan: ket,
+      kode_gudang: defaultGudang?.kode || prev.kode_gudang,
+      nama_gudang: defaultGudang?.nama || prev.nama_gudang,
     }));
+    if (defaultGudang) {
+      setRakListFiltered(rakList.filter(r => r.kode_gudang === defaultGudang.kode));
+    }
     setEditingItem(null);
     setShowModal(true);
     // Simpan pr_id + action ke ref agar bisa diakses di handleSubmit
     pendingPrUpdateRef.current = { prId: prIntent.prId, action: prIntent.action };
     setPrIntent(null);
-  }, [prIntent, barangList]);
+  }, [prIntent, barangList, gudangList, rakList, currentUser]);
 
   const loadBarangList = async () => {
     try {
@@ -1813,7 +1828,7 @@ export default function MutasiGudang() {
                     formData.jenis_transaksi === 'Masuk' ? (
                       <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-50 border border-purple-200 text-sm text-purple-800">
                         <TrendingUp className="w-4 h-4 flex-shrink-0" />
-                        <span>Mutasi <strong>Masuk</strong> ini untuk menerima barang dari PO terkait <strong>{formData.referensi}</strong>. Pilih Gudang &amp; Rak, lalu simpan.</span>
+                        <span>Mutasi <strong>Masuk</strong> ini untuk menerima barang dari PO <strong>{formData.referensi}</strong>. Pilih Gudang &amp; Rak, lalu simpan.</span>
                       </div>
                     ) : formData.jenis_transaksi === 'Keluar' ? (
                       <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-teal-50 border border-teal-200 text-sm text-teal-800">

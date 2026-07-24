@@ -463,9 +463,7 @@ export default function PermintaanBarang() {
     // Diproses → Diterima: hanya navigate, status PR diupdate SETELAH mutasi Masuk berhasil disimpan
     const handleTerima = async (item) => {
         if (!confirm(
-            `Terima barang untuk ${item.no_pr} (${item.nama_barang})?\n\n` +
-            `Barang dari PO ${item.no_po || '-'} (${item.nama_barang}) sudah tiba di gudang.\n` +
-            `Anda akan diarahkan ke Mutasi Gudang.`
+            `Terima barang dari PO ${item.no_po || '-'} (${item.nama_barang})?\n`
         )) return;
         try {
             // Fetch fresh untuk pastikan no_po terkini
