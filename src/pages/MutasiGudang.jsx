@@ -78,6 +78,11 @@ export default function MutasiGudang() {
   const [showBarangDropdown, setShowBarangDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
+  // State untuk Pencarian Lokasi Rak di Modal
+  const [searchTermRak, setSearchTermRak] = useState('');
+  const [showRakDropdown, setShowRakDropdown] = useState(false);
+  const dropdownRakRef = useRef(null);
+
   // State untuk Modal Tambah Barang Baru
   const [showAddBarangModal, setShowAddBarangModal] = useState(false);
   const [subKategoriListModal, setSubKategoriListModal] = useState([]);
@@ -253,6 +258,38 @@ export default function MutasiGudang() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBarangDropdown]);
 
+  // Filter rak (cascading dari gudang) berdasarkan input search di modal
+  const filteredRakSearch = useMemo(() => {
+    if (!searchTermRak) return rakListFiltered;
+    const term = normalizeSearch(searchTermRak);
+    if (!term) return rakListFiltered;
+    return rakListFiltered.filter(r =>
+      normalizeSearch(r.kode_rak).includes(term) ||
+      normalizeSearch(r.nama_rak).includes(term)
+    );
+  }, [searchTermRak, rakListFiltered]);
+
+  // Sinkronkan teks searchbar dengan rak yang sedang terpilih (mis. saat modal
+  // dibuka untuk edit, reset form, atau saat gudang berubah dan rak ikut ter-reset)
+  useEffect(() => {
+    setSearchTermRak(formData.nama_rak || '');
+  }, [formData.kode_rak]);
+
+  // Handle klik di luar untuk menutup dropdown Lokasi Rak.
+  // Jika ditutup tanpa memilih rak yang valid, kembalikan teks ke rak yang tersimpan.
+  useEffect(() => {
+    const handleClickOutsideRak = (event) => {
+      if (dropdownRakRef.current && !dropdownRakRef.current.contains(event.target)) {
+        setShowRakDropdown(false);
+        setSearchTermRak(formData.nama_rak || '');
+      }
+    };
+    if (showRakDropdown) {
+      document.addEventListener('mousedown', handleClickOutsideRak);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutsideRak);
+  }, [showRakDropdown, formData.nama_rak]);
+
   // Fetch mutasi data
   const fetchMutasiData = useCallback(async () => {
     try {
@@ -410,13 +447,6 @@ export default function MutasiGudang() {
         kode_rak: '',   // reset rak saat gudang berubah
         nama_rak: '',
       }));
-    } else if (name === 'kode_rak') {
-      const selectedRak = rakList.find(r => r.kode_rak === value);
-      setFormData(prev => ({
-        ...prev,
-        kode_rak: value,
-        nama_rak: selectedRak?.nama_rak || '',
-      }));
     } else if (name === 'kode_barang') {
       const selectedBarang = barangList.find(b => b.kode_barang === value);
       if (selectedBarang) {
@@ -458,6 +488,24 @@ export default function MutasiGudang() {
     }));
     setSearchTermBarang('');
     setShowBarangDropdown(false);
+  };
+
+  const handleSelectRak = (rak) => {
+    setFormData(prev => ({
+      ...prev,
+      kode_rak: rak.kode_rak,
+      nama_rak: rak.nama_rak,
+    }));
+    setShowRakDropdown(false);
+  };
+
+  const handleClearRak = () => {
+    setFormData(prev => ({
+      ...prev,
+      kode_rak: '',
+      nama_rak: '',
+    }));
+    setShowRakDropdown(false);
   };
 
   // Handler untuk Modal Tambah Barang Baru
@@ -1986,29 +2034,64 @@ export default function MutasiGudang() {
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                       />
                     </div>
-                    <div>
+                    <div className="relative" ref={dropdownRakRef}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Lokasi Rak
                       </label>
-                      <select
-                        name="kode_rak"
-                        value={formData.kode_rak}
-                        onChange={handleInputChange}
-                        disabled={!formData.kode_gudang || rakListFiltered.length === 0}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">-- Pilih Lokasi Rak --</option>
-                        {rakListFiltered.map((rak) => (
-                          <option key={rak.kode_rak} value={rak.kode_rak}>
-                            {rak.nama_rak}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder={formData.kode_gudang ? 'Cari lokasi rak...' : 'Pilih Gudang terlebih dahulu'}
+                          value={searchTermRak}
+                          onChange={(e) => { setSearchTermRak(e.target.value); setShowRakDropdown(true); }}
+                          onFocus={() => setShowRakDropdown(true)}
+                          disabled={!formData.kode_gudang}
+                          autoComplete="off"
+                          className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                        {formData.kode_rak && (
+                          <button
+                            type="button"
+                            onClick={handleClearRak}
+                            tabIndex={-1}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {showRakDropdown && formData.kode_gudang && (
+                        <div className="absolute z-30 w-full mt-1 bg-white border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                          <div
+                            onClick={handleClearRak}
+                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b text-sm text-gray-500 italic"
+                          >
+                            -- Tidak ada rak dipilih --
+                          </div>
+                          {filteredRakSearch.length > 0 ? (
+                            filteredRakSearch.map((rak) => (
+                              <div
+                                key={rak.kode_rak}
+                                onClick={() => handleSelectRak(rak)}
+                                className="px-4 py-2 hover:bg-green-50 cursor-pointer border-b last:border-0"
+                              >
+                                <div className="text-sm font-medium text-gray-800">{rak.nama_rak}</div>                                
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                              {rakListFiltered.length === 0
+                                ? 'Tidak ada rak untuk gudang ini'
+                                : 'Lokasi rak tidak ditemukan'}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {!formData.kode_gudang && (
                         <p className="mt-1 text-xs text-gray-400">Pilih Gudang terlebih dahulu</p>
-                      )}
-                      {formData.kode_gudang && rakListFiltered.length === 0 && (
-                        <p className="mt-1 text-xs text-amber-500">Tidak ada rak untuk gudang ini</p>
                       )}
                     </div>
                   </div>

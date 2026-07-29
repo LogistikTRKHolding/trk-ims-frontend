@@ -555,7 +555,7 @@ export default function Summary() {
                       <td className="px-6 py-4 text-xs">{item.nama_armada || '-'}</td>
                       <td className="px-6 py-4 text-xs">{item.stok_akhir.toLocaleString('id-ID')} {item.satuan}</td>
                       {/* <td className="px-6 py-4 text-xs text-right font-medium text-green-700">{formatCurrency(item.nilai_stok)}</td> */}
-                      <td className="px-6 py-4 text-xs">{item.nama_gudang || item.lokasi || '-'}</td>
+                      <td className="px-6 py-4 text-xs">{item.lokasi || '-'}</td>
                       <td className="px-6 py-4 text-xs text-center">
                         <span className={`inline-flex px-3 py-1 text-[11px] font-bold uppercase rounded-full shadow-sm ${getStatusColor(item.status_stok)}`}>
                           {item.status_stok}
