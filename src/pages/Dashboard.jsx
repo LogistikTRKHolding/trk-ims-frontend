@@ -205,8 +205,7 @@ export default function Dashboard() {
             <span>{isRefreshing ? 'Memuat...' : 'Refresh'}</span>
           </button>
 
-          <div className="flex flex-wrap gap-3">
-            <select aria-label="Select kategori" name="kategori"
+          <select aria-label="Select kategori" name="kategori"
               value={selectedKategori}
               onChange={(e) => setSelectedKategori(e.target.value)}
               className="flex-1 sm:flex-initial px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
@@ -219,6 +218,7 @@ export default function Dashboard() {
               ))}
             </select>
 
+          <div className="flex flex-wrap gap-3">
             <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
