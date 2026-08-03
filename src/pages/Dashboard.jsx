@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, kategoriAPI } from '../services/api';
 import {
   ClipboardList, TrendingUp, Package, AlertTriangle,
   ShoppingCart, Clock, DollarSign, RefreshCw,
@@ -16,15 +16,32 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [kategoriList, setKategoriList] = useState([]);
+  const [selectedKategori, setSelectedKategori] = useState('');
+
+  // Daftar kategori hanya perlu diambil sekali saat halaman dibuka
+  useEffect(() => {
+    loadKategoriList();
+  }, []);
 
   useEffect(() => {
     loadMetrics();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedKategori]);
+
+  const loadKategoriList = async () => {
+    try {
+      const data = await kategoriAPI.getActive();
+      const list = Array.isArray(data) ? data : (data?.data || []);
+      setKategoriList(list.filter((k) => k.is_active !== false));
+    } catch (error) {
+      console.error('Error loading kategori list:', error);
+    }
+  };
 
   const loadMetrics = async () => {
     try {
       setLoading(true);
-      const data = await dashboardAPI.getMetrics(selectedMonth, selectedYear);
+      const data = await dashboardAPI.getMetrics(selectedMonth, selectedYear, selectedKategori);
       setMetrics(data);
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -37,7 +54,7 @@ export default function Dashboard() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const data = await dashboardAPI.getMetrics(selectedMonth, selectedYear);
+      const data = await dashboardAPI.getMetrics(selectedMonth, selectedYear, selectedKategori);
       setMetrics(data);
     } catch (error) {
       console.error('Error refreshing metrics:', error);
@@ -188,7 +205,20 @@ export default function Dashboard() {
             <span>{isRefreshing ? 'Memuat...' : 'Refresh'}</span>
           </button>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <select aria-label="Select kategori" name="kategori"
+              value={selectedKategori}
+              onChange={(e) => setSelectedKategori(e.target.value)}
+              className="flex-1 sm:flex-initial px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Semua Kategori</option>
+              {kategoriList.map((kat) => (
+                <option key={kat.kode_kategori} value={kat.kode_kategori}>
+                  {kat.nama_kategori}
+                </option>
+              ))}
+            </select>
+
             <select aria-label="Select month" name="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -345,10 +375,16 @@ export default function Dashboard() {
               <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Top 10 Permintaan Suku Cadang
+                    Top 10 Permintaan Barang
                   </h3>
                   <span className="text-xs font-medium px-2 py-1 bg-green-50 text-green-600 rounded">
                     {months[selectedMonth - 1]} {selectedYear}
+                    {selectedKategori && (
+                      <>
+                        {' • '}
+                        {kategoriList.find((k) => k.kode_kategori === selectedKategori)?.nama_kategori || selectedKategori}
+                      </>
+                    )}
                   </span>
                 </div>
 

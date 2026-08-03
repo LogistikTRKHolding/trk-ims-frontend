@@ -974,10 +974,11 @@ export const usersAPI = {
 // DASHBOARD API
 // ============================================
 export const dashboardAPI = {
-  async getMetrics(month, year) {
+  async getMetrics(month, year, kategori) {
     const params = new URLSearchParams();
     if (month) params.append("month", month);
     if (year) params.append("year", year);
+    if (kategori) params.append("kategori", kategori);
 
     const queryString = params.toString();
     const url = queryString
@@ -991,11 +992,12 @@ export const dashboardAPI = {
     return fetchWithAuth(`${API_URL}/dashboard/stock-composition`);
   },
 
-  async getTopPurchases(month, year, limit = 10) {
+  async getTopPurchases(month, year, limit = 10, kategori) {
     const params = new URLSearchParams();
     if (month) params.append("month", month);
     if (year) params.append("year", year);
     if (limit) params.append("limit", limit);
+    if (kategori) params.append("kategori", kategori);
 
     const queryString = params.toString();
     const url = queryString
