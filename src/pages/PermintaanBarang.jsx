@@ -152,6 +152,10 @@ export default function PermintaanBarang() {
     const [lokasiStok, setLokasiStok] = useState([]);
     const [loadingLokasi, setLoadingLokasi] = useState(false);
 
+    // Breakdown lokasi stok fisik per kode_barang, untuk kolom "Lokasi" di tabel
+    // Bentuk: { [kode_barang]: [{ lokasi, qty }, ...] } — hanya lokasi dengan stok_akhir > 0
+    const [lokasiByBarang, setLokasiByBarang] = useState({});
+
     // Search dropdown barang
     const [barangSearch, setBarangSearch] = useState('');
     const [showBarangList, setShowBarangList] = useState(false);
@@ -179,14 +183,26 @@ export default function PermintaanBarang() {
 
     const loadMasterData = async () => {
         try {
-            const [barang, kategori, armada] = await Promise.all([
+            const [barang, kategori, armada, stok] = await Promise.all([
                 barangAPI.getAll(),   // v_barang_complete → sudah ada stok_akhir, stok_tersedia
                 kategoriAPI.getAll(),
                 armadaAPI.getAll(),
+                stokAPI.getAll(),     // v_stok_summary → breakdown per gudang, untuk kolom Lokasi
             ]);
             setBarangList(Array.isArray(barang) ? barang.filter(b => b.is_active !== false) : []);
             setKategoriList(Array.isArray(kategori) ? kategori : []);
             setArmadaList(Array.isArray(armada) ? armada : []);
+
+            // Kelompokkan stok per kode_barang, buang lokasi yang stok_akhir-nya 0
+            const map = {};
+            (Array.isArray(stok) ? stok : []).forEach((r) => {
+                const qty = Number(r.stok_akhir) || 0;
+                if (qty <= 0) return;
+                if (!map[r.kode_barang]) map[r.kode_barang] = [];
+                map[r.kode_barang].push({ lokasi: r.lokasi || r.nama_gudang || '-', qty });
+            });
+            Object.values(map).forEach(arr => arr.sort((a, b) => b.qty - a.qty));
+            setLokasiByBarang(map);
         } catch (err) {
             console.error('loadMasterData error:', err);
         }
@@ -521,6 +537,7 @@ export default function PermintaanBarang() {
             'Qty Request': r.qty_request,
             'Stok Fisik': r.stok_fisik ?? 0,
             'Stok Tersedia': r.stok_tersedia ?? 0,
+            'Lokasi': (lokasiByBarang[r.kode_barang] || []).map(l => `${l.lokasi} (${fmtQty(l.qty)})`).join(', '),
             'Prioritas': r.prioritas,
             'Status': r.status,
             'Kategori': r.nama_kategori || '',
@@ -711,6 +728,9 @@ export default function PermintaanBarang() {
                                         Stok
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Lokasi
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                                         Prioritas
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -727,7 +747,7 @@ export default function PermintaanBarang() {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="9" className="px-6 py-12 text-center">
+                                        <td colSpan="10" className="px-6 py-12 text-center">
                                             <div className="flex flex-col items-center justify-center space-y-2">
                                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                                                 <span className="text-sm text-gray-500">Memuat data...</span>
@@ -736,13 +756,13 @@ export default function PermintaanBarang() {
                                     </tr>
                                 ) : !error && paginatedData.length === 0 ? (
                                     <tr>
-                                        <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                                        <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
                                             Tidak ada data permintaan
                                         </td>
                                     </tr>
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan="9" className="px-6 py-8 text-center text-red-500">{error}</td>
+                                        <td colSpan="10" className="px-6 py-8 text-center text-red-500">{error}</td>
                                     </tr>
                                 ) : (
                                     paginatedData.map((item) => {
@@ -801,6 +821,25 @@ export default function PermintaanBarang() {
                                                             <FulfillmentBadge stokTersedia={stokTersediaRow} qtyRequest={item.qty_request} />
                                                         )}
                                                     </div>
+                                                </td>
+
+                                                {/* Lokasi — chip per gudang, hanya jika Stok Tersedia > 0 */}
+                                                <td className="px-6 py-4 max-w-[160px]">
+                                                    {stokTersediaRow > 0 && lokasiByBarang[item.kode_barang]?.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {lokasiByBarang[item.kode_barang].map((l, idx) => (
+                                                                <span
+                                                                    key={idx}
+                                                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600"
+                                                                >
+                                                                    {l.lokasi}
+                                                                    <span className="font-medium text-gray-800">{fmtQty(l.qty)}</span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">-</span>
+                                                    )}
                                                 </td>
 
                                                 {/* Prioritas */}
