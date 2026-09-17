@@ -5,7 +5,8 @@ const normalizeSearch = (str) => String(str).replace(/[^a-z0-9]/gi, '').toLowerC
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx'; // dipakai untuk parsing file saat Import (ImportModal)
+import ExcelJS from 'exceljs'; // dipakai untuk Export — mendukung styling, merge, formula & outline grouping
 import MainLayout from '../components/layout/MainLayout';
 import ImportModal from '../components/common/ImportModal';
 import { useDataTable } from '../hooks/useDataTable';
@@ -984,117 +985,243 @@ export default function MutasiGudang() {
     }
   };
 
-  // Export to Excel — sorted & grouped sama seperti data table
-  const handleExport = () => {
-    const COLS = [
-      'Gudang', 'Tanggal', 'No Transaksi', 'Transaksi',
-      'Kode Barang', 'Nama Barang', 'Alias',
-      'Qty', 'Satuan',
-      'Kategori', 'Armada',
-      'Referensi', 'Lokasi Rak', 'Keterangan',
-      // kolom summary (hanya terisi di group header)
-      'Total Masuk', 'Total Keluar', 'Stok',
-    ];
+  // Export to Excel — layout & outline grouping mengikuti contoh "Mutasi_Gudang.xlsx"
+  // (judul [+ periode kalau filter tanggal aktif], header hijau, 1 baris ringkasan per barang
+  //  dengan formula SUMIFS, baris detail dg outline level 1 shg bisa di-collapse/expand)
+  const handleExport = async () => {
+    try {
+      // ── Kolom: Tanggal | Jenis Transaksi | Gudang | Rak | Jumlah | Satuan | Keterangan | Total Masuk | Total Keluar | Stok Akhir ──
+      const HEADERS = [
+        'Tanggal', 'Jenis Transaksi', 'Gudang', 'Rak',
+        'Jumlah', 'Satuan', 'Keterangan', 'Total Masuk', 'Total Keluar', 'Stok Akhir',
+      ];
+      const COL_WIDTHS = [12, 14, 24, 8, 10, 9, 34, 12, 14, 11];
+      const TOTAL_COLS = HEADERS.length; // 10 (A..J)
+      const DETAIL_LAST_COL = 7;         // Tanggal..Keterangan → baris ringkasan barang di-merge sampai sini
+      const COL = { TANGGAL: 1, JENIS: 2, GUDANG: 3, RAK: 4, JUMLAH: 5, SATUAN: 6, KETERANGAN: 7, MASUK: 8, KELUAR: 9, STOK: 10 };
 
-    // Build rows: untuk setiap group → 1 header row + N data rows + 1 empty separator
-    const rows = [COLS]; // baris pertama = header kolom
+      const colLetter = (n) => {
+        let s = '';
+        while (n > 0) {
+          const rem = (n - 1) % 26;
+          s = String.fromCharCode(65 + rem) + s;
+          n = Math.floor((n - 1) / 26);
+        }
+        return s;
+      };
 
-    for (const group of groupedData) {
-      const satuan = group.rows[0]?.satuan || '';
-      const totalMasuk = group.rows.filter(r => r.jenis_transaksi === 'Masuk').reduce((s, r) => s + (r.qty || 0), 0);
-      const totalKeluar = group.rows.filter(r => r.jenis_transaksi === 'Keluar').reduce((s, r) => s + (r.qty || 0), 0);
+      const GREEN = 'FF16A34A';
+      const LIGHT_GREEN = 'FFF0FDF4';
+      const NAVY = 'FF1F3864';
+      const GRAY = 'FF595959';
+      const FOOT_GRAY = 'FF808080';
+      const SALDO_GRAY = 'FF9CA3AF';
+      const thin = { style: 'thin' };
+      const allBorders = { top: thin, bottom: thin, left: thin, right: thin };
 
-      // Stok aktual dari allData (tidak terpengaruh filter)
-      const stokInfo = stokByBarang.get(group.kode_barang) || { masuk: 0, keluar: 0 };
-      const stokAktual = stokInfo.masuk - stokInfo.keluar;
+      const formatLongDate = (d) => {
+        if (!d) return '';
+        const date = typeof d === 'string' ? new Date(`${d}T00:00:00`) : new Date(d);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      };
 
-      // ── Group header row ──
-      rows.push([
-        '', '', '', '',                        // Gudang, Tanggal, No Transaksi, Transaksi
-        group.kode_barang,                     // Kode Barang
-        group.nama_barang,                     // Nama Barang
-        group.alias || '-',                    // Alias
-        '', satuan,                            // Qty, Satuan
-        '', '',                                // Kategori, Armada
-        '', '', '',                            // Referensi, Lokasi Rak, Keterangan
-        `${totalMasuk} ${satuan}`,             // Total Masuk
-        `${totalKeluar} ${satuan}`,            // Total Keluar
-        `${stokAktual} ${satuan}`,             // Stok Aktual
-      ]);
+      // ── Label periode: hanya ditampilkan kalau filter tanggal (single/range) sedang aktif ──
+      let periodeLabel = '';
+      if (dateFilterMode === 'range' && dateRangeStart && dateRangeEnd) {
+        periodeLabel = `Periode ${formatLongDate(dateRangeStart)} s/d ${formatLongDate(dateRangeEnd)}`;
+      } else if (dateFilterMode === 'single' && singleDate) {
+        periodeLabel = `Periode ${formatLongDate(singleDate)}`;
+      }
+      const showPeriode = periodeLabel !== '';
 
-      // ── Saldo sebelum filter (hanya ketika filter aktif) ──
-      if (hasActiveFilters) {
-        const saldo = stokLuarFilterByBarang.get(group.kode_barang) ?? { qty: 0 };
-        rows.push([
-          '-',                                   // Gudang
-          '-',                                   // Tanggal
-          '-',                                   // No Transaksi
-          'Masuk',                               // Transaksi
-          group.kode_barang,                     // Kode Barang
-          group.nama_barang,                     // Nama Barang
-          '-',                                   // Alias
-          saldo.qty,                             // Qty
-          satuan,                                // Satuan
-          '-', '-',                              // Kategori, Armada
-          '-',                                   // Referensi
-          '-',                                   // Lokasi Rak
-          'Saldo sebelum periode filter',        // Keterangan
-          '', '', '',                            // kolom summary kosong
-        ]);
+      // ── Posisi baris header/data menyesuaikan ada/tidaknya baris periode ──
+      const headerRowNum = showPeriode ? 4 : 3; // showPeriode: judul,periode,spacer,header — else: judul,spacer,header
+      const dataStartRow = headerRowNum + 1;
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('Mutasi Gudang', {
+        views: [{ showGridLines: false, state: 'frozen', ySplit: headerRowNum, topLeftCell: `A${dataStartRow}`, activePane: 'bottomLeft' }],
+        properties: { outlineLevelRow: 1 },
+      });
+      ws.properties.outlineProperties = { summaryBelow: true, summaryRight: true };
+      ws.columns = COL_WIDTHS.map((w) => ({ width: w }));
+
+      // ── Judul ──
+      ws.mergeCells(1, 1, 1, TOTAL_COLS);
+      ws.getCell(1, 1).value = 'LAPORAN MUTASI GUDANG';
+      ws.getCell(1, 1).font = { bold: true, size: 14, name: 'Arial', color: { argb: NAVY } };
+      ws.getRow(1).height = 21.75;
+
+      // ── Periode (hanya kalau ada filter tanggal aktif) ──
+      if (showPeriode) {
+        ws.mergeCells(2, 1, 2, TOTAL_COLS);
+        ws.getCell(2, 1).value = periodeLabel;
+        ws.getCell(2, 1).font = { italic: true, size: 10, name: 'Arial', color: { argb: GRAY } };
       }
 
-      // ── Data rows ──
-      for (const item of group.rows) {
-        rows.push([
-          item.nama_gudang,
-          formatDate(item.tanggal),
-          item.no_transaksi || '-',
-          item.jenis_transaksi,
-          item.kode_barang,
-          item.nama_barang,
-          item.alias || '-',
-          item.qty,
-          item.satuan,
-          item.nama_kategori || '-',
-          item.nama_armada || '-',
-          item.referensi || '-',
-          item.nama_rak || '-',
-          item.keterangan || '-',
-          '', '', '',                          // kolom summary kosong di data rows
-        ]);
+      // ── Header kolom, freeze di bawahnya ──
+      const headerRow = ws.getRow(headerRowNum);
+      HEADERS.forEach((label, i) => {
+        const cell = headerRow.getCell(i + 1);
+        cell.value = label;
+        cell.font = { bold: true, size: 10, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GREEN } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = allBorders;
+      });
+      headerRow.height = 26;
+
+      // ── Group per barang: 1 baris ringkasan (formula) + baris detail (outline level 1) ──
+      let r = dataStartRow;
+      const jenisOrder = { Masuk: 0, Keluar: 1 };
+      for (const group of groupedData) {
+        // Detail diurutkan tanggal naik (kronologis) untuk laporan, terlepas dari urutan di tabel layar
+        const detailRows = [...group.rows].sort((a, b) => {
+          const dateCompare = new Date(a.tanggal) - new Date(b.tanggal);
+          if (dateCompare !== 0) return dateCompare;
+          return (jenisOrder[a.jenis_transaksi] ?? 2) - (jenisOrder[b.jenis_transaksi] ?? 2);
+        });
+        const satuan = detailRows[0]?.satuan || '';
+        const partNumber = detailRows[0]?.part_number || group.part_number || '';
+
+        const headerRowIdx = r;
+
+        // Baris "Saldo sebelum periode filter" (hanya saat filter aktif) — dicatat sbg "Masuk" sintetis
+        // agar ikut terjumlah di SUMIFS Total Masuk: saldo_luar + masuk_filter − keluar_filter = stok_aktual
+        let saldoRowIdx = null;
+        if (hasActiveFilters) {
+          const saldo = stokLuarFilterByBarang.get(group.kode_barang) ?? { qty: 0 };
+          saldoRowIdx = headerRowIdx + 1;
+          const row = ws.getRow(saldoRowIdx);
+          row.outlineLevel = 1;
+          row.getCell(COL.TANGGAL).value = '-';
+          row.getCell(COL.JENIS).value = 'Masuk';
+          row.getCell(COL.JENIS).alignment = { horizontal: 'center' };
+          row.getCell(COL.GUDANG).value = '-';
+          row.getCell(COL.RAK).value = '-';
+          row.getCell(COL.JUMLAH).value = saldo.qty || 0;
+          row.getCell(COL.JUMLAH).numFmt = '#,##0';
+          row.getCell(COL.JUMLAH).alignment = { horizontal: 'right' };
+          row.getCell(COL.SATUAN).value = satuan;
+          row.getCell(COL.KETERANGAN).value = 'Saldo sebelum periode filter';
+          for (let col = 1; col <= TOTAL_COLS; col++) {
+            const cell = row.getCell(col);
+            cell.font = { italic: true, size: 10, name: 'Arial', color: { argb: SALDO_GRAY } };
+            cell.border = allBorders;
+          }
+        }
+
+        const firstSumRow = saldoRowIdx || (headerRowIdx + 1);
+        const lastSumRow = headerRowIdx + (saldoRowIdx ? 1 : 0) + detailRows.length;
+
+        // Baris ringkasan barang (merge kolom Tanggal..Keterangan)
+        ws.mergeCells(headerRowIdx, 1, headerRowIdx, DETAIL_LAST_COL);
+        for (let col = 1; col <= TOTAL_COLS; col++) {
+          const cell = ws.getRow(headerRowIdx).getCell(col);
+          cell.font = { bold: true, size: 10, name: 'Arial', color: { argb: GREEN } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: LIGHT_GREEN } };
+          cell.border = allBorders;
+        }
+        const kodeLabel = partNumber
+          ? `(Kode: ${group.kode_barang}/PN: ${partNumber})`
+          : `(Kode: ${group.kode_barang})`;
+        const labelCell = ws.getCell(headerRowIdx, 1);
+        labelCell.value = `${group.nama_barang}  ${kodeLabel}`;
+        labelCell.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        const jumlahLetter = colLetter(COL.JUMLAH);
+        const jenisLetter = colLetter(COL.JENIS);
+        const iCell = ws.getCell(headerRowIdx, COL.MASUK);
+        const jCell = ws.getCell(headerRowIdx, COL.KELUAR);
+        const kCell = ws.getCell(headerRowIdx, COL.STOK);
+        if (lastSumRow >= firstSumRow) {
+          iCell.value = { formula: `SUMIFS(${jumlahLetter}${firstSumRow}:${jumlahLetter}${lastSumRow},${jenisLetter}${firstSumRow}:${jenisLetter}${lastSumRow},"Masuk")` };
+          jCell.value = { formula: `SUMIFS(${jumlahLetter}${firstSumRow}:${jumlahLetter}${lastSumRow},${jenisLetter}${firstSumRow}:${jenisLetter}${lastSumRow},"Keluar")` };
+        } else {
+          iCell.value = 0;
+          jCell.value = 0;
+        }
+        kCell.value = { formula: `${colLetter(COL.MASUK)}${headerRowIdx}-${colLetter(COL.KELUAR)}${headerRowIdx}` };
+        [iCell, jCell, kCell].forEach((c) => {
+          c.numFmt = '#,##0';
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+
+        r = headerRowIdx + 1 + (saldoRowIdx ? 1 : 0);
+
+        // Baris detail transaksi — outlineLevel 1 = bisa di-collapse/expand lewat tombol -/+ di kiri baris
+        for (const item of detailRows) {
+          const row = ws.getRow(r);
+          row.outlineLevel = 1;
+
+          const tanggalCell = row.getCell(COL.TANGGAL);
+          const parsedDate = new Date(item.tanggal);
+          if (!isNaN(parsedDate.getTime())) {
+            tanggalCell.value = parsedDate;
+            tanggalCell.numFmt = 'mm-dd-yy';
+          } else {
+            tanggalCell.value = item.tanggal || '-';
+          }
+
+          const jenisCell = row.getCell(COL.JENIS);
+          jenisCell.value = item.jenis_transaksi;
+          jenisCell.alignment = { horizontal: 'center' };
+
+          row.getCell(COL.GUDANG).value = item.nama_gudang || '-';
+          row.getCell(COL.RAK).value = item.nama_rak || '-';
+
+          const qtyCell = row.getCell(COL.JUMLAH);
+          qtyCell.value = item.qty || 0;
+          qtyCell.numFmt = '#,##0';
+          qtyCell.alignment = { horizontal: 'right' };
+
+          row.getCell(COL.SATUAN).value = item.satuan || '';
+          row.getCell(COL.KETERANGAN).value = item.keterangan || '-';
+
+          for (let col = 1; col <= TOTAL_COLS; col++) {
+            const cell = row.getCell(col);
+            cell.font = cell.font?.bold ? cell.font : { size: 10, name: 'Arial' };
+            cell.border = allBorders;
+          }
+
+          r++;
+        }
       }
 
-      // ── Baris pemisah antar group ──
-      rows.push(new Array(COLS.length).fill(''));
+      // ── Baris kosong pemisah + catatan kaki ──
+      r++; // baris kosong (spacer), sengaja tidak ditulis apa pun
+      const footnoteRow = r;
+      ws.mergeCells(footnoteRow, 1, footnoteRow, TOTAL_COLS);
+      const footCell = ws.getCell(footnoteRow, 1);
+      footCell.value = hasActiveFilters
+        ? 'Catatan: klik tombol - / + di sisi kiri baris untuk collapse/expand tiap grup barang. Baris "Saldo sebelum periode filter" '
+          + 'adalah saldo bersih transaksi di luar rentang filter aktif. Total Masuk & Total Keluar dihitung otomatis (SUMIFS) dari '
+          + 'seluruh baris detail (termasuk baris saldo) di bawah header masing-masing grup; Stok Akhir = Total Masuk - Total Keluar.'
+        : 'Catatan: klik tombol - / + di sisi kiri baris untuk collapse/expand tiap grup barang. Total Masuk & Total Keluar dihitung '
+          + 'otomatis (SUMIFS) dari baris detail transaksi di bawah header masing-masing grup; Stok Akhir = Total Masuk - Total Keluar.';
+      footCell.font = { italic: true, size: 9, name: 'Arial', color: { argb: FOOT_GRAY } };
+      footCell.alignment = { wrapText: true, vertical: 'top' };
+      ws.getRow(footnoteRow).height = 27.75;
+
+      // ── Simpan & unduh ──
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const fileName = `mutasi_gudang_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      alert('Gagal export Excel: ' + (err.message || 'Unknown error'));
     }
-
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-
-    // Lebar kolom otomatis (estimasi)
-    ws['!cols'] = [
-      { wch: 14 }, // Gudang
-      { wch: 12 }, // Tanggal
-      { wch: 18 }, // Kode Barang
-      { wch: 28 }, // Nama Barang
-      { wch: 20 }, // Alias
-      { wch: 10 }, // Transaksi
-      { wch: 8 }, // Qty
-      { wch: 8 }, // Satuan
-      { wch: 14 }, // Kategori
-      { wch: 14 }, // Armada
-      { wch: 16 }, // Referensi
-      { wch: 12 }, // Lokasi Rak
-      { wch: 24 }, // Keterangan
-      { wch: 14 }, // Total Masuk
-      { wch: 14 }, // Total Keluar
-      { wch: 12 }, // Stok
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Mutasi Gudang');
-
-    const fileName = `mutasi_gudang_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
   };
 
   return (
