@@ -1,6 +1,6 @@
 // src/components/layout/MainLayout.jsx
 
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, Suspense } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, TrendingUp, Warehouse, ClipboardList,
@@ -51,6 +51,16 @@ const defaultPage = {
   description: 'Sistem Manajemen Inventori Gudang',
   icon: LayoutDashboard,
 };
+
+// Fallback saat chunk halaman (React.lazy) sedang di-fetch.
+// Hanya muncul sekali per tab, saat tab itu pertama kali dibuka.
+function TabLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-20 text-gray-500">
+      <span className="animate-pulse text-sm">Memuat halaman...</span>
+    </div>
+  );
+}
 
 function buildTab(path) {
   return { path, ...(pageInfo[path] ?? defaultPage) };
@@ -170,7 +180,15 @@ export default function MainLayout({ children }) {
                   key={tab.path}
                   style={{ display: tab.path === activeTabPath ? 'block' : 'none' }}
                 >
-                  <PageComponent />
+                  {/*
+                   * Suspense per-tab (bukan satu Suspense global di luar .map()):
+                   * setiap tab lazy-load & fallback secara independen, jadi
+                   * tab lain yang sudah ter-mount tidak ikut ke-cover fallback
+                   * saat tab baru masih fetching chunk-nya.
+                   */}
+                  <Suspense fallback={<TabLoadingFallback />}>
+                    <PageComponent />
+                  </Suspense>
                 </div>
               );
             })}

@@ -13,6 +13,9 @@ export default defineConfig({
       // Workbox: cache strategi untuk offline
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+        // Fix untuk error "exceeding the limit": naikkan batas precache Workbox.
+        // Default-nya 2 MB, bundle index-*.js kamu 2.1 MB jadi kepotong.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         runtimeCaching: [
           {
             // Cache API calls dari backend
@@ -27,6 +30,22 @@ export default defineConfig({
       }
     })
   ],
+
+  build: {
+    // Pecah bundle jadi beberapa chunk supaya file utama tidak sebesar 2 MB+.
+    // Sesuaikan daftar library di bawah dengan package.json kamu (cek nama
+    // library XLSX/chart yang dipakai di ImportModal & Dashboard).
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // 'vendor-xlsx': ['xlsx'],
+          // 'vendor-charts': ['recharts'], // ganti sesuai library chart yang dipakai
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000, // opsional: naikkan ambang warning Rollup (default 500kb)
+  },
 
   server: {
     port: 5173,
